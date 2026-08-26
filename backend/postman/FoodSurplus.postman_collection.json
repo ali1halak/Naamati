@@ -1,14 +1,17 @@
 {
   "info": {
+    "_postman_id": "a409ce3d-6ef0-4556-8b85-9149672bc348",
     "name": "Food Surplus API",
-    "_postman_id": "f5e1a1a0-0000-4000-a000-000000000001",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Food Surplus Redistribution Platform — API contract. Import this, set `base_url`, and run requests top to bottom. Register/Login auto-save the returned token into the `token` collection variable so every other request authenticates automatically."
+    "description": "Food Surplus platform API — auth, food categories, and admin.\n\n=== SETUP ===\n1. Set `base_url` if the API is not on http://127.0.0.1:8000/api\n2. Run any Register or Login request — the token is saved into the `token` variable automatically, so every other request just works.\n\n=== RESPONSE SHAPE ===\nEvery response, success or error, looks like this:\n{ \"success\": bool, \"data\": object|null, \"message\": string|null, \"errors\": object|null }\n\nSo you can write ONE response handler for the whole app:\n- success == true  -> read `data`\n- success == false -> show `message`, and on 422 show `errors` under each field\n\nStatus codes: 200 OK · 201 Created · 401 Unauthenticated · 403 Forbidden · 404 Not found · 422 Validation error · 429 Too many requests.\n\n=== ENUMS (fixed values — never send anything else) ===\n\n1) account_type — which kind of account to create (register only)\n   \"donor\"   -> a person/business giving away surplus food\n   \"charity\" -> an organization that collects and distributes it\n\n2) type — the donor's kind. REQUIRED when account_type = \"donor\"\n   \"individual\" -> a private person\n   \"restaurant\" -> a restaurant\n   \"hotel\"      -> a hotel\n   \"company\"    -> a company\n\n3) status — the charity's account state. READ-ONLY (the API sets it, you only display it)\n   \"pending\"   -> just registered, waiting for the admin. Can log in, but every charity feature returns 403.\n   \"active\"    -> approved by the admin. Full access.\n   \"suspended\" -> blocked by the admin. Can log in to see this, but no access.\n   => After login, if data.type == \"charity\", branch on data.user.status to pick the screen.\n\n4) data.type — which kind of account just logged in (returned by register / login / me)\n   \"donor\" | \"charity\"  -> use it to decide which home screen to open.\n\nBooleans are real JSON booleans (true/false), not 0/1 or \"true\".\nTimes are \"HH:MM:SS\" (e.g. \"08:00:00\"). Dates are ISO 8601 UTC.\n\n=== HEADS UP: RATE LIMIT ===\n/register and /login accept only 5 requests per minute per IP. Going over returns 429 \"Too many requests\". If registration suddenly stops working while testing, that is why — wait a minute and continue. Nothing is broken.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://127.0.0.1:8000/api", "type": "string" },
+    { "key": "base_url", "value": "http://127.0.0.1:8000/api/v1", "type": "string" },
     { "key": "token", "value": "", "type": "string" },
-    { "key": "donor_email", "value": "donor1@test.com", "type": "string" }
+    { "key": "donor_email", "value": "ahmad.donor@example.com", "type": "string" },
+    { "key": "charity_email", "value": "birr@example.com", "type": "string" },
+    { "key": "admin_token", "value": "", "type": "string" },
+    { "key": "charity_id", "value": "1", "type": "string" }
   ],
   "item": [
     {
@@ -20,13 +23,12 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 201', () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
-                  "pm.test('has token', () => pm.expect(json.data.token).to.be.a('string'));",
-                  "if (json.data && json.data.token) { pm.collectionVariables.set('token', json.data.token); }"
-                ],
-                "type": "text/javascript"
+                  "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);"
+                ]
               }
             }
           ],
@@ -38,11 +40,104 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Donor\",\n  \"type\": \"restaurant\",\n  \"email\": \"{{donor_email}}\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+              "raw": "{\n  \"account_type\": \"donor\",\n  \"name\": \"Ahmad\",\n  \"type\": \"restaurant\",\n  \"email\": \"{{donor_email}}\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
             },
             "url": { "raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"] },
-            "description": "type: individual | restaurant | hotel | company. On success (201) a Sanctum token is issued and saved automatically to {{token}}."
-          }
+            "description": "Creates a donor account. Usable immediately — no admin approval needed.\n\nFIELDS\n- account_type : \"donor\"  (fixed)\n- name         : max 120 chars\n- type         : \"individual\" | \"restaurant\" | \"hotel\" | \"company\"   <- dropdown in the UI\n- email        : must not exist as a donor OR a charity\n- phone        : max 20 chars\n- password     : min 8 chars\n- password_confirmation : must match password\n\nRETURNS a token — save it and send it as `Authorization: Bearer <token>` on every protected request.\n\nNote: re-running this returns 422 (email taken). Change the `donor_email` variable to register again."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"account_type\": \"donor\",\n  \"name\": \"Ahmad\",\n  \"type\": \"restaurant\",\n  \"email\": \"ahmad.donor@example.com\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}" },
+                "url": { "raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"] }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"donor\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Ahmad\",\n      \"type\": \"restaurant\",\n      \"email\": \"ahmad.donor@example.com\",\n      \"phone\": \"0999999999\",\n      \"created_at\": \"2026-08-24T19:02:47.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:47.000000Z\"\n    },\n    \"token\": \"5|yc1UXJuPBZ1JitKy8j6AzypVSfCHLGrnp3wTz0EHd1e76285\"\n  },\n  \"message\": \"Registered successfully\"\n}"
+            },
+            {
+              "name": "422 Email already taken",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"account_type\": \"donor\",\n  \"name\": \"Ahmad\",\n  \"type\": \"restaurant\",\n  \"email\": \"ahmad.donor@example.com\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}" },
+                "url": { "raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"] }
+              },
+              "status": "Unprocessable Content",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"email\": [\"This email is already registered.\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register (Charity)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"account_type\": \"charity\",\n  \"name\": \"Al-Birr Charity\",\n  \"email\": \"{{charity_email}}\",\n  \"phone\": \"0911111111\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"has_kitchen\": true,\n  \"address\": \"Aleppo - Al-Furqan\",\n  \"work_start\": \"08:00\",\n  \"work_end\": \"16:00\",\n  \"license_document\": null\n}"
+            },
+            "url": { "raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"] },
+            "description": "Creates a charity account. It always starts as status = \"pending\".\n\nIMPORTANT FOR THE APP FLOW\nA pending charity CAN log in and call /me — so it can see its own status — but it CANNOT use any charity feature until an admin approves it. Show a \"waiting for approval\" screen while status is \"pending\".\n\nFIELDS\n- account_type     : \"charity\"  (fixed)\n- name             : max 120 chars\n- email            : must not exist as a donor OR a charity\n- phone            : max 20 chars\n- password         : min 8 chars\n- password_confirmation : must match password\n- has_kitchen      : true | false  <- true means it can cook raw food. A charity with false is NEVER shown food that needs cooking.\n- address          : max 255 chars\n- work_start       : \"HH:MM\" 24h, e.g. \"08:00\"\n- work_end         : \"HH:MM\" 24h, must be after work_start\n- license_document : optional, send null or omit it\n\nRETURNS status = \"pending\" plus a token (usable for /me and /logout right away)."
+          },
+          "response": [
+            {
+              "name": "201 Created (pending approval)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"account_type\": \"charity\",\n  \"name\": \"Al-Birr Charity\",\n  \"email\": \"birr@example.com\",\n  \"phone\": \"0911111111\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"has_kitchen\": true,\n  \"address\": \"Aleppo - Al-Furqan\",\n  \"work_start\": \"08:00\",\n  \"work_end\": \"16:00\"\n}" },
+                "url": { "raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"] }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"charity\",\n    \"user\": {\n      \"id\": 2,\n      \"name\": \"Al-Birr Charity\",\n      \"email\": \"birr@example.com\",\n      \"phone\": \"0911111111\",\n      \"has_kitchen\": true,\n      \"status\": \"pending\",\n      \"license_document\": null,\n      \"rating_avg\": null,\n      \"ratings_count\": 0,\n      \"address\": \"Aleppo - Al-Furqan\",\n      \"work_start\": \"08:00:00\",\n      \"work_end\": \"16:00:00\",\n      \"created_at\": \"2026-08-24T19:02:48.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:48.000000Z\",\n      \"logo_url\": null\n    },\n    \"token\": \"6|wkgRz0KlIJ1IVj65OZGVhD0OtscnVpu6XmvYEJ5B5c6f5155\"\n  },\n  \"message\": \"Registered successfully. Your account is pending admin approval.\"\n}"
+            },
+            {
+              "name": "422 Missing charity fields",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"account_type\": \"charity\",\n  \"name\": \"Y\",\n  \"email\": \"y@example.com\",\n  \"phone\": \"0911111111\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}" },
+                "url": { "raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"] }
+              },
+              "status": "Unprocessable Content",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"has_kitchen\": [\"The has kitchen field is required when account type is charity.\"],\n    \"address\": [\"The address field is required when account type is charity.\"],\n    \"work_start\": [\"The work start field is required when account type is charity.\"],\n    \"work_end\": [\"The work end field is required when account type is charity.\"]\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Login",
@@ -50,12 +145,12 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
-                  "if (json.data && json.data.token) { pm.collectionVariables.set('token', json.data.token); }"
-                ],
-                "type": "text/javascript"
+                  "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);"
+                ]
               }
             }
           ],
@@ -70,8 +165,55 @@
               "raw": "{\n  \"email\": \"{{donor_email}}\",\n  \"password\": \"password123\"\n}"
             },
             "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] },
-            "description": "Checks the donors table then the charities table. Returns data.type = \"donor\" | \"charity\"."
-          }
+            "description": "ONE login endpoint for both account types — do not ask the user whether they are a donor or a charity, the API works it out.\n\nHOW TO ROUTE AFTER LOGIN\n1. Read `data.type`:\n   \"donor\"   -> open the donor home screen\n   \"charity\" -> go to step 2\n2. For a charity, read `data.user.status`:\n   \"active\"    -> charity home screen\n   \"pending\"   -> \"waiting for admin approval\" screen\n   \"suspended\" -> \"account suspended\" screen\n\nA pending or suspended charity logs in successfully (200) on purpose, so it can see where it stands.\n\nBODY: email, password. Wrong email or wrong password both return the same 401 \"Invalid credentials\" — deliberate, so nobody can discover which emails exist."
+          },
+          "response": [
+            {
+              "name": "200 OK (donor)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"email\": \"ahmad.donor@example.com\",\n  \"password\": \"password123\"\n}" },
+                "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"donor\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Ahmad\",\n      \"type\": \"restaurant\",\n      \"email\": \"ahmad.donor@example.com\",\n      \"phone\": \"0999999999\",\n      \"created_at\": \"2026-08-24T19:02:47.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:47.000000Z\"\n    },\n    \"token\": \"7|b2Hg3zyLpGRVgUTZsNFnkWrttNI1fDPKD02HuQ2qc26bba8b\"\n  },\n  \"message\": null\n}"
+            },
+            {
+              "name": "200 OK (charity)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"email\": \"birr@example.com\",\n  \"password\": \"password123\"\n}" },
+                "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"charity\",\n    \"user\": {\n      \"id\": 2,\n      \"name\": \"Al-Birr Charity\",\n      \"email\": \"birr@example.com\",\n      \"phone\": \"0911111111\",\n      \"has_kitchen\": true,\n      \"status\": \"pending\",\n      \"license_document\": null,\n      \"rating_avg\": null,\n      \"ratings_count\": 0,\n      \"address\": \"Aleppo - Al-Furqan\",\n      \"work_start\": \"08:00:00\",\n      \"work_end\": \"16:00:00\",\n      \"created_at\": \"2026-08-24T19:02:48.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:48.000000Z\",\n      \"logo_url\": null\n    },\n    \"token\": \"8|wkgRz0KlIJ1IVj65OZGVhD0OtscnVpu6XmvYEJ5B5c6f5155\"\n  },\n  \"message\": null\n}"
+            },
+            {
+              "name": "401 Invalid credentials",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"email\": \"ahmad.donor@example.com\",\n  \"password\": \"wrongpass\"\n}" },
+                "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Invalid credentials\",\n  \"errors\": null\n}"
+            }
+          ]
         },
         {
           "name": "Me",
@@ -81,8 +223,39 @@
               { "key": "Authorization", "value": "Bearer {{token}}" },
               { "key": "Accept", "value": "application/json" }
             ],
-            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
-          }
+            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] },
+            "description": "Returns the currently authenticated donor or charity.\n\nUse this on app start: if the saved token still returns 200, skip the login screen. A 401 means the token is gone or was revoked — send the user back to login."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"donor\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Ahmad\",\n      \"type\": \"restaurant\",\n      \"email\": \"ahmad.donor@example.com\",\n      \"phone\": \"0999999999\",\n      \"created_at\": \"2026-08-24T19:02:47.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:47.000000Z\"\n    }\n  },\n  \"message\": null\n}"
+            },
+            {
+              "name": "401 Unauthenticated",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Unauthenticated\",\n  \"errors\": null\n}"
+            }
+          ]
         },
         {
           "name": "Logout",
@@ -90,10 +263,11 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "if (pm.response.code === 200) { pm.collectionVariables.set('token', ''); }"
-                ],
-                "type": "text/javascript"
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('token', '');"
+                ]
               }
             }
           ],
@@ -103,8 +277,227 @@
               { "key": "Authorization", "value": "Bearer {{token}}" },
               { "key": "Accept", "value": "application/json" }
             ],
-            "url": { "raw": "{{base_url}}/logout", "host": ["{{base_url}}"], "path": ["logout"] }
-          }
+            "url": { "raw": "{{base_url}}/logout", "host": ["{{base_url}}"], "path": ["logout"] },
+            "description": "Revokes only the token used for this request, so signing out on one device does not sign the user out everywhere else. Delete the token from local storage after this succeeds."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/logout", "host": ["{{base_url}}"], "path": ["logout"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": null,\n  \"message\": \"Logged out\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reference",
+      "item": [
+        {
+          "name": "Food Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/food-categories", "host": ["{{base_url}}"], "path": ["food-categories"] },
+            "description": "The list that fills the food-category dropdown on the \"create donation request\" screen. Short and fixed, so it is NOT paginated — `data` is a plain array.\n\nEach item has both `name_ar` and `name_en`; show `name_ar` in the Arabic UI.\n\n`default_needs_cooking` is a suggestion, not a rule: when the donor picks a category, pre-fill the \"needs cooking?\" switch from this value but let them change it. It matters because food that needs cooking is never shown to a charity without a kitchen."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+                "url": { "raw": "{{base_url}}/food-categories", "host": ["{{base_url}}"], "path": ["food-categories"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    { \"id\": 1, \"name_ar\": \"طعام مطبوخ جاهز\", \"name_en\": \"Cooked / Ready\", \"default_needs_cooking\": false },\n    { \"id\": 2, \"name_ar\": \"خضار وفواكه\", \"name_en\": \"Fruits & Vegetables\", \"default_needs_cooking\": false },\n    { \"id\": 3, \"name_ar\": \"مخبوزات وحلويات\", \"name_en\": \"Bakery & Sweets\", \"default_needs_cooking\": false },\n    { \"id\": 4, \"name_ar\": \"معلّبات وأطعمة جافة\", \"name_en\": \"Canned & Dry\", \"default_needs_cooking\": false },\n    { \"id\": 5, \"name_ar\": \"لحوم ودواجن نيئة\", \"name_en\": \"Raw Meat & Poultry\", \"default_needs_cooking\": true },\n    { \"id\": 6, \"name_ar\": \"حبوب نيئة\", \"name_en\": \"Raw Grains\", \"default_needs_cooking\": true },\n    { \"id\": 7, \"name_ar\": \"غير ذلك\", \"name_en\": \"Other\", \"default_needs_cooking\": false }\n  ],\n  \"message\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Admin endpoints. These do NOT use a Bearer token — they use the static `X-Admin-Token` header instead.\n\nSet the `admin_token` collection variable to the ADMIN_TOKEN value from the backend .env before running these. The value is deliberately left empty here so it never gets committed to the repository.",
+      "item": [
+        {
+          "name": "List Charities",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Admin-Token", "value": "{{admin_token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/charities?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "charities"],
+              "query": [
+                { "key": "status", "value": "pending", "description": "Optional: pending | active | suspended. Remove to list all." }
+              ]
+            },
+            "description": "Lists charities, newest first, paginated 15 per page. Each row includes `strikes_count` (no-show count).\n\nThe response `data` is Laravel's paginator object — the actual rows are in `data.data`, and `data.current_page` / `data.last_page` / `data.total` drive pagination."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{ "key": "X-Admin-Token", "value": "{{admin_token}}" }],
+                "url": {
+                  "raw": "{{base_url}}/admin/charities?status=pending",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "charities"],
+                  "query": [{ "key": "status", "value": "pending" }]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"current_page\": 1,\n    \"data\": [\n      {\n        \"id\": 1,\n        \"name\": \"Al-Birr Charity\",\n        \"email\": \"birr@example.com\",\n        \"phone\": \"0911111111\",\n        \"has_kitchen\": true,\n        \"status\": \"pending\",\n        \"license_document\": null,\n        \"rating_avg\": null,\n        \"ratings_count\": 0,\n        \"address\": \"Aleppo - Al-Furqan\",\n        \"work_start\": \"08:00:00\",\n        \"work_end\": \"16:00:00\",\n        \"created_at\": \"2026-08-24T19:30:20.000000Z\",\n        \"updated_at\": \"2026-08-24T19:30:20.000000Z\",\n        \"strikes_count\": 0,\n        \"logo_url\": null\n      }\n    ],\n    \"first_page_url\": \"http://127.0.0.1:8000/api/v1/admin/charities?page=1\",\n    \"from\": 1,\n    \"last_page\": 1,\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  },\n  \"message\": null\n}"
+            },
+            {
+              "name": "401 Invalid admin token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{ "key": "X-Admin-Token", "value": "wrong-token" }],
+                "url": { "raw": "{{base_url}}/admin/charities", "host": ["{{base_url}}"], "path": ["admin", "charities"] }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Invalid admin token\",\n  \"errors\": null\n}"
+            },
+            {
+              "name": "422 Invalid status filter",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{ "key": "X-Admin-Token", "value": "{{admin_token}}" }],
+                "url": {
+                  "raw": "{{base_url}}/admin/charities?status=xyz",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "charities"],
+                  "query": [{ "key": "status", "value": "xyz" }]
+                }
+              },
+              "status": "Unprocessable Content",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"status\": [\"The selected status is invalid.\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Approve Charity",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Admin-Token", "value": "{{admin_token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/charities/{{charity_id}}/approve",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "charities", "{{charity_id}}", "approve"]
+            },
+            "description": "Sets the charity status to `active` so it can start using charity features.\n\nAlso used to reinstate a suspended charity — in that case its strikes are cleared, so a single later no-show does not immediately re-suspend it."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "X-Admin-Token", "value": "{{admin_token}}" }],
+                "url": {
+                  "raw": "{{base_url}}/admin/charities/1/approve",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "charities", "1", "approve"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Al-Birr Charity\",\n    \"email\": \"birr@example.com\",\n    \"phone\": \"0911111111\",\n    \"has_kitchen\": true,\n    \"status\": \"active\",\n    \"license_document\": null,\n    \"rating_avg\": null,\n    \"ratings_count\": 0,\n    \"address\": \"Aleppo - Al-Furqan\",\n    \"work_start\": \"08:00:00\",\n    \"work_end\": \"16:00:00\",\n    \"created_at\": \"2026-08-24T19:30:20.000000Z\",\n    \"updated_at\": \"2026-08-24T22:24:39.000000Z\",\n    \"logo_url\": null\n  },\n  \"message\": \"Charity approved\"\n}"
+            },
+            {
+              "name": "404 Not found",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "X-Admin-Token", "value": "{{admin_token}}" }],
+                "url": {
+                  "raw": "{{base_url}}/admin/charities/999/approve",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "charities", "999", "approve"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Not found\",\n  \"errors\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Suspend Charity",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Admin-Token", "value": "{{admin_token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/charities/{{charity_id}}/suspend",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "charities", "{{charity_id}}", "suspend"]
+            },
+            "description": "Sets the charity status to `suspended`. It can still log in and see its own status, but every charity feature returns 403 until an admin approves it again."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "X-Admin-Token", "value": "{{admin_token}}" }],
+                "url": {
+                  "raw": "{{base_url}}/admin/charities/1/suspend",
+                  "host": ["{{base_url}}"],
+                  "path": ["admin", "charities", "1", "suspend"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Al-Birr Charity\",\n    \"email\": \"birr@example.com\",\n    \"phone\": \"0911111111\",\n    \"has_kitchen\": true,\n    \"status\": \"suspended\",\n    \"license_document\": null,\n    \"rating_avg\": null,\n    \"ratings_count\": 0,\n    \"address\": \"Aleppo - Al-Furqan\",\n    \"work_start\": \"08:00:00\",\n    \"work_end\": \"16:00:00\",\n    \"created_at\": \"2026-08-24T19:30:20.000000Z\",\n    \"updated_at\": \"2026-08-24T22:30:11.000000Z\",\n    \"logo_url\": null\n  },\n  \"message\": \"Charity suspended\"\n}"
+            }
+          ]
         }
       ]
     }
