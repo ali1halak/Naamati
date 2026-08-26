@@ -20,21 +20,19 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request)
     {
-        $donor = Donor::create([
-            'name'     => $request->name,
-            'type'     => $request->type,
-            'email'    => $request->email,
-            'phone'    => $request->phone,
-            'password' => $request->password, // hashed automatically via model cast
-        ]);
+        $result = $this->authService->register($request->validated());
 
-        $token = $donor->createToken('donor-auth')->plainTextToken;
+        $token = $result['user']->createToken($result['type'] . '-auth')->plainTextToken;
+
+        $message = $result['type'] === 'charity'
+            ? 'Registered successfully. Your account is pending admin approval.'
+            : 'Registered successfully';
 
         return $this->ok([
-            'type'  => 'donor',
-            'user'  => $donor,
+            'type'  => $result['type'],
+            'user'  => $result['user'],
             'token' => $token,
-        ], 'Registered successfully', 201);
+        ], $message, 201);
     }
 
     public function login(LoginRequest $request)
