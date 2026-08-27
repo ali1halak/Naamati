@@ -164,3 +164,55 @@ it as valid input anyway so the app does not break when it does.
 ## Next up (not built yet)
 Donor: create/list/show/cancel donation request · Charity: available requests + accept · rating · QR confirm · distribute · no-show/strikes · stats.
 This section will be updated the moment each slice is done — this file is the single source of truth for the contract, matching the team plan's "API First" rule. Do not hand-build request shapes from memory; check here first.
+
+---
+
+# Phase 2 — Donation lifecycle
+
+## The state machine
+
+```
+pending ──charity accepts──> accepted ──donor scans QR──> picked_up ──charity files numbers──> completed
+   │                            │
+   ├──donor cancels──────────> cancelled <──donor cancels──┘
+   └──valid_until passes────> expired
+```
+
+`pending` on a **request** means "waiting for a charity". `pending` on a **charity account** means "waiting for admin approval". Different fields, same word.
+
+## Donor — `/api/v1/donor/*` (Bearer token, donor)
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/requests` | Publish. Starts `pending`. |
+| GET | `/requests` | Own requests, paginated. Optional `?status=`. |
+| GET | `/requests/{id}` | Own request only, else `404`. |
+| POST | `/requests/{id}/cancel` | Only from `pending` or `accepted`. |
+| POST | `/requests/{id}/confirm` | Body `qr_token`. `accepted` → `picked_up`. |
+| POST | `/requests/{id}/rate` | From `picked_up` onward. Once only. |
+
+**Create validation:** `food_category_id` exists · `quantity_desc` required, max 150 · `needs_cooking` optional (falls back to the category default) · `valid_until` after now · `pickup_until` after now and `before_or_equal:valid_until` · `pickup_address` required · `latitude`/`longitude` optional but required together · `contact_phone` required.
+
+## Charity — `/api/v1/charity/*` (Bearer token, **active** charity)
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/requests/available` | Eligible open requests. |
+| GET | `/requests` | Ones this charity took. |
+| GET | `/requests/{id}` | Must be assigned to it, else `404`. |
+| POST | `/requests/{id}/accept` | Body `eta_minutes` (5–480). **Returns `qr_token` once.** |
+
+**Available filter:** `status = pending` AND `valid_until > now` AND (charity has a kitchen OR the food does not need cooking) AND the charity has no strike on that request.
+
+## Decisions worth knowing
+
+- **The QR token is single-use.** Confirming destroys it, so a scanned code cannot be replayed.
+- **It is returned only by `accept`** — never in any listing or detail response.
+- **Accept is locked** (`lockForUpdate`) so two charities racing on one request cannot both win.
+- **The kitchen rule is enforced twice** — in the available filter and again on accept.
+- **Ownership violations return `404`, not `403`**, so ids cannot be probed.
+- **Rating is allowed from `picked_up`**, not `completed` — the donor's part ends at handover.
+- **`rating_avg` is recomputed from the rows**, never incremented, so it cannot drift.
+
+## Not built yet (phase 3)
+Charity distribution numbers (`picked_up` → `completed`), no-show reporting + strikes, auto-expiry job, stats dashboard.
