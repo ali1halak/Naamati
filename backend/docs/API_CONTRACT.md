@@ -18,15 +18,16 @@ HTTP status codes: `200` OK · `201` Created · `401` Unauthenticated · `403` F
 
 ## Status: ✅ Done & tested (Auth slice)
 
-### `POST /api/register`
-Creates a **donor** account (charities are created only by the admin — see roadmap below).
+### `POST /api/register/donor`
+Creates a donor account.
 
 Body:
 ```json
 {
-  "name": "Test Donor",
+  "account_type": "donor",
+  "name": "Ahmad",
   "type": "restaurant",           // individual | restaurant | hotel | company
-  "email": "donor1@test.com",
+  "email": "donor@test.com",
   "phone": "0999999999",
   "password": "password123",
   "password_confirmation": "password123"
@@ -34,9 +35,36 @@ Body:
 ```
 Success `201`:
 ```json
-{ "success": true, "data": { "type": "donor", "user": { "id": 1, "name": "...", "type": "restaurant", "email": "...", "phone": "..." }, "token": "1|xxxxx..." }, "message": "Registered successfully" }
+{ "success": true, "data": { "type": "donor", "user": { "id": 1, "name": "Ahmad", "type": "restaurant", "email": "donor@test.com", "phone": "0999999999" }, "token": "1|xxxxx..." }, "message": "Registered successfully" }
 ```
 Errors: `422` if email taken / fields invalid.
+
+### `POST /api/register/charity`
+Creates a charity account.
+
+Body:
+```json
+{
+  "account_type": "charity",
+  "name": "Al-Birr Charity",
+  "email": "charity@test.com",
+  "phone": "0911111111",
+  "password": "password123",
+  "password_confirmation": "password123",
+  "has_kitchen": true,
+  "address": "Aleppo - Al-Furqan",
+  "work_start": "08:00",
+  "work_end": "16:00",
+  "license_document": null
+}
+```
+Success `201`:
+```json
+{ "success": true, "data": { "type": "charity", "user": { "id": 2, "name": "Al-Birr Charity", "email": "charity@test.com", "phone": "0911111111", "has_kitchen": true, "address": "Aleppo - Al-Furqan", "work_start": "08:00:00", "work_end": "16:00:00", "license_document": null }, "token": "2|xxxxx..." }, "message": "Registered successfully" }
+```
+Errors: `422` if email taken / fields invalid.
+
+> Backward compatibility: `POST /api/register` still works as a donor registration alias.
 
 ### `POST /api/login`
 Body: `{ "email": "...", "password": "..." }`

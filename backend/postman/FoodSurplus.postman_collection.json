@@ -8,7 +8,8 @@
   "variable": [
     { "key": "base_url", "value": "http://127.0.0.1:8000/api", "type": "string" },
     { "key": "token", "value": "", "type": "string" },
-    { "key": "donor_email", "value": "donor1@test.com", "type": "string" }
+    { "key": "donor_email", "value": "donor1@test.com", "type": "string" },
+    { "key": "charity_email", "value": "charity1@test.com", "type": "string" }
   ],
   "item": [
     {
@@ -38,10 +39,40 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Donor\",\n  \"type\": \"restaurant\",\n  \"email\": \"{{donor_email}}\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+              "raw": "{\n  \"account_type\": \"donor\",\n  \"name\": \"Ahmad\",\n  \"type\": \"restaurant\",\n  \"email\": \"{{donor_email}}\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
             },
-            "url": { "raw": "{{base_url}}/register", "host": ["{{base_url}}"], "path": ["register"] },
+            "url": { "raw": "{{base_url}}/register/donor", "host": ["{{base_url}}"], "path": ["register", "donor"] },
             "description": "type: individual | restaurant | hotel | company. On success (201) a Sanctum token is issued and saved automatically to {{token}}."
+          }
+        },
+        {
+          "name": "Register (Charity)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('has token', () => pm.expect(json.data.token).to.be.a('string'));",
+                  "if (json.data && json.data.token) { pm.collectionVariables.set('token', json.data.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"account_type\": \"charity\",\n  \"name\": \"Al-Birr Charity\",\n  \"email\": \"{{charity_email}}\",\n  \"phone\": \"0911111111\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"has_kitchen\": true,\n  \"address\": \"Aleppo - Al-Furqan\",\n  \"work_start\": \"08:00\",\n  \"work_end\": \"16:00\",\n  \"license_document\": null\n}"
+            },
+            "url": { "raw": "{{base_url}}/register/charity", "host": ["{{base_url}}"], "path": ["register", "charity"] },
+            "description": "Creates a charity account and issues a Sanctum token."
           }
         },
         {
