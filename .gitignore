@@ -1,0 +1,28 @@
+# The repo root only holds backend/ and frontend/.
+# Anything below is a Laravel/Node artifact from a command run in the wrong
+# directory - ignored here so `git status` keeps showing only real changes.
+
+/.env
+/.env.*
+/artisan
+/composer.json
+/composer.lock
+/package.json
+/package-lock.json
+
+/app/
+/bootstrap/
+/config/
+/database/
+/node_modules/
+/public/
+/resources/
+/routes/
+/storage/
+/tests/
+/vendor/
+
+*.sqlite
+*.log
+.DS_Store
+Thumbs.db

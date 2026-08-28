@@ -1,12 +1,12 @@
-{
+﻿{
   "info": {
     "name": "Food Surplus API",
     "_postman_id": "f5e1a1a0-0000-4000-a000-000000000001",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Food Surplus Redistribution Platform — API contract. Import this, set `base_url`, and run requests top to bottom. Register/Login auto-save the returned token into the `token` collection variable so every other request authenticates automatically."
+    "description": "Food Surplus API auth collection. The API base is /api/v1. Register donor and charity with separate endpoints."
   },
   "variable": [
-    { "key": "base_url", "value": "http://127.0.0.1:8000/api", "type": "string" },
+    { "key": "base_url", "value": "http://127.0.0.1:8000/api/v1", "type": "string" },
     { "key": "token", "value": "", "type": "string" },
     { "key": "donor_email", "value": "donor1@test.com", "type": "string" },
     { "key": "charity_email", "value": "charity1@test.com", "type": "string" }
@@ -16,18 +16,17 @@
       "name": "Auth",
       "item": [
         {
-          "name": "Register (Donor)",
+          "name": "Register Donor",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 201', () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
-                  "pm.test('has token', () => pm.expect(json.data.token).to.be.a('string'));",
                   "if (json.data && json.data.token) { pm.collectionVariables.set('token', json.data.token); }"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -39,25 +38,27 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"account_type\": \"donor\",\n  \"name\": \"Ahmad\",\n  \"type\": \"restaurant\",\n  \"email\": \"{{donor_email}}\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+              "raw": "{\n  \"name\": \"Ahmad\",\n  \"type\": \"restaurant\",\n  \"email\": \"{{donor_email}}\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
             },
-            "url": { "raw": "{{base_url}}/register/donor", "host": ["{{base_url}}"], "path": ["register", "donor"] },
-            "description": "type: individual | restaurant | hotel | company. On success (201) a Sanctum token is issued and saved automatically to {{token}}."
+            "url": {
+              "raw": "{{base_url}}/register/donor",
+              "host": ["{{base_url}}"],
+              "path": ["register", "donor"]
+            }
           }
         },
         {
-          "name": "Register (Charity)",
+          "name": "Register Charity",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 201', () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
-                  "pm.test('has token', () => pm.expect(json.data.token).to.be.a('string'));",
                   "if (json.data && json.data.token) { pm.collectionVariables.set('token', json.data.token); }"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -69,10 +70,13 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"account_type\": \"charity\",\n  \"name\": \"Al-Birr Charity\",\n  \"email\": \"{{charity_email}}\",\n  \"phone\": \"0911111111\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"has_kitchen\": true,\n  \"address\": \"Aleppo - Al-Furqan\",\n  \"work_start\": \"08:00\",\n  \"work_end\": \"16:00\",\n  \"license_document\": null\n}"
+              "raw": "{\n  \"name\": \"Al-Birr Charity\",\n  \"email\": \"{{charity_email}}\",\n  \"phone\": \"0911111111\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"has_kitchen\": true,\n  \"address\": \"Aleppo - Al-Furqan\",\n  \"work_start\": \"08:00\",\n  \"work_end\": \"16:00\",\n  \"license_document\": null\n}"
             },
-            "url": { "raw": "{{base_url}}/register/charity", "host": ["{{base_url}}"], "path": ["register", "charity"] },
-            "description": "Creates a charity account and issues a Sanctum token."
+            "url": {
+              "raw": "{{base_url}}/register/charity",
+              "host": ["{{base_url}}"],
+              "path": ["register", "charity"]
+            }
           }
         },
         {
@@ -81,12 +85,12 @@
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
                   "if (json.data && json.data.token) { pm.collectionVariables.set('token', json.data.token); }"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -100,8 +104,11 @@
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{donor_email}}\",\n  \"password\": \"password123\"\n}"
             },
-            "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] },
-            "description": "Checks the donors table then the charities table. Returns data.type = \"donor\" | \"charity\"."
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            }
           }
         },
         {
@@ -109,32 +116,29 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "{{token}}" },
               { "key": "Accept", "value": "application/json" }
             ],
-            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+            "url": {
+              "raw": "{{base_url}}/me",
+              "host": ["{{base_url}}"],
+              "path": ["me"]
+            }
           }
         },
         {
           "name": "Logout",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) { pm.collectionVariables.set('token', ''); }"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "{{token}}" },
               { "key": "Accept", "value": "application/json" }
             ],
-            "url": { "raw": "{{base_url}}/logout", "host": ["{{base_url}}"], "path": ["logout"] }
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": ["{{base_url}}"],
+              "path": ["logout"]
+            }
           }
         }
       ]

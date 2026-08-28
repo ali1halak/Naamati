@@ -11,8 +11,7 @@ class AuthRegistrationTest extends TestCase
 
     public function test_donor_registration_endpoint_creates_donor_account(): void
     {
-        $response = $this->postJson('/api/register/donor', [
-            'account_type' => 'donor',
+        $response = $this->postJson('/api/v1/register/donor', [
             'name' => 'Ahmad',
             'type' => 'restaurant',
             'email' => 'donor@test.com',
@@ -33,8 +32,7 @@ class AuthRegistrationTest extends TestCase
 
     public function test_charity_registration_endpoint_creates_charity_account_without_donor_type_field(): void
     {
-        $response = $this->postJson('/api/register/charity', [
-            'account_type' => 'charity',
+        $response = $this->postJson('/api/v1/register/charity', [
             'name' => 'Al-Birr Charity',
             'email' => 'charity@test.com',
             'phone' => '0911111111',

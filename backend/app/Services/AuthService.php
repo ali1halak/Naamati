@@ -2,15 +2,18 @@
 
 namespace App\Services;
 
+use App\Enums\CharityStatus;
 use App\Models\Charity;
 use App\Models\Donor;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 
 class AuthService
 {
     /**
      * Attempt login across both the donor and charity tables.
-     * Returns ['type' => 'donor'|'charity', 'user' => Model] or null.
+     *
+     * @return array{type: string, user: Model}|null
      */
     public function attemptLogin(string $email, string $password): ?array
     {
@@ -26,4 +29,5 @@ class AuthService
 
         return null;
     }
+
 }

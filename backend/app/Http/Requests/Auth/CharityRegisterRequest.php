@@ -14,16 +14,23 @@ class CharityRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'            => ['required', 'string', 'max:120'],
-            'email'           => ['required', 'email', 'unique:charities,email'],
-            'phone'           => ['required', 'string', 'max:20'],
-            'password'        => ['required', 'string', 'min:8', 'confirmed'],
-            'has_kitchen'     => ['required', 'boolean'],
-            'address'         => ['required', 'string', 'max:255'],
-            'work_start'      => ['required', 'date_format:H:i'],
-            'work_end'        => ['required', 'date_format:H:i'],
+            'name'             => ['required', 'string', 'max:120'],
+            'email'            => ['required', 'email', 'unique:charities,email'],
+            'phone'            => ['required', 'string', 'max:20'],
+            'password'         => ['required', 'string', 'min:8', 'confirmed'],
+            'has_kitchen'      => ['required', 'boolean'],
+            'address'          => ['required', 'string', 'max:255'],
+            'work_start'       => ['required', 'date_format:H:i'],
+            'work_end'         => ['required', 'date_format:H:i', 'after:work_start'],
             'license_document' => ['nullable', 'string', 'max:255'],
-            'account_type'    => ['sometimes', 'in:charity'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'email.unique'   => 'This email is already registered.',
+            'work_end.after' => 'Work end time must be after work start time.',
         ];
     }
 }

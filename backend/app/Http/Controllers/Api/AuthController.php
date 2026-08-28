@@ -20,11 +20,6 @@ class AuthController extends Controller
     {
     }
 
-    public function register(RegisterRequest $request)
-    {
-        return $this->registerDonor($request);
-    }
-
     public function registerDonor(RegisterRequest $request)
     {
         $donor = Donor::create([

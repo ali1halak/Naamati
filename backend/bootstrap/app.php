@@ -12,6 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Runs before authentication so an unauthenticated request is answered
+        // with a 401 envelope instead of a redirect to a non-existent route.
+        $middleware->api(prepend: [
+            \App\Http\Middleware\ForceJsonResponse::class,
+        ]);
+
         $middleware->alias([
             'type'        => \App\Http\Middleware\EnsureUserType::class,
             'admin.token' => \App\Http\Middleware\AdminToken::class,

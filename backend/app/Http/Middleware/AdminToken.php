@@ -9,11 +9,18 @@ class AdminToken
 {
     public function handle(Request $request, Closure $next)
     {
-        if ($request->header('X-Admin-Token') !== config('services.admin.token')) {
+        $expected = (string) config('services.admin.token');
+        $provided = (string) $request->header('X-Admin-Token');
+
+        // Refuse outright if no token is configured, otherwise a missing
+        // ADMIN_TOKEN would let every request through. hash_equals keeps the
+        // comparison constant-time.
+        if ($expected === '' || ! hash_equals($expected, $provided)) {
             return response()->json([
                 'success' => false,
                 'data'    => null,
                 'message' => 'Invalid admin token',
+                'errors'  => null,
             ], 401);
         }
 

@@ -1,6 +1,24 @@
 # Food Surplus API — Contract (living document)
 
-Base URL (local): `http://127.0.0.1:8000/api`
+Base URL (local): `http://127.0.0.1:8000/api/v1`
+
+> ### ⚠️ Breaking change — 2026-08-26: every endpoint moved under `/v1`
+>
+> `POST /api/register` is now `POST /api/v1/register`, and so on for all eight
+> endpoints. The old paths return `404` with the normal error envelope.
+>
+> **App fix:** change the one base-URL constant — nothing else. The Postman
+> collection is already updated, so re-import it and its `base_url` variable
+> carries the new path.
+>
+> Everything else in this release is additive: three new read-only fields on
+> the charity object (`rating_avg`, `ratings_count`, `logo_url`), which older
+> clients can safely ignore.
+>
+> Also fixed: a request without an `Accept: application/json` header used to
+> get a `500` when its token was missing or expired. It now returns the same
+> clean `401` envelope as every other client.
+
 Every response — success or error — uses this envelope:
 
 ```json
@@ -18,13 +36,12 @@ HTTP status codes: `200` OK · `201` Created · `401` Unauthenticated · `403` F
 
 ## Status: ✅ Done & tested (Auth slice)
 
-### `POST /api/register/donor`
+### `POST /api/v1/register/donor`
 Creates a donor account.
 
 Body:
 ```json
 {
-  "account_type": "donor",
   "name": "Ahmad",
   "type": "restaurant",           // individual | restaurant | hotel | company
   "email": "donor@test.com",
@@ -39,13 +56,12 @@ Success `201`:
 ```
 Errors: `422` if email taken / fields invalid.
 
-### `POST /api/register/charity`
+### `POST /api/v1/register/charity`
 Creates a charity account.
 
 Body:
 ```json
 {
-  "account_type": "charity",
   "name": "Al-Birr Charity",
   "email": "charity@test.com",
   "phone": "0911111111",
@@ -64,8 +80,6 @@ Success `201`:
 ```
 Errors: `422` if email taken / fields invalid.
 
-> Backward compatibility: `POST /api/register` still works as a donor registration alias.
-
 ### `POST /api/login`
 Body: `{ "email": "...", "password": "..." }`
 Checks the `donors` table, then `charities`. Success `200`:
@@ -83,6 +97,146 @@ Revokes the current token only (other devices/sessions stay logged in). Success 
 
 ---
 
+---
+
+## Charity lifecycle (important for the app)
+
+`pending` → (admin approves) → `active` → (admin suspends) → `suspended` → (admin approves) → `active`
+
+A charity can **always log in**, whatever its status — that is deliberate, so it can see where it stands. But every charity-only endpoint returns `403 "Charity account is not active"` unless the status is `active`.
+
+**Frontend:** after login, if `data.type === "charity"`, branch on `data.user.status`:
+- `pending` → "waiting for admin approval" screen
+- `suspended` → "account suspended" screen
+- `active` → normal charity home
+
+### The charity object
+
+Returned by `login`, `register`, `me`, and every admin endpoint.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | int | |
+| `name` | string | |
+| `email` / `phone` | string | |
+| `has_kitchen` | bool | `true` = can cook raw food. A charity with `false` is never offered food that needs cooking. |
+| `status` | enum | `pending` · `active` · `suspended` |
+| `license_document` | string \| null | |
+| `rating_avg` | float \| null | Average stars, 2 decimals. `null` until the first rating arrives — show "no ratings yet", not `0`. |
+| `ratings_count` | int | How many ratings the average is built from. |
+| `address` | string | |
+| `work_start` / `work_end` | string | `"HH:MM:SS"` |
+| `logo_url` | string \| null | Absolute URL, ready to load. `null` while no logo is set. |
+
+`rating_avg`, `ratings_count` and `logo_url` are **read-only** — no endpoint accepts them as input.
+
+---
+
+## Admin endpoints — `/api/admin/*`
+
+Admin does **not** use a Bearer token. Every admin request must send:
+```
+X-Admin-Token: {ADMIN_TOKEN from backend .env}
+```
+Wrong or missing token → `401 "Invalid admin token"`.
+
+### `GET /api/admin/charities`
+Optional `?status=pending|active|suspended`. Paginated 15/page, newest first, each row carries `strikes_count`.
+`data` is Laravel's paginator: rows live in `data.data`, with `data.current_page`, `data.last_page`, `data.total`.
+Errors: `422` if `status` is not one of the three values.
+
+### `POST /api/admin/charities/{id}/approve`
+Sets status to `active`. If the charity was `suspended`, its strikes are cleared too — otherwise one later no-show would instantly re-suspend it.
+Success `200`: `{ "success": true, "data": { ...charity, "status": "active" }, "message": "Charity approved" }`
+
+### `POST /api/admin/charities/{id}/suspend`
+Sets status to `suspended`. Success `200`, message `"Charity suspended"`.
+
+Both return `404` if the charity id does not exist.
+
+---
+
+---
+
+## Donation request status — the full list
+
+Phase 2 endpoints are being built now. The schema is already in place, so the
+app can code against these values today.
+
+| Status | Meaning | Who moves it here |
+|---|---|---|
+| `pending` | Posted, waiting for a charity to take it | donor (on create) |
+| `accepted` | A charity claimed it and is on the way | charity |
+| `picked_up` | Handover confirmed — **reserved, not used yet** | later phase (QR) |
+| `completed` | Delivered and closed. The rating prompt fires here. | donor |
+| `expired` | Nobody accepted it before `valid_until` | system |
+| `cancelled` | Donor pulled it back before a charity accepted | donor |
+| `no_show` | Charity accepted then never showed up | system / admin |
+
+Terminal states — `completed`, `expired`, `cancelled`, `no_show` — never change
+again. `picked_up` is returned by the API only once the QR handover ships; treat
+it as valid input anyway so the app does not break when it does.
+
+> Note for anyone holding the Phase 2 PDF: that document lists only four
+> statuses and calls the first one `pending`. The name matches; the list does
+> not. The extra three (`expired`, `no_show`, `picked_up`) exist because the
+> app has to handle food going stale, charities failing to collect, and the
+> strike system that suspends them. Build the app against **this** table.
+
+---
+
 ## Next up (not built yet)
-Donor: create/list/show/cancel donation request · Charity: available requests + accept · QR confirm · distribute · no-show/strikes · admin · stats.
+Donor: create/list/show/cancel donation request · Charity: available requests + accept · rating · QR confirm · distribute · no-show/strikes · stats.
 This section will be updated the moment each slice is done — this file is the single source of truth for the contract, matching the team plan's "API First" rule. Do not hand-build request shapes from memory; check here first.
+
+---
+
+# Phase 2 — Donation lifecycle
+
+## The state machine
+
+```
+pending ──charity accepts──> accepted ──donor scans QR──> picked_up ──charity files numbers──> completed
+   │                            │
+   ├──donor cancels──────────> cancelled <──donor cancels──┘
+   └──valid_until passes────> expired
+```
+
+`pending` on a **request** means "waiting for a charity". `pending` on a **charity account** means "waiting for admin approval". Different fields, same word.
+
+## Donor — `/api/v1/donor/*` (Bearer token, donor)
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/requests` | Publish. Starts `pending`. |
+| GET | `/requests` | Own requests, paginated. Optional `?status=`. |
+| GET | `/requests/{id}` | Own request only, else `404`. |
+| POST | `/requests/{id}/cancel` | Only from `pending` or `accepted`. |
+| POST | `/requests/{id}/confirm` | Body `qr_token`. `accepted` → `picked_up`. |
+| POST | `/requests/{id}/rate` | From `picked_up` onward. Once only. |
+
+**Create validation:** `food_category_id` exists · `quantity_desc` required, max 150 · `needs_cooking` optional (falls back to the category default) · `valid_until` after now · `pickup_until` after now and `before_or_equal:valid_until` · `pickup_address` required · `latitude`/`longitude` optional but required together · `contact_phone` required.
+
+## Charity — `/api/v1/charity/*` (Bearer token, **active** charity)
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/requests/available` | Eligible open requests. |
+| GET | `/requests` | Ones this charity took. |
+| GET | `/requests/{id}` | Must be assigned to it, else `404`. |
+| POST | `/requests/{id}/accept` | Body `eta_minutes` (5–480). **Returns `qr_token` once.** |
+
+**Available filter:** `status = pending` AND `valid_until > now` AND (charity has a kitchen OR the food does not need cooking) AND the charity has no strike on that request.
+
+## Decisions worth knowing
+
+- **The QR token is single-use.** Confirming destroys it, so a scanned code cannot be replayed.
+- **It is returned only by `accept`** — never in any listing or detail response.
+- **Accept is locked** (`lockForUpdate`) so two charities racing on one request cannot both win.
+- **The kitchen rule is enforced twice** — in the available filter and again on accept.
+- **Ownership violations return `404`, not `403`**, so ids cannot be probed.
+- **Rating is allowed from `picked_up`**, not `completed` — the donor's part ends at handover.
+- **`rating_avg` is recomputed from the rows**, never incremented, so it cannot drift.
+
+## Not built yet (phase 3)
+Charity distribution numbers (`picked_up` → `completed`), no-show reporting + strikes, auto-expiry job, stats dashboard.
