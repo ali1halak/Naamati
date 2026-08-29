@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/charity_account_status_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
 import 'route_names.dart';
@@ -102,6 +103,26 @@ class AppRouter {
 
         return RegisterPage(initialType: initialType);
       },
+    ),
+    GoRoute(
+      path: RouteNames.charityPending,
+      name: 'charity-pending',
+      builder: (context, state) => const CharityAccountStatusPage(
+        title: 'حسابك قيد المراجعة',
+        message:
+            'تم استلام طلب تسجيل الجمعية. سيقوم الأدمن بمراجعته يدويًا قبل تفعيل الحساب.',
+        icon: Icons.hourglass_top_rounded,
+      ),
+    ),
+    GoRoute(
+      path: RouteNames.charitySuspended,
+      name: 'charity-suspended',
+      builder: (context, state) => const CharityAccountStatusPage(
+        title: 'الحساب موقوف',
+        message:
+            'تم إيقاف حساب الجمعية. يرجى التواصل مع الأدمن لإعادة التفعيل.',
+        icon: Icons.block_rounded,
+      ),
     ),
 
     // ── Onboarding (placeholder) ──────────────────────────────────────────────

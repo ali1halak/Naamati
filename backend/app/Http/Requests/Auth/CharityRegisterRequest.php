@@ -11,6 +11,17 @@ class CharityRegisterRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'has_kitchen' => filter_var(
+                $this->input('has_kitchen'),
+                FILTER_VALIDATE_BOOL,
+                FILTER_NULL_ON_FAILURE
+            ),
+        ]);
+    }
+
     public function rules(): array
     {
         return [
@@ -22,7 +33,7 @@ class CharityRegisterRequest extends FormRequest
             'address'          => ['required', 'string', 'max:255'],
             'work_start'       => ['required', 'date_format:H:i'],
             'work_end'         => ['required', 'date_format:H:i', 'after:work_start'],
-            'license_document' => ['nullable', 'string', 'max:255'],
+            'license_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ];
     }
 

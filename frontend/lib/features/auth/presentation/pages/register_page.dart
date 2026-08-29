@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:typed_data';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
@@ -15,10 +17,7 @@ import '../bloc/register_state.dart';
 enum RegisterAccountType { donor, charity }
 
 class RegisterPage extends StatelessWidget {
-  const RegisterPage({
-    super.key,
-    this.initialType = RegisterAccountType.donor,
-  });
+  const RegisterPage({super.key, this.initialType = RegisterAccountType.donor});
 
   final RegisterAccountType initialType;
 
@@ -59,6 +58,8 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
   final _charityAddressController = TextEditingController();
   final _charityWorkStartController = TextEditingController();
   final _charityWorkEndController = TextEditingController();
+  Uint8List? _charityLicenseDocumentBytes;
+  String? _charityLicenseDocumentName;
   bool _hasKitchen = false;
 
   @override
@@ -95,7 +96,70 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
       address: _charityAddressController.text.trim(),
       workStart: _charityWorkStartController.text,
       workEnd: _charityWorkEndController.text,
+      licenseDocumentBytes: _charityLicenseDocumentBytes,
+      licenseDocumentName: _charityLicenseDocumentName,
     );
+  }
+
+  Future<void> _pickLicenseDocument() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
+      withData: true,
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    final file = result.files.single;
+    if (file.bytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر قراءة ملف الترخيص المختار')),
+      );
+      return;
+    }
+
+    const maxLicenseBytes = 5 * 1024 * 1024;
+    if (file.bytes!.lengthInBytes > maxLicenseBytes) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ملف الترخيص يجب أن يكون 5MB أو أقل')),
+      );
+      return;
+    }
+
+    setState(() {
+      _charityLicenseDocumentBytes = file.bytes;
+      _charityLicenseDocumentName = file.name;
+    });
+  }
+
+  void _revalidateConfirmPasswords() {
+    if (_formKey.currentState == null) {
+      return;
+    }
+
+    if (_donorConfirmPasswordController.text.isNotEmpty ||
+        _charityConfirmPasswordController.text.isNotEmpty) {
+      _formKey.currentState!.validate();
+    }
+  }
+
+  String? _charityWorkEndValidator(String? value) {
+    final baseError = requiredFieldValidator(fieldName: 'وقت انتهاء العمل')(
+      value,
+    );
+    if (baseError != null) {
+      return baseError;
+    }
+
+    final start = _charityWorkStartController.text.trim();
+    final end = value?.trim() ?? '';
+    if (start.isNotEmpty && end.isNotEmpty && end.compareTo(start) <= 0) {
+      return 'وقت الانتهاء يجب أن يكون بعد وقت البدء.';
+    }
+
+    return null;
   }
 
   @override
@@ -132,7 +196,8 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
             child: _SegmentButton(
               title: 'متبرع',
               selected: _accountType == RegisterAccountType.donor,
-              onTap: () => setState(() => _accountType = RegisterAccountType.donor),
+              onTap: () =>
+                  setState(() => _accountType = RegisterAccountType.donor),
             ),
           ),
           SizedBox(width: 8.w),
@@ -205,6 +270,8 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'كلمة المرور',
           controller: _donorPasswordController,
           obscureText: true,
+          onChanged: (_) => _revalidateConfirmPasswords(),
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: passwordValidator,
           prefixIcon: Icons.lock_outline,
         ),
@@ -213,7 +280,10 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'تأكيد كلمة المرور',
           controller: _donorConfirmPasswordController,
           obscureText: true,
-          validator: confirmPasswordValidator(_donorPasswordController.text),
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: confirmPasswordValidator(
+            () => _donorPasswordController.text,
+          ),
           prefixIcon: Icons.lock_reset_outlined,
         ),
       ],
@@ -254,6 +324,8 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'كلمة المرور',
           controller: _charityPasswordController,
           obscureText: true,
+          onChanged: (_) => _revalidateConfirmPasswords(),
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: passwordValidator,
           prefixIcon: Icons.lock_outline,
         ),
@@ -262,7 +334,10 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'تأكيد كلمة المرور',
           controller: _charityConfirmPasswordController,
           obscureText: true,
-          validator: confirmPasswordValidator(_charityPasswordController.text),
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: confirmPasswordValidator(
+            () => _charityPasswordController.text,
+          ),
           prefixIcon: Icons.lock_reset_outlined,
         ),
         SizedBox(height: AppConstants.paddingLG.h),
@@ -296,14 +371,18 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
               child: TextFormField(
                 controller: _charityWorkStartController,
                 readOnly: true,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 onTap: () async {
                   final time = await showTimePicker(
                     context: context,
                     initialTime: TimeOfDay.now(),
                   );
                   if (time != null) {
-                    _charityWorkStartController.text =
-                        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                    setState(() {
+                      _charityWorkStartController.text =
+                          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                    });
+                    _formKey.currentState?.validate();
                   }
                 },
                 validator: requiredFieldValidator(fieldName: 'وقت بدء العمل'),
@@ -319,17 +398,21 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
               child: TextFormField(
                 controller: _charityWorkEndController,
                 readOnly: true,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 onTap: () async {
                   final time = await showTimePicker(
                     context: context,
                     initialTime: TimeOfDay.now(),
                   );
                   if (time != null) {
-                    _charityWorkEndController.text =
-                        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                    setState(() {
+                      _charityWorkEndController.text =
+                          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                    });
+                    _formKey.currentState?.validate();
                   }
                 },
-                validator: requiredFieldValidator(fieldName: 'وقت انتهاء العمل'),
+                validator: _charityWorkEndValidator,
                 decoration: const InputDecoration(
                   labelText: 'نهاية العمل',
                   prefixIcon: Icon(Icons.access_time_outlined),
@@ -341,7 +424,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
         ),
         SizedBox(height: AppConstants.paddingLG.h),
         OutlinedButton.icon(
-          onPressed: () {},
+          onPressed: _pickLicenseDocument,
           style: OutlinedButton.styleFrom(
             minimumSize: Size.fromHeight(AppConstants.buttonHeight.h),
             side: BorderSide(
@@ -357,7 +440,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
             color: Theme.of(context).colorScheme.primary,
           ),
           label: Text(
-            'إرفاق ملف الترخيص',
+            _charityLicenseDocumentName ?? 'إرفاق ملف الترخيص',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -374,10 +457,21 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
     return BlocListener<RegisterCubit, RegisterState>(
       listener: (context, state) {
         if (state.isSuccess) {
+          final user = state.user;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('تم إنشاء الحساب بنجاح')),
           );
-          context.go(RouteNames.home);
+          if (user?.accountType == 'charity') {
+            if (user?.status == 'suspended') {
+              context.go(RouteNames.charitySuspended);
+            } else if (user?.status == 'pending') {
+              context.go(RouteNames.charityPending);
+            } else {
+              context.go(RouteNames.home);
+            }
+          } else {
+            context.go(RouteNames.home);
+          }
         } else if (state.isFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.errorMessage ?? 'فشل إنشاء الحساب')),
@@ -410,7 +504,9 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
                   Card(
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppConstants.radiusLG.r),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusLG.r,
+                      ),
                     ),
                     child: Padding(
                       padding: EdgeInsets.all(AppConstants.paddingLG.w),

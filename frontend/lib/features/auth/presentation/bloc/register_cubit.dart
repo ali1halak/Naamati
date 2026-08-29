@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'dart:typed_data';
 
 import '../../../../core/base/base_state.dart';
 import '../../domain/usecases/register_charity_usecase.dart';
@@ -58,6 +59,8 @@ class RegisterCubit extends Cubit<RegisterState> {
     required String address,
     required String workStart,
     required String workEnd,
+    Uint8List? licenseDocumentBytes,
+    String? licenseDocumentName,
   }) async {
     emit(state.copyWith(status: BlocStatus.loading, errorMessage: null));
 
@@ -72,6 +75,8 @@ class RegisterCubit extends Cubit<RegisterState> {
         address: address,
         workStart: workStart,
         workEnd: workEnd,
+        licenseDocumentBytes: licenseDocumentBytes,
+        licenseDocumentName: licenseDocumentName,
       ),
     );
 

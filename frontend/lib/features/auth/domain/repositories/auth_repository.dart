@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../entities/user.dart';
@@ -27,6 +29,8 @@ abstract class AuthRepository {
     required String address,
     required String workStart,
     required String workEnd,
+    Uint8List? licenseDocumentBytes,
+    String? licenseDocumentName,
   });
 
   Future<Either<Failure, User>> getCurrentUser();

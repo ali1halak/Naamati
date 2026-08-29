@@ -101,23 +101,32 @@ class _AuthRemoteDataSource implements AuthRemoteDataSource {
     required String address,
     required String workStart,
     required String workEnd,
+    MultipartFile? licenseDocument,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
+    queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
-    final _data = {
-      'name': name,
-      'email': email,
-      'phone': phone,
-      'password': password,
-      'password_confirmation': passwordConfirmation,
-      'has_kitchen': hasKitchen,
-      'address': address,
-      'work_start': workStart,
-      'work_end': workEnd,
-    };
+    final _data = FormData();
+    _data.fields.add(MapEntry('name', name));
+    _data.fields.add(MapEntry('email', email));
+    _data.fields.add(MapEntry('phone', phone));
+    _data.fields.add(MapEntry('password', password));
+    _data.fields.add(MapEntry('password_confirmation', passwordConfirmation));
+    _data.fields.add(MapEntry('has_kitchen', hasKitchen.toString()));
+    _data.fields.add(MapEntry('address', address));
+    _data.fields.add(MapEntry('work_start', workStart));
+    _data.fields.add(MapEntry('work_end', workEnd));
+    if (licenseDocument != null) {
+      _data.files.add(MapEntry('license_document', licenseDocument));
+    }
     final _options = _setStreamType<AuthResponseModel>(
-      Options(method: 'POST', headers: _headers, extra: _extra)
+      Options(
+            method: 'POST',
+            headers: _headers,
+            extra: _extra,
+            contentType: 'multipart/form-data',
+          )
           .compose(
             _dio.options,
             '/register/charity',

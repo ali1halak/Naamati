@@ -71,12 +71,12 @@ Body:
   "address": "Aleppo - Al-Furqan",
   "work_start": "08:00",
   "work_end": "16:00",
-  "license_document": null
+  "license_document": null   // optional uploaded file (pdf/jpg/png) or omitted
 }
 ```
 Success `201`:
 ```json
-{ "success": true, "data": { "type": "charity", "user": { "id": 2, "name": "Al-Birr Charity", "email": "charity@test.com", "phone": "0911111111", "has_kitchen": true, "address": "Aleppo - Al-Furqan", "work_start": "08:00:00", "work_end": "16:00:00", "license_document": null }, "token": "2|xxxxx..." }, "message": "Registered successfully" }
+{ "success": true, "data": { "type": "charity", "user": { "id": 2, "name": "Al-Birr Charity", "email": "charity@test.com", "phone": "0911111111", "status": "pending", "has_kitchen": true, "address": "Aleppo - Al-Furqan", "work_start": "08:00:00", "work_end": "16:00:00", "license_document": null }, "token": "2|xxxxx..." }, "message": "Registered successfully" }
 ```
 Errors: `422` if email taken / fields invalid.
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\CharityStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\CharityRegisterRequest;
 use App\Http\Requests\Auth\LoginRequest;
@@ -41,16 +42,26 @@ class AuthController extends Controller
 
     public function registerCharity(CharityRegisterRequest $request)
     {
+        $licenseDocumentPath = null;
+
+        if ($request->hasFile('license_document')) {
+            $licenseDocumentPath = $request->file('license_document')->store(
+                'license-documents',
+                'public'
+            );
+        }
+
         $charity = Charity::create([
-            'name'            => $request->name,
-            'email'           => $request->email,
-            'phone'           => $request->phone,
-            'password'        => $request->password,
-            'has_kitchen'     => $request->has_kitchen,
-            'address'         => $request->address,
-            'work_start'      => $request->work_start,
-            'work_end'        => $request->work_end,
-            'license_document' => $request->license_document,
+            'name'             => $request->name,
+            'email'            => $request->email,
+            'phone'            => $request->phone,
+            'password'         => $request->password,
+            'has_kitchen'      => $request->has_kitchen,
+            'status'           => CharityStatus::Pending,
+            'address'          => $request->address,
+            'work_start'       => $request->work_start,
+            'work_end'         => $request->work_end,
+            'license_document'  => $licenseDocumentPath,
         ]);
 
         $token = $charity->createToken('charity-auth')->plainTextToken;

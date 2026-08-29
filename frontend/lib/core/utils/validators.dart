@@ -36,15 +36,15 @@ String? passwordValidator(String? value) {
   if (value.length < 8) {
     return 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.';
   }
-  if (!RegExp(r'[A-Z]').hasMatch(value)) {
-    return 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل.';
-  }
-  if (!RegExp(r'[a-z]').hasMatch(value)) {
-    return 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل.';
-  }
-  if (!RegExp(r'[0-9]').hasMatch(value)) {
-    return 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.';
-  }
+  // if (!RegExp(r'[A-Z]').hasMatch(value)) {
+  //   return 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل.';
+  // }
+  // if (!RegExp(r'[a-z]').hasMatch(value)) {
+  //   return 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل.';
+  // }
+  // if (!RegExp(r'[0-9]').hasMatch(value)) {
+  //   return 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.';
+  // }
   return null;
 }
 
@@ -86,16 +86,19 @@ String? Function(String?) requiredFieldValidator({
 // Confirm password
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Validates that [value] matches [originalPassword].
+/// Validates that [value] matches the current password returned by
+/// [originalPassword].
 ///
 /// Use this as the validator for a "Confirm Password" field, passing the
-/// current value of the original password field.
-String? Function(String?) confirmPasswordValidator(String? originalPassword) {
+/// current password value getter of the original field.
+String? Function(String?) confirmPasswordValidator(
+  String? Function() originalPassword,
+) {
   return (String? value) {
     if (value == null || value.isEmpty) {
       return 'يرجى تأكيد كلمة المرور.';
     }
-    if (value != originalPassword) {
+    if (value != originalPassword()) {
       return 'كلمتا المرور غير متطابقتين.';
     }
     return null;

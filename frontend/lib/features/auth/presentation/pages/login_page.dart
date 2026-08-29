@@ -74,7 +74,18 @@ class _LoginPageViewState extends State<_LoginPageView> {
         child: BlocListener<LoginCubit, LoginState>(
           listener: (context, state) {
             if (state.isSuccess) {
-              context.go(RouteNames.home);
+              final user = state.user;
+              if (user?.accountType == 'charity') {
+                if (user?.status == 'suspended') {
+                  context.go(RouteNames.charitySuspended);
+                } else if (user?.status == 'pending') {
+                  context.go(RouteNames.charityPending);
+                } else {
+                  context.go(RouteNames.home);
+                }
+              } else {
+                context.go(RouteNames.home);
+              }
             } else if (state.isFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

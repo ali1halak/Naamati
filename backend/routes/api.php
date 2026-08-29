@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\FoodCategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+    // Throttled: these are the only unauthenticated write endpoints, so they are
+    // the ones worth brute-forcing. 5 attempts per minute per IP.
     Route::middleware('throttle:5,1')->group(function () {
         Route::post('/register/donor', [AuthController::class, 'registerDonor']);
         Route::post('/register/charity', [AuthController::class, 'registerCharity']);
@@ -19,6 +21,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::get('/food-categories', [FoodCategoryController::class, 'index']);
 
+        // ---- Donor ----
         Route::middleware('type:donor')->prefix('donor')->group(function () {
             Route::get('/requests', [DonationRequestController::class, 'index']);
             Route::post('/requests', [DonationRequestController::class, 'store']);
@@ -28,6 +31,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/requests/{id}/rate', [DonationRequestController::class, 'rate']);
         });
 
+        // ---- Charity (must be approved/active — enforced by the middleware) ----
         Route::middleware('type:charity')->prefix('charity')->group(function () {
             Route::get('/requests/available', [CharityRequestController::class, 'available']);
             Route::get('/requests', [CharityRequestController::class, 'index']);
@@ -36,6 +40,7 @@ Route::prefix('v1')->group(function () {
         });
     });
 
+    // Admin — authenticated with the static X-Admin-Token header, not Sanctum.
     Route::middleware('admin.token')->prefix('admin')->group(function () {
         Route::get('/charities', [AdminController::class, 'charities']);
         Route::post('/charities/{charity}/approve', [AdminController::class, 'approve']);

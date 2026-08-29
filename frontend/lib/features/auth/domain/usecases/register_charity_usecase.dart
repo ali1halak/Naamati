@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
@@ -25,6 +27,8 @@ class RegisterCharityUseCase implements UseCase<User, RegisterCharityParams> {
       address: params.address,
       workStart: params.workStart,
       workEnd: params.workEnd,
+      licenseDocumentBytes: params.licenseDocumentBytes,
+      licenseDocumentName: params.licenseDocumentName,
     );
   }
 }
@@ -39,6 +43,8 @@ class RegisterCharityParams extends Equatable {
   final String address;
   final String workStart;
   final String workEnd;
+  final Uint8List? licenseDocumentBytes;
+  final String? licenseDocumentName;
 
   const RegisterCharityParams({
     required this.name,
@@ -50,10 +56,12 @@ class RegisterCharityParams extends Equatable {
     required this.address,
     required this.workStart,
     required this.workEnd,
+    this.licenseDocumentBytes,
+    this.licenseDocumentName,
   });
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
     name,
     email,
     phone,
@@ -63,5 +71,7 @@ class RegisterCharityParams extends Equatable {
     address,
     workStart,
     workEnd,
+    licenseDocumentBytes,
+    licenseDocumentName,
   ];
 }

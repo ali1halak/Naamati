@@ -12,6 +12,8 @@ abstract class RouteNames {
   static const String login = '/login';
   static const String register = '/register';
   static const String resetPassword = '/reset-password';
+  static const String charityPending = '/charity/pending';
+  static const String charitySuspended = '/charity/suspended';
 
   // ── Onboarding ───────────────────────────────────────────────────────────────
   static const String onboarding = '/onboarding';

@@ -47,6 +47,9 @@ class CustomTextField extends StatefulWidget {
   /// Whether the field is enabled.
   final bool enabled;
 
+  /// When to run validation automatically.
+  final AutovalidateMode? autovalidateMode;
+
   /// Focus node for programmatic focus control.
   final FocusNode? focusNode;
 
@@ -65,6 +68,7 @@ class CustomTextField extends StatefulWidget {
     this.textInputAction = TextInputAction.next,
     this.maxLines = 1,
     this.enabled = true,
+    this.autovalidateMode,
     this.focusNode,
   });
 
@@ -106,6 +110,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           textInputAction: widget.textInputAction,
           maxLines: widget.obscureText ? 1 : widget.maxLines,
           enabled: widget.enabled,
+          autovalidateMode: widget.autovalidateMode,
           focusNode: widget.focusNode,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             color: Theme.of(context).colorScheme.onSurface,
