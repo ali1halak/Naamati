@@ -8,10 +8,11 @@ part of 'user_model.dart';
 
 UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel(
   id: (json['id'] as num).toInt(),
-  name: json['name'] as String,
-  type: json['type'] as String,
-  email: json['email'] as String,
-  phone: json['phone'] as String,
+  name: json['name'] as String?,
+  type: json['type'] as String?,
+  email: json['email'] as String?,
+  phone: json['phone'] as String?,
+  status: json['status'] as String?,
   createdAt: json['created_at'] == null
       ? null
       : DateTime.parse(json['created_at'] as String),
@@ -26,6 +27,7 @@ Map<String, dynamic> _$UserModelToJson(UserModel instance) => <String, dynamic>{
   'type': instance.type,
   'email': instance.email,
   'phone': instance.phone,
+  'status': instance.status,
   'created_at': instance.createdAt?.toIso8601String(),
   'updated_at': instance.updatedAt?.toIso8601String(),
 };

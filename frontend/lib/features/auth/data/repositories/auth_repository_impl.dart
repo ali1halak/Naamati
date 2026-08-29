@@ -1,6 +1,8 @@
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
+import 'dart:typed_data';
 
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/error/failures.dart';
@@ -22,6 +24,20 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.secureStorage,
   });
 
+  User _withAuthMetadata(User user, String? accountType) {
+    return User(
+      id: user.id,
+      name: user.name,
+      type: user.type,
+      email: user.email,
+      phone: user.phone,
+      accountType: accountType,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    );
+  }
+
   @override
   Future<Either<Failure, User>> login({
     required String email,
@@ -37,9 +53,11 @@ class AuthRepositoryImpl implements AuthRepository {
         if (response.success) {
           await secureStorage.write(
             key: StorageKeys.accessToken,
-            value: response.data.token,
+            value: response.data.token ?? '',
           );
-          return Right(response.data.user);
+          return Right(
+            _withAuthMetadata(response.data.user, response.data.type ?? ''),
+          );
         } else {
           return Left(
             ServerFailure(message: response.message ?? 'Login failed'),
@@ -76,9 +94,11 @@ class AuthRepositoryImpl implements AuthRepository {
         if (response.success) {
           await secureStorage.write(
             key: StorageKeys.accessToken,
-            value: response.data.token,
+            value: response.data.token ?? '',
           );
-          return Right(response.data.user);
+          return Right(
+            _withAuthMetadata(response.data.user, response.data.type ?? ''),
+          );
         } else {
           return Left(
             ServerFailure(message: response.message ?? 'Registration failed'),
@@ -103,9 +123,19 @@ class AuthRepositoryImpl implements AuthRepository {
     required String address,
     required String workStart,
     required String workEnd,
+    Uint8List? licenseDocumentBytes,
+    String? licenseDocumentName,
   }) async {
     if (await networkInfo.isConnected) {
       try {
+        MultipartFile? licenseDocument;
+        if (licenseDocumentBytes != null && licenseDocumentName != null) {
+          licenseDocument = MultipartFile.fromBytes(
+            licenseDocumentBytes,
+            filename: licenseDocumentName,
+          );
+        }
+
         final response = await remoteDataSource.registerCharity(
           name: name,
           email: email,
@@ -116,14 +146,17 @@ class AuthRepositoryImpl implements AuthRepository {
           address: address,
           workStart: workStart,
           workEnd: workEnd,
+          licenseDocument: licenseDocument,
         );
 
         if (response.success) {
           await secureStorage.write(
             key: StorageKeys.accessToken,
-            value: response.data.token,
+            value: response.data.token ?? '',
           );
-          return Right(response.data.user);
+          return Right(
+            _withAuthMetadata(response.data.user, response.data.type ?? ''),
+          );
         } else {
           return Left(
             ServerFailure(message: response.message ?? 'Registration failed'),
@@ -144,7 +177,9 @@ class AuthRepositoryImpl implements AuthRepository {
         final response = await remoteDataSource.getCurrentUser();
 
         if (response.success) {
-          return Right(response.data.user);
+          return Right(
+            _withAuthMetadata(response.data.user, response.data.type ?? ''),
+          );
         } else {
           return Left(
             ServerFailure(message: response.message ?? 'Failed to fetch user'),

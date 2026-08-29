@@ -23,10 +23,10 @@ class MeResponseModel {
 
 @JsonSerializable()
 class MeDataModel {
-  final String type;
+  final String? type;
   final UserModel user;
 
-  const MeDataModel({required this.type, required this.user});
+  const MeDataModel({this.type, required this.user});
 
   factory MeDataModel.fromJson(Map<String, dynamic> json) =>
       _$MeDataModelFromJson(json);

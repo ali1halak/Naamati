@@ -21,7 +21,7 @@ Map<String, dynamic> _$MeResponseModelToJson(MeResponseModel instance) =>
     };
 
 MeDataModel _$MeDataModelFromJson(Map<String, dynamic> json) => MeDataModel(
-  type: json['type'] as String,
+  type: json['type'] as String?,
   user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
 );
 

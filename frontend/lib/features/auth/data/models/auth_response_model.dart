@@ -23,14 +23,14 @@ class AuthResponseModel {
 
 @JsonSerializable()
 class AuthDataModel {
-  final String type;
+  final String? type;
   final UserModel user;
-  final String token;
+  final String? token;
 
   const AuthDataModel({
-    required this.type,
+    this.type,
     required this.user,
-    required this.token,
+    this.token,
   });
 
   factory AuthDataModel.fromJson(Map<String, dynamic> json) =>
