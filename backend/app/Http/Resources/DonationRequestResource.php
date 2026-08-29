@@ -6,9 +6,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * A donation request as both sides see it.
- *
- * qr_token is never included here — it is returned exactly once, in the
- * response to the charity's accept call, so it cannot leak through a listing.
  */
 class DonationRequestResource extends JsonResource
 {

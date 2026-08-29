@@ -45,5 +45,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/charities', [AdminController::class, 'charities']);
         Route::post('/charities/{charity}/approve', [AdminController::class, 'approve']);
         Route::post('/charities/{charity}/suspend', [AdminController::class, 'suspend']);
+        Route::get('/notifications', [AdminController::class, 'notifications']);
+        Route::post('/notifications/{id}/read', [AdminController::class, 'markNotificationRead']);
     });
 });
