@@ -23,7 +23,12 @@ import '../../features/auth/domain/repositories/auth_repository.dart' as _i787;
 import '../../features/auth/domain/usecases/get_current_user_usecase.dart'
     as _i17;
 import '../../features/auth/domain/usecases/login_usecase.dart' as _i188;
+import '../../features/auth/domain/usecases/register_charity_usecase.dart'
+    as _i408;
+import '../../features/auth/domain/usecases/register_donor_usecase.dart'
+    as _i1019;
 import '../../features/auth/presentation/bloc/login_cubit.dart' as _i281;
+import '../../features/auth/presentation/bloc/register_cubit.dart' as _i98;
 import '../network/network_info.dart' as _i932;
 import 'injection_container.dart' as _i809;
 
@@ -56,6 +61,18 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i188.LoginUseCase>(
       () => _i188.LoginUseCase(gh<_i787.AuthRepository>()),
+    );
+    gh.lazySingleton<_i408.RegisterCharityUseCase>(
+      () => _i408.RegisterCharityUseCase(gh<_i787.AuthRepository>()),
+    );
+    gh.lazySingleton<_i1019.RegisterDonorUseCase>(
+      () => _i1019.RegisterDonorUseCase(gh<_i787.AuthRepository>()),
+    );
+    gh.factory<_i98.RegisterCubit>(
+      () => _i98.RegisterCubit(
+        gh<_i1019.RegisterDonorUseCase>(),
+        gh<_i408.RegisterCharityUseCase>(),
+      ),
     );
     gh.factory<_i281.LoginCubit>(
       () => _i281.LoginCubit(gh<_i188.LoginUseCase>()),

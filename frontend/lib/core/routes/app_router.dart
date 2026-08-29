@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
 import 'route_names.dart';
 
@@ -93,8 +94,14 @@ class AppRouter {
     GoRoute(
       path: RouteNames.register,
       name: 'register',
-      builder: (context, state) =>
-          const _SplashPage(), // replace with RegisterPage
+      builder: (context, state) {
+        final type = state.uri.queryParameters['type'];
+        final initialType = type == 'charity'
+            ? RegisterAccountType.charity
+            : RegisterAccountType.donor;
+
+        return RegisterPage(initialType: initialType);
+      },
     ),
 
     // ── Onboarding (placeholder) ──────────────────────────────────────────────

@@ -98,42 +98,11 @@ class WelcomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Primary CTA — donor
                   CustomButton(
-                    label: 'إنشاء حساب كمتبرع',
+                    label: 'إنشاء حساب',
                     onPressed: () => context.push(RouteNames.register),
                   ),
-                  SizedBox(height: 12.h),
-
-                  // Secondary CTA — charity (outlined)
-                  SizedBox(
-                    height: AppConstants.buttonHeight.h,
-                    child: OutlinedButton(
-                      onPressed: () => context.push(RouteNames.register),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: colorScheme.primary,
-                          width: 1.5.w,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.radiusMD.r,
-                          ),
-                        ),
-                        foregroundColor: colorScheme.primary,
-                      ),
-                      child: Text(
-                        'إنشاء حساب كجمعية خيرية',
-                        style: textTheme.labelLarge?.copyWith(
-                          color: colorScheme.primary,
-                          fontSize: 14.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-
-                  // Login link
+                  SizedBox(height: 18.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -144,8 +113,8 @@ class WelcomePage extends StatelessWidget {
                           fontSize: 13.sp,
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () => context.push(RouteNames.login),
+                      TextButton(
+                        onPressed: () => context.push(RouteNames.login),
                         child: Text(
                           'تسجيل الدخول',
                           style: textTheme.bodySmall?.copyWith(

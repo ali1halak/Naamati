@@ -5,6 +5,9 @@ import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
+import '../../features/auth/domain/usecases/register_donor_usecase.dart';
+import '../../features/auth/domain/usecases/register_charity_usecase.dart';
+import '../../features/auth/presentation/bloc/register_cubit.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
 import 'injection_container.config.dart';
@@ -18,6 +21,21 @@ final sl = GetIt.instance;
 )
 void configureDependencies() {
   sl.init();
+
+  // Manual registrations for registration flow (codegen may not have run yet).
+  // These mirror the generated registrations so `sl<RegisterCubit>()` works
+  // immediately from UI code.
+  sl.registerLazySingleton<RegisterDonorUseCase>(
+    () => RegisterDonorUseCase(sl()),
+  );
+
+  sl.registerLazySingleton<RegisterCharityUseCase>(
+    () => RegisterCharityUseCase(sl()),
+  );
+
+  sl.registerFactory<RegisterCubit>(
+    () => RegisterCubit(sl<RegisterDonorUseCase>(), sl<RegisterCharityUseCase>()),
+  );
 }
 
 @module

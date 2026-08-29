@@ -1,15 +1,18 @@
 ﻿{
   "info": {
     "name": "Food Surplus API",
-    "_postman_id": "f5e1a1a0-0000-4000-a000-000000000001",
+    "_postman_id": "7e540d5d-f35b-4fa4-8ec4-c5eb910a3128",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Food Surplus API auth collection. The API base is /api/v1. Register donor and charity with separate endpoints."
+    "description": "Food Surplus project API collection. Base URL is http://127.0.0.1:8000/api/v1. Use separate register endpoints for donor and charity, and the same token flow for auth."
   },
   "variable": [
     { "key": "base_url", "value": "http://127.0.0.1:8000/api/v1", "type": "string" },
     { "key": "token", "value": "", "type": "string" },
     { "key": "donor_email", "value": "donor1@test.com", "type": "string" },
-    { "key": "charity_email", "value": "charity1@test.com", "type": "string" }
+    { "key": "charity_email", "value": "charity1@test.com", "type": "string" },
+    { "key": "admin_token", "value": "", "type": "string" },
+    { "key": "request_id", "value": "1", "type": "string" },
+    { "key": "charity_id", "value": "1", "type": "string" }
   ],
   "item": [
     {
@@ -138,6 +141,261 @@
               "raw": "{{base_url}}/logout",
               "host": ["{{base_url}}"],
               "path": ["logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Food Categories",
+      "item": [
+        {
+          "name": "Get Food Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/food-categories",
+              "host": ["{{base_url}}"],
+              "path": ["food-categories"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Donor",
+      "item": [
+        {
+          "name": "List My Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/donor/requests",
+              "host": ["{{base_url}}"],
+              "path": ["donor", "requests"]
+            }
+          }
+        },
+        {
+          "name": "Create Donation Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"food_category_id\": 1,\n  \"title\": \"Fresh vegetables\",\n  \"description\": \"10kg of vegetables ready for pickup\",\n  \"quantity\": 10,\n  \"unit\": \"kg\",\n  \"pickup_time\": \"2026-08-30T18:00:00Z\",\n  \"location\": \"Aleppo City Center\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/donor/requests",
+              "host": ["{{base_url}}"],
+              "path": ["donor", "requests"]
+            }
+          }
+        },
+        {
+          "name": "Get Donation Request By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/donor/requests/{{request_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["donor", "requests", "{{request_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Donation Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Not needed anymore\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/donor/requests/{{request_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["donor", "requests", "{{request_id}}", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Confirm Pickup",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qr_token\": \"example-qr-token\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/donor/requests/{{request_id}}/confirm",
+              "host": ["{{base_url}}"],
+              "path": ["donor", "requests", "{{request_id}}", "confirm"]
+            }
+          }
+        },
+        {
+          "name": "Rate Donation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great coordination\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/donor/requests/{{request_id}}/rate",
+              "host": ["{{base_url}}"],
+              "path": ["donor", "requests", "{{request_id}}", "rate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Charity",
+      "item": [
+        {
+          "name": "Get Available Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/charity/requests/available",
+              "host": ["{{base_url}}"],
+              "path": ["charity", "requests", "available"]
+            }
+          }
+        },
+        {
+          "name": "List Charity Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/charity/requests",
+              "host": ["{{base_url}}"],
+              "path": ["charity", "requests"]
+            }
+          }
+        },
+        {
+          "name": "Get Charity Request By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/charity/requests/{{request_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["charity", "requests", "{{request_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Accept Donation Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "{{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eta_minutes\": 30\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/charity/requests/{{request_id}}/accept",
+              "host": ["{{base_url}}"],
+              "path": ["charity", "requests", "{{request_id}}", "accept"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "List Charities",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Admin-Token", "value": "{{admin_token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/charities",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "charities"]
+            }
+          }
+        },
+        {
+          "name": "Approve Charity",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Admin-Token", "value": "{{admin_token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/charities/{{charity_id}}/approve",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "charities", "{{charity_id}}", "approve"]
+            }
+          }
+        },
+        {
+          "name": "Suspend Charity",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Admin-Token", "value": "{{admin_token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/charities/{{charity_id}}/suspend",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "charities", "{{charity_id}}", "suspend"]
             }
           }
         }

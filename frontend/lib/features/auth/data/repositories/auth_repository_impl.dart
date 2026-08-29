@@ -35,7 +35,6 @@ class AuthRepositoryImpl implements AuthRepository {
         );
 
         if (response.success) {
-          // Save the token securely
           await secureStorage.write(
             key: StorageKeys.accessToken,
             value: response.data.token,
@@ -44,6 +43,90 @@ class AuthRepositoryImpl implements AuthRepository {
         } else {
           return Left(
             ServerFailure(message: response.message ?? 'Login failed'),
+          );
+        }
+      } catch (e) {
+        return Left(mapExceptionToFailure(e));
+      }
+    } else {
+      return Left(const NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, User>> registerDonor({
+    required String name,
+    required String type,
+    required String email,
+    required String phone,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final response = await remoteDataSource.registerDonor(
+          name: name,
+          type: type,
+          email: email,
+          phone: phone,
+          password: password,
+          passwordConfirmation: passwordConfirmation,
+        );
+
+        if (response.success) {
+          await secureStorage.write(
+            key: StorageKeys.accessToken,
+            value: response.data.token,
+          );
+          return Right(response.data.user);
+        } else {
+          return Left(
+            ServerFailure(message: response.message ?? 'Registration failed'),
+          );
+        }
+      } catch (e) {
+        return Left(mapExceptionToFailure(e));
+      }
+    } else {
+      return Left(const NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, User>> registerCharity({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+    required String passwordConfirmation,
+    required bool hasKitchen,
+    required String address,
+    required String workStart,
+    required String workEnd,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final response = await remoteDataSource.registerCharity(
+          name: name,
+          email: email,
+          phone: phone,
+          password: password,
+          passwordConfirmation: passwordConfirmation,
+          hasKitchen: hasKitchen,
+          address: address,
+          workStart: workStart,
+          workEnd: workEnd,
+        );
+
+        if (response.success) {
+          await secureStorage.write(
+            key: StorageKeys.accessToken,
+            value: response.data.token,
+          );
+          return Right(response.data.user);
+        } else {
+          return Left(
+            ServerFailure(message: response.message ?? 'Registration failed'),
           );
         }
       } catch (e) {
