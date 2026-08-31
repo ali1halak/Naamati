@@ -94,9 +94,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
         if (widget.label != null) ...[
           Text(
             widget.label!,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
           ),
           SizedBox(height: AppConstants.paddingXS.h),
         ],
@@ -112,9 +112,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
           enabled: widget.enabled,
           autovalidateMode: widget.autovalidateMode,
           focusNode: widget.focusNode,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: widget.hint,
             prefixIcon: widget.prefixIcon != null
@@ -123,13 +123,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
             suffixIcon: widget.obscureText
                 ? IconButton(
                     icon: Icon(
-                      _obscureText
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
+                      _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                       size: AppConstants.iconSizeMD.h,
                     ),
-                    onPressed: () =>
-                        setState(() => _obscureText = !_obscureText),
+                    onPressed: () => setState(() => _obscureText = !_obscureText),
                   )
                 : widget.suffixIcon,
           ),

@@ -51,9 +51,7 @@ class DioClient {
     }
 
     // Auth token injection + 401 handling.
-    dio.interceptors.add(
-      _AuthInterceptor(secureStorage: secureStorage, dio: dio),
-    );
+    dio.interceptors.add(_AuthInterceptor(secureStorage: secureStorage, dio: dio));
 
     return dio;
   }
@@ -75,14 +73,10 @@ class _AuthInterceptor extends Interceptor {
   _AuthInterceptor({required this.secureStorage, required this.dio});
 
   @override
-  void onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     final token = await secureStorage.read(key: StorageKeys.accessToken);
     if (token != null && token.isNotEmpty) {
-      options.headers[ApiConstants.headerAuthorization] =
-          '${ApiConstants.bearerPrefix}$token';
+      options.headers[ApiConstants.headerAuthorization] = '${ApiConstants.bearerPrefix}$token';
     }
     handler.next(options);
   }

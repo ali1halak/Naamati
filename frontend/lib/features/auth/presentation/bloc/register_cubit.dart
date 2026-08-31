@@ -12,10 +12,8 @@ class RegisterCubit extends Cubit<RegisterState> {
   final RegisterDonorUseCase _registerDonorUseCase;
   final RegisterCharityUseCase _registerCharityUseCase;
 
-  RegisterCubit(
-    this._registerDonorUseCase,
-    this._registerCharityUseCase,
-  ) : super(const RegisterState());
+  RegisterCubit(this._registerDonorUseCase, this._registerCharityUseCase)
+    : super(const RegisterState());
 
   Future<void> registerDonor({
     required String name,
@@ -39,12 +37,7 @@ class RegisterCubit extends Cubit<RegisterState> {
     );
 
     result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: BlocStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
+      (failure) => emit(state.copyWith(status: BlocStatus.failure, errorMessage: failure.message)),
       (user) => emit(state.copyWith(status: BlocStatus.success, user: user)),
     );
   }
@@ -81,12 +74,7 @@ class RegisterCubit extends Cubit<RegisterState> {
     );
 
     result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: BlocStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
+      (failure) => emit(state.copyWith(status: BlocStatus.failure, errorMessage: failure.message)),
       (user) => emit(state.copyWith(status: BlocStatus.success, user: user)),
     );
   }

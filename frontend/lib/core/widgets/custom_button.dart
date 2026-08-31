@@ -69,9 +69,7 @@ class CustomButton extends StatelessWidget {
           backgroundColor: effectiveBg,
           foregroundColor: effectiveFg,
           disabledBackgroundColor: effectiveBg.withValues(alpha: 0.6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(effectiveRadius.r),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(effectiveRadius.r)),
           elevation: 0,
         ),
         child: isLoading
@@ -86,15 +84,10 @@ class CustomButton extends StatelessWidget {
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (leadingIcon != null) ...[
-                    leadingIcon!,
-                    const SizedBox(width: 8),
-                  ],
+                  if (leadingIcon != null) ...[leadingIcon!, const SizedBox(width: 8)],
                   Text(
                     label,
-                    style: (textStyle ?? AppTextStyles.labelLarge).copyWith(
-                      color: effectiveFg,
-                    ),
+                    style: (textStyle ?? AppTextStyles.labelLarge).copyWith(color: effectiveFg),
                   ),
                 ],
               ),

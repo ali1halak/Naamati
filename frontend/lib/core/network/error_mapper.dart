@@ -15,24 +15,15 @@ import '../error/failures.dart';
 /// ```
 Failure mapExceptionToFailure(Object exception) {
   if (exception is ServerException) {
-    return ServerFailure(
-      message: exception.message,
-      statusCode: exception.statusCode,
-    );
+    return ServerFailure(message: exception.message, statusCode: exception.statusCode);
   }
 
   if (exception is CacheException) {
-    return CacheFailure(
-      message: exception.message,
-      statusCode: exception.statusCode,
-    );
+    return CacheFailure(message: exception.message, statusCode: exception.statusCode);
   }
 
   if (exception is NetworkException) {
-    return NetworkFailure(
-      message: exception.message,
-      statusCode: exception.statusCode,
-    );
+    return NetworkFailure(message: exception.message, statusCode: exception.statusCode);
   }
 
   if (exception is DioException) {

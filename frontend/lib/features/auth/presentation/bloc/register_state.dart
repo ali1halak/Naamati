@@ -8,11 +8,7 @@ class RegisterState extends Equatable {
   final String? errorMessage;
   final User? user;
 
-  const RegisterState({
-    this.status = BlocStatus.initial,
-    this.errorMessage,
-    this.user,
-  });
+  const RegisterState({this.status = BlocStatus.initial, this.errorMessage, this.user});
 
   bool get isLoading => status == BlocStatus.loading;
   bool get isSuccess => status == BlocStatus.success;
@@ -27,9 +23,7 @@ class RegisterState extends Equatable {
   }) {
     return RegisterState(
       status: status ?? this.status,
-      errorMessage: identical(errorMessage, _unset)
-          ? this.errorMessage
-          : errorMessage as String?,
+      errorMessage: identical(errorMessage, _unset) ? this.errorMessage : errorMessage as String?,
       user: identical(user, _unset) ? this.user : user as User?,
     );
   }

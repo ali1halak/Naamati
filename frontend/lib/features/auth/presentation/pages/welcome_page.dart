@@ -72,9 +72,7 @@ class WelcomePage extends StatelessWidget {
                           'نحول فائض الطعام إلى نعمة تصل\nمستحقيها',
                           textAlign: TextAlign.center,
                           style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onPrimary.withValues(
-                              alpha: 0.85,
-                            ),
+                            color: colorScheme.onPrimary.withValues(alpha: 0.85),
                             height: 1.6,
                             fontSize: 14.sp,
                           ),
@@ -92,8 +90,7 @@ class WelcomePage extends StatelessWidget {
                 AppConstants.paddingLG.w,
                 AppConstants.paddingXL.h,
                 AppConstants.paddingLG.w,
-                AppConstants.paddingLG.h +
-                    MediaQuery.of(context).padding.bottom,
+                AppConstants.paddingLG.h + MediaQuery.of(context).padding.bottom,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

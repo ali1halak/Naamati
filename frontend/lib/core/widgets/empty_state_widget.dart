@@ -41,30 +41,16 @@ class EmptyStateWidget extends StatelessWidget {
             Container(
               width: 88.r,
               height: 88.r,
-              decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: AppColors.primaryContainer, shape: BoxShape.circle),
               child: Icon(icon, size: 44.r, color: AppColors.primary),
             ),
             SizedBox(height: AppConstants.paddingLG.h),
-            Text(
-              title,
-              style: AppTextStyles.titleMedium,
-              textAlign: TextAlign.center,
-            ),
+            Text(title, style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
             if (subtitle != null) ...[
               SizedBox(height: AppConstants.paddingSM.h),
-              Text(
-                subtitle!,
-                style: AppTextStyles.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
+              Text(subtitle!, style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
             ],
-            if (action != null) ...[
-              SizedBox(height: AppConstants.paddingXL.h),
-              action!,
-            ],
+            if (action != null) ...[SizedBox(height: AppConstants.paddingXL.h), action!],
           ],
         ),
       ),

@@ -42,10 +42,7 @@ class AppErrorWidget extends StatelessWidget {
             Container(
               width: 72.r,
               height: 72.r,
-              decoration: BoxDecoration(
-                color: AppColors.errorContainer,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: AppColors.errorContainer, shape: BoxShape.circle),
               child: Icon(icon, size: 36.r, color: AppColors.error),
             ),
             SizedBox(height: AppConstants.paddingLG.h),
@@ -55,11 +52,7 @@ class AppErrorWidget extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: AppConstants.paddingSM.h),
-            Text(
-              message,
-              style: AppTextStyles.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
+            Text(message, style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
             if (onRetry != null) ...[
               SizedBox(height: AppConstants.paddingXL.h),
               CustomButton(label: retryLabel, onPressed: onRetry, width: 160.w),

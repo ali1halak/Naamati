@@ -39,29 +39,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, User>> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<Either<Failure, User>> login({required String email, required String password}) async {
     if (await networkInfo.isConnected) {
       try {
-        final response = await remoteDataSource.login(
-          email: email,
-          password: password,
-        );
+        final response = await remoteDataSource.login(email: email, password: password);
 
         if (response.success) {
-          await secureStorage.write(
-            key: StorageKeys.accessToken,
-            value: response.data.token ?? '',
-          );
-          return Right(
-            _withAuthMetadata(response.data.user, response.data.type ?? ''),
-          );
+          await secureStorage.write(key: StorageKeys.accessToken, value: response.data.token ?? '');
+          return Right(_withAuthMetadata(response.data.user, response.data.type ?? ''));
         } else {
-          return Left(
-            ServerFailure(message: response.message ?? 'Login failed'),
-          );
+          return Left(ServerFailure(message: response.message ?? 'Login failed'));
         }
       } catch (e) {
         return Left(mapExceptionToFailure(e));
@@ -92,17 +79,10 @@ class AuthRepositoryImpl implements AuthRepository {
         );
 
         if (response.success) {
-          await secureStorage.write(
-            key: StorageKeys.accessToken,
-            value: response.data.token ?? '',
-          );
-          return Right(
-            _withAuthMetadata(response.data.user, response.data.type ?? ''),
-          );
+          await secureStorage.write(key: StorageKeys.accessToken, value: response.data.token ?? '');
+          return Right(_withAuthMetadata(response.data.user, response.data.type ?? ''));
         } else {
-          return Left(
-            ServerFailure(message: response.message ?? 'Registration failed'),
-          );
+          return Left(ServerFailure(message: response.message ?? 'Registration failed'));
         }
       } catch (e) {
         return Left(mapExceptionToFailure(e));
@@ -150,17 +130,10 @@ class AuthRepositoryImpl implements AuthRepository {
         );
 
         if (response.success) {
-          await secureStorage.write(
-            key: StorageKeys.accessToken,
-            value: response.data.token ?? '',
-          );
-          return Right(
-            _withAuthMetadata(response.data.user, response.data.type ?? ''),
-          );
+          await secureStorage.write(key: StorageKeys.accessToken, value: response.data.token ?? '');
+          return Right(_withAuthMetadata(response.data.user, response.data.type ?? ''));
         } else {
-          return Left(
-            ServerFailure(message: response.message ?? 'Registration failed'),
-          );
+          return Left(ServerFailure(message: response.message ?? 'Registration failed'));
         }
       } catch (e) {
         return Left(mapExceptionToFailure(e));
@@ -177,13 +150,9 @@ class AuthRepositoryImpl implements AuthRepository {
         final response = await remoteDataSource.getCurrentUser();
 
         if (response.success) {
-          return Right(
-            _withAuthMetadata(response.data.user, response.data.type ?? ''),
-          );
+          return Right(_withAuthMetadata(response.data.user, response.data.type ?? ''));
         } else {
-          return Left(
-            ServerFailure(message: response.message ?? 'Failed to fetch user'),
-          );
+          return Left(ServerFailure(message: response.message ?? 'Failed to fetch user'));
         }
       } catch (e) {
         return Left(mapExceptionToFailure(e));

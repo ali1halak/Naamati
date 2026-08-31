@@ -10,8 +10,7 @@ abstract class ApiConstants {
   ///
   /// The Laravel API is served under `/api/v1`, so the base URL must include
   /// the version prefix (e.g. `http://localhost:8000/api/v1`).
-  static String get baseUrl =>
-      dotenv.env['API_BASE_URL'] ?? 'http://localhost:8000/api/v1';
+  static String get baseUrl => dotenv.env['API_BASE_URL'] ?? 'http://localhost:8000/api/v1';
 
   // ── Timeouts ─────────────────────────────────────────────────────────────────
   static const Duration connectTimeout = Duration(seconds: 30);

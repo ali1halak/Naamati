@@ -11,11 +11,7 @@ import 'injection_container.config.dart';
 
 final sl = GetIt.instance;
 
-@InjectableInit(
-  initializerName: 'init',
-  preferRelativeImports: true,
-  asExtension: true,
-)
+@InjectableInit(initializerName: 'init', preferRelativeImports: true, asExtension: true)
 void configureDependencies() {
   sl.init();
 }

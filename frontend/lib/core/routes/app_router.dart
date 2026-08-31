@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/charity_account_status_page.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
+import '../../features/home/presentation/pages/home_page.dart';
 import 'route_names.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -42,6 +43,18 @@ class _NotFoundPage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CharityHomePlaceholder extends StatelessWidget {
+  const _CharityHomePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('الجمعية')),
+      body: const Center(child: Text('Charity Home — قريباً')),
     );
   }
 }
@@ -87,11 +100,7 @@ class AppRouter {
     ),
 
     // ── Auth routes (placeholder) ─────────────────────────────────────────────
-    GoRoute(
-      path: RouteNames.login,
-      name: 'login',
-      builder: (context, state) => const LoginPage(),
-    ),
+    GoRoute(path: RouteNames.login, name: 'login', builder: (context, state) => const LoginPage()),
     GoRoute(
       path: RouteNames.register,
       name: 'register',
@@ -109,8 +118,7 @@ class AppRouter {
       name: 'charity-pending',
       builder: (context, state) => const CharityAccountStatusPage(
         title: 'حسابك قيد المراجعة',
-        message:
-            'تم استلام طلب تسجيل الجمعية. سيقوم الأدمن بمراجعته يدويًا قبل تفعيل الحساب.',
+        message: 'تم استلام طلب تسجيل الجمعية. سيقوم الأدمن بمراجعته يدويًا قبل تفعيل الحساب.',
         icon: Icons.hourglass_top_rounded,
       ),
     ),
@@ -119,8 +127,7 @@ class AppRouter {
       name: 'charity-suspended',
       builder: (context, state) => const CharityAccountStatusPage(
         title: 'الحساب موقوف',
-        message:
-            'تم إيقاف حساب الجمعية. يرجى التواصل مع الأدمن لإعادة التفعيل.',
+        message: 'تم إيقاف حساب الجمعية. يرجى التواصل مع الأدمن لإعادة التفعيل.',
         icon: Icons.block_rounded,
       ),
     ),
@@ -129,27 +136,31 @@ class AppRouter {
     GoRoute(
       path: RouteNames.onboarding,
       name: 'onboarding',
-      builder: (context, state) =>
-          const _SplashPage(), // replace with OnboardingPage
+      builder: (context, state) => const _SplashPage(), // replace with OnboardingPage
     ),
 
-    // ── Main app routes (placeholder) ─────────────────────────────────────────
+    // ── Donor routes (المتبرع) — حصرية للمتبرع بعد تسجيل الدخول ───────────
     GoRoute(
       path: RouteNames.home,
-      name: 'home',
-      builder: (context, state) => const _SplashPage(), // replace with HomePage
+      name: 'donor-home',
+      builder: (context, state) => const DonorHomePage(),
+    ),
+
+    // ── Charity routes (الجمعية) ────────────────────────────────────────────
+    GoRoute(
+      path: RouteNames.charityHome,
+      name: 'charity-home',
+      builder: (context, state) => const _CharityHomePlaceholder(),
     ),
     GoRoute(
       path: RouteNames.profile,
       name: 'profile',
-      builder: (context, state) =>
-          const _SplashPage(), // replace with ProfilePage
+      builder: (context, state) => const _SplashPage(), // replace with ProfilePage
     ),
     GoRoute(
       path: RouteNames.settings,
       name: 'settings',
-      builder: (context, state) =>
-          const _SplashPage(), // replace with SettingsPage
+      builder: (context, state) => const _SplashPage(), // replace with SettingsPage
     ),
   ];
 

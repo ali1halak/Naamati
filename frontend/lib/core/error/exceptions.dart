@@ -12,8 +12,7 @@ class ServerException implements Exception {
   const ServerException({required this.message, this.statusCode});
 
   @override
-  String toString() =>
-      'ServerException(statusCode: $statusCode, message: $message)';
+  String toString() => 'ServerException(statusCode: $statusCode, message: $message)';
 }
 
 /// Thrown when local storage operations fail.
@@ -72,21 +71,14 @@ Exception mapDioExceptionToCustomException(DioException error) {
       return const NetworkException();
 
     case DioExceptionType.cancel:
-      return ServerException(
-        message: 'Request was cancelled.',
-        statusCode: statusCode,
-      );
+      return ServerException(message: 'Request was cancelled.', statusCode: statusCode);
 
     case DioExceptionType.badCertificate:
-      return ServerException(
-        message: 'SSL certificate error.',
-        statusCode: statusCode,
-      );
+      return ServerException(message: 'SSL certificate error.', statusCode: statusCode);
 
     case DioExceptionType.unknown:
     default:
-      if (error.error != null &&
-          error.error.toString().contains('SocketException')) {
+      if (error.error != null && error.error.toString().contains('SocketException')) {
         return const NetworkException();
       }
       return ServerException(
@@ -105,9 +97,7 @@ Exception _mapBadResponse(DioException error) {
   try {
     final data = error.response?.data;
     if (data is Map) {
-      message =
-          (data['message'] ?? data['error'] ?? error.message ?? 'Server error')
-              .toString();
+      message = (data['message'] ?? data['error'] ?? error.message ?? 'Server error').toString();
     } else {
       message = error.message ?? 'Server error';
     }
@@ -122,10 +112,7 @@ Exception _mapBadResponse(DioException error) {
         statusCode: statusCode,
       );
     case 401:
-      return ServerException(
-        message: 'Unauthorized. Please log in again.',
-        statusCode: statusCode,
-      );
+      return ServerException(message: 'Unauthorized. Please log in again.', statusCode: statusCode);
     case 403:
       return ServerException(
         message: 'You do not have permission to perform this action.',

@@ -19,9 +19,7 @@ class InputConverter {
     try {
       final value = int.parse(str);
       if (value < 0) {
-        return Left(
-          const ValidationFailure(message: 'Value must be a positive number.'),
-        );
+        return Left(const ValidationFailure(message: 'Value must be a positive number.'));
       }
       return Right(value);
     } on FormatException {
@@ -36,9 +34,7 @@ class InputConverter {
     try {
       return Right(double.parse(str));
     } on FormatException {
-      return Left(
-        const ValidationFailure(message: 'Invalid decimal number format.'),
-      );
+      return Left(const ValidationFailure(message: 'Invalid decimal number format.'));
     }
   }
 
@@ -48,9 +44,7 @@ class InputConverter {
   Either<Failure, String> stringNotEmpty(String str) {
     final trimmed = str.trim();
     if (trimmed.isEmpty) {
-      return Left(
-        const ValidationFailure(message: 'This field cannot be empty.'),
-      );
+      return Left(const ValidationFailure(message: 'This field cannot be empty.'));
     }
     return Right(trimmed);
   }

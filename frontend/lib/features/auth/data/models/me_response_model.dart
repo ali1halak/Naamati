@@ -9,14 +9,9 @@ class MeResponseModel {
   final MeDataModel data;
   final String? message;
 
-  const MeResponseModel({
-    required this.success,
-    required this.data,
-    this.message,
-  });
+  const MeResponseModel({required this.success, required this.data, this.message});
 
-  factory MeResponseModel.fromJson(Map<String, dynamic> json) =>
-      _$MeResponseModelFromJson(json);
+  factory MeResponseModel.fromJson(Map<String, dynamic> json) => _$MeResponseModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$MeResponseModelToJson(this);
 }
@@ -28,8 +23,7 @@ class MeDataModel {
 
   const MeDataModel({this.type, required this.user});
 
-  factory MeDataModel.fromJson(Map<String, dynamic> json) =>
-      _$MeDataModelFromJson(json);
+  factory MeDataModel.fromJson(Map<String, dynamic> json) => _$MeDataModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$MeDataModelToJson(this);
 }

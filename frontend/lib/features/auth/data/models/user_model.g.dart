@@ -13,12 +13,8 @@ UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel(
   email: json['email'] as String?,
   phone: json['phone'] as String?,
   status: json['status'] as String?,
-  createdAt: json['created_at'] == null
-      ? null
-      : DateTime.parse(json['created_at'] as String),
-  updatedAt: json['updated_at'] == null
-      ? null
-      : DateTime.parse(json['updated_at'] as String),
+  createdAt: json['created_at'] == null ? null : DateTime.parse(json['created_at'] as String),
+  updatedAt: json['updated_at'] == null ? null : DateTime.parse(json['updated_at'] as String),
 );
 
 Map<String, dynamic> _$UserModelToJson(UserModel instance) => <String, dynamic>{

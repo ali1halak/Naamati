@@ -6,7 +6,14 @@ abstract class RouteNames {
   // ── Root / Shell ─────────────────────────────────────────────────────────────
   static const String splash = '/';
   static const String welcome = '/welcome';
+
+  // ── Donor (المتبرع) ────────────────────────────────────────────────────────────
+  /// Donor-only home — matches the Figma screenshot (طلب تبرع جديد).
   static const String home = '/home';
+  static const String donorHome = '/home';
+
+  // ── Charity (الجمعية) ─────────────────────────────────────────────────────────
+  static const String charityHome = '/charity/home';
 
   // ── Auth ─────────────────────────────────────────────────────────────────────
   static const String login = '/login';
