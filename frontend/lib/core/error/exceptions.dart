@@ -98,6 +98,22 @@ Exception _mapBadResponse(DioException error) {
     final data = error.response?.data;
     if (data is Map) {
       message = (data['message'] ?? data['error'] ?? error.message ?? 'Server error').toString();
+
+      // Laravel 422s carry a field→messages map; the first field error is far
+      // more useful to the user than the generic envelope message.
+      final errors = data['errors'];
+      if (errors is Map && errors.isNotEmpty) {
+        final first = errors.values.first;
+        String? firstError;
+        if (first is List && first.isNotEmpty) {
+          firstError = first.first?.toString();
+        } else if (first != null) {
+          firstError = first.toString();
+        }
+        if (firstError != null && firstError.isNotEmpty) {
+          message = firstError;
+        }
+      }
     } else {
       message = error.message ?? 'Server error';
     }

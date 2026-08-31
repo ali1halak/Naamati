@@ -12,6 +12,17 @@ abstract class RouteNames {
   static const String home = '/home';
   static const String donorHome = '/home';
 
+  // ── Donations (التبرعات) ──────────────────────────────────────────────────────
+  /// Create-donation form. Must stay above [donationDetails] so the static
+  /// path wins over the `:id` parameter route.
+  static const String createDonation = '/donation/new';
+
+  /// Donation tracking (pending → accepted → delivered → rated).
+  static const String donationDetails = '/donation/:id';
+
+  /// Convenience builder for [donationDetails] deep links.
+  static String donationDetailsPath(int id) => '/donation/$id';
+
   // ── Charity (الجمعية) ─────────────────────────────────────────────────────────
   static const String charityHome = '/charity/home';
 

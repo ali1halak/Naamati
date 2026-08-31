@@ -53,6 +53,17 @@ class CustomTextField extends StatefulWidget {
   /// Focus node for programmatic focus control.
   final FocusNode? focusNode;
 
+  /// Whether the field is read-only (e.g. picker-driven fields). Defaults to
+  /// `false` — combine with [onTap] for date/time/category pickers.
+  final bool readOnly;
+
+  /// Whether to show the caret when focused (set `false` for read-only
+  /// picker fields so the field looks like a button).
+  final bool? showCursor;
+
+  /// Called when the field itself is tapped (picker fields).
+  final VoidCallback? onTap;
+
   const CustomTextField({
     super.key,
     this.label,
@@ -70,6 +81,9 @@ class CustomTextField extends StatefulWidget {
     this.enabled = true,
     this.autovalidateMode,
     this.focusNode,
+    this.readOnly = false,
+    this.showCursor,
+    this.onTap,
   });
 
   @override
@@ -112,6 +126,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
           enabled: widget.enabled,
           autovalidateMode: widget.autovalidateMode,
           focusNode: widget.focusNode,
+          readOnly: widget.readOnly,
+          showCursor: widget.showCursor,
+          onTap: widget.onTap,
           style: Theme.of(
             context,
           ).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),

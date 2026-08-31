@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/storage_keys.dart';
+import '../../core/di/injection_container.dart';
 import '../../features/auth/presentation/pages/charity_account_status_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
+import '../../features/donation/presentation/pages/create_donation_page.dart';
+import '../../features/donation/presentation/pages/donation_tracking_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import 'route_names.dart';
 
@@ -12,8 +17,33 @@ import 'route_names.dart';
 // Placeholder screens (will be replaced by feature screens)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _SplashPage extends StatelessWidget {
+class _SplashPage extends StatefulWidget {
   const _SplashPage();
+
+  @override
+  State<_SplashPage> createState() => _SplashPageState();
+}
+
+class _SplashPageState extends State<_SplashPage> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthAndRedirect();
+  }
+
+  Future<void> _checkAuthAndRedirect() async {
+    final secureStorage = sl<FlutterSecureStorage>();
+    final accessToken = await secureStorage.read(key: StorageKeys.accessToken);
+    final isAuth = accessToken != null && accessToken.isNotEmpty;
+
+    if (mounted) {
+      if (isAuth) {
+        context.go(RouteNames.home);
+      } else {
+        context.go(RouteNames.welcome);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,10 +108,9 @@ class AppRouter {
   AppRouter._();
 
   static final GoRouter router = GoRouter(
-    initialLocation: RouteNames.welcome,
+    initialLocation: RouteNames.splash,
     debugLogDiagnostics: true,
     errorBuilder: (context, state) => const _NotFoundPage(),
-    // redirect: _guard,  ← uncomment and implement once auth is wired up
     routes: _routes,
   );
 
@@ -146,6 +175,20 @@ class AppRouter {
       builder: (context, state) => const DonorHomePage(),
     ),
 
+    // ── Donation flow (طلب التبرع) ─────────────────────────────────────────────
+    // NOTE: '/donation/new' must be registered before '/donation/:id'.
+    GoRoute(
+      path: RouteNames.createDonation,
+      name: 'create-donation',
+      builder: (context, state) => const CreateDonationPage(),
+    ),
+    GoRoute(
+      path: RouteNames.donationDetails,
+      name: 'donation-details',
+      builder: (context, state) =>
+          DonationTrackingPage(donationId: int.parse(state.pathParameters['id']!)),
+    ),
+
     // ── Charity routes (الجمعية) ────────────────────────────────────────────
     GoRoute(
       path: RouteNames.charityHome,
@@ -164,18 +207,4 @@ class AppRouter {
     ),
   ];
 
-  // ── Auth Guard (stub — implement once BLoC auth state is ready) ───────────
-
-  // static String? _guard(BuildContext context, GoRouterState state) {
-  //   final isAuthenticated = sl<AuthBloc>().state.isAuthenticated;
-  //   final isOnboarded = sl<SharedPreferences>().getBool(StorageKeys.isOnboardingComplete) ?? false;
-  //
-  //   if (!isAuthenticated && state.matchedLocation != RouteNames.login) {
-  //     return RouteNames.login;
-  //   }
-  //   if (!isOnboarded && state.matchedLocation != RouteNames.onboarding) {
-  //     return RouteNames.onboarding;
-  //   }
-  //   return null; // no redirect
-  // }
 }

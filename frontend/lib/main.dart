@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -15,6 +16,12 @@ import 'core/theme/app_theme.dart';
 ///    [ScreenUtilInit] for responsive sizing.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Lock the app to portrait — the UI is designed mobile-portrait only.
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   // Load environment variables.
   await dotenv.load(fileName: ".env");
