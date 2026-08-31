@@ -51,14 +51,16 @@ class AdminController extends Controller
     public function notifications(Request $request)
     {
         $validated = $request->validate([
-            'type'    => ['nullable', Rule::in(array_column(NotificationType::cases(), 'value'))],
-            'is_read' => ['nullable', 'boolean'],
+            'type' => ['nullable', Rule::in(array_column(NotificationType::cases(), 'value'))],
+            // Not the `boolean` rule: it rejects the "true"/"false" strings a
+            // mobile client naturally puts in a query string.
+            'is_read' => ['nullable', Rule::in(['0', '1', 'true', 'false'])],
         ]);
 
         $query = Notification::where('recipient_type', RecipientType::Admin)
             ->when($validated['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
             ->when(
-                array_key_exists('is_read', $validated) && $validated['is_read'] !== null,
+                isset($validated['is_read']),
                 fn ($q) => $q->where('is_read', $request->boolean('is_read'))
             )
             ->latest();
