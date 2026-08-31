@@ -18,7 +18,7 @@ class RegisterRequest extends FormRequest
         return [
             'name'     => ['required', 'string', 'max:120'],
             'type'     => ['required', Rule::in(array_map(fn ($type) => $type->value, DonorType::cases()))],
-            'email'    => ['required', 'email', 'unique:donors,email'],
+            'email'    => ['required', 'email', 'unique:donors,email', 'unique:charities,email'],
             'phone'    => ['required', 'string', 'max:20'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];

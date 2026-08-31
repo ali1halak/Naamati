@@ -10,11 +10,10 @@ class DonationRequest extends Model
     protected $fillable = [
         'donor_id', 'charity_id', 'food_category_id', 'needs_cooking', 'quantity_desc',
         'description', 'valid_until', 'pickup_until', 'pickup_address', 'latitude',
-        'longitude', 'contact_phone', 'status', 'qr_token', 'accepted_at', 'eta_minutes',
+        'longitude', 'contact_phone', 'status', 'accepted_at', 'eta_minutes',
         'picked_up_at', 'confirmed_at', 'cancel_reason',
     ];
 
-    protected $hidden = ['qr_token']; // never exposed in listings
 
     protected function casts(): array
     {

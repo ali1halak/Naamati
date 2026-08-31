@@ -91,14 +91,13 @@ class DonationRequestController extends Controller
     }
 
     /**
-     * The donor scans the QR the charity presents — this is what confirms the
-     * food actually changed hands.
+     * The donor states the food changed hands. This notifies the admin that
+     * this charity received from this donor.
      */
-    public function confirm(ConfirmPickupRequest $request, int $id)
+    public function confirm(Request $request, int $id)
     {
-        $donationRequest = $this->requests->confirmPickup(
-            $this->ownedRequest($request, $id),
-            $request->validated()['qr_token']
+        $donationRequest = $this->requests->confirmHandover(
+            $this->ownedRequest($request, $id)
         );
 
         return $this->ok(

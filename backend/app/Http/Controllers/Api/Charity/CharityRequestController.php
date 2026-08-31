@@ -52,8 +52,7 @@ class CharityRequestController extends Controller
     }
 
     /**
-     * Claim a request. The QR token is returned here and ONLY here — the
-     * charity renders it, and the donor scans it to confirm the handover.
+     * Claim a request. Notifies the donor which charity is coming and when.
      */
     public function accept(AcceptDonationRequest $request, int $id)
     {
@@ -63,9 +62,9 @@ class CharityRequestController extends Controller
             $request->validated()['eta_minutes']
         );
 
-        return $this->ok([
-            'request'  => new DonationRequestResource($donationRequest->load('foodCategory', 'donor')),
-            'qr_token' => $donationRequest->qr_token,
-        ], 'Request accepted');
+        return $this->ok(
+            new DonationRequestResource($donationRequest->load('foodCategory', 'donor')),
+            'Request accepted'
+        );
     }
 }

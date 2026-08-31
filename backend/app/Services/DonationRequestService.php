@@ -9,7 +9,6 @@ use App\Models\FoodCategory;
 use App\Models\RequestStatusLog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -21,6 +20,10 @@ use Illuminate\Validation\ValidationException;
  */
 class DonationRequestService
 {
+    public function __construct(
+        private readonly NotificationService $notifications,
+    ) {}
+
     private function log(DonationRequest $r, ?RequestStatus $from, RequestStatus $to, ?string $note = null): void
     {
         RequestStatusLog::create([
@@ -95,36 +98,32 @@ class DonationRequestService
                 'status'      => RequestStatus::Accepted,
                 'accepted_at' => now(),
                 'eta_minutes' => $etaMinutes,
-                'qr_token'    => Str::random(64),
             ]);
 
             $this->log($fresh, $from, RequestStatus::Accepted, "accepted by charity #{$charity->id}");
+            $this->notifications->requestAccepted($fresh);
 
             return $fresh->refresh();
         });
     }
 
     /**
-     * The charity shows its QR, the donor scans it. Matching the token is what
-     * proves the handover actually happened.
+     * The donor states the food changed hands. The admin is notified so there is
+     * a record of which charity received from which donor.
      */
-    public function confirmPickup(DonationRequest $request, string $qrToken): DonationRequest
+    public function confirmHandover(DonationRequest $request): DonationRequest
     {
         $this->guard($request, [RequestStatus::Accepted]);
-
-        if (! $request->qr_token || ! hash_equals($request->qr_token, $qrToken)) {
-            throw ValidationException::withMessages(['qr_token' => 'Invalid QR code']);
-        }
 
         $from = $request->status;
         $request->update([
             'status'       => RequestStatus::PickedUp,
             'picked_up_at' => now(),
             'confirmed_at' => now(),
-            'qr_token'     => null, // single use — cannot be replayed
         ]);
 
-        $this->log($request, $from, RequestStatus::PickedUp);
+        $this->log($request, $from, RequestStatus::PickedUp, 'confirmed by donor');
+        $this->notifications->handoverConfirmed($request);
 
         return $request->refresh();
     }

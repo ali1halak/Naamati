@@ -26,7 +26,7 @@ class CharityRegisterRequest extends FormRequest
     {
         return [
             'name'             => ['required', 'string', 'max:120'],
-            'email'            => ['required', 'email', 'unique:charities,email'],
+            'email'            => ['required', 'email', 'unique:charities,email', 'unique:donors,email'],
             'phone'            => ['required', 'string', 'max:20'],
             'password'         => ['required', 'string', 'min:8', 'confirmed'],
             'has_kitchen'      => ['required', 'boolean'],

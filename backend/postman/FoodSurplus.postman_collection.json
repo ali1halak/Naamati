@@ -1,405 +1,2154 @@
-﻿{
-  "info": {
-    "name": "Food Surplus API",
-    "_postman_id": "7e540d5d-f35b-4fa4-8ec4-c5eb910a3128",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Food Surplus project API collection. Base URL is http://127.0.0.1:8000/api/v1. Use separate register endpoints for donor and charity, and the same token flow for auth."
-  },
-  "variable": [
-    { "key": "base_url", "value": "http://127.0.0.1:8000/api/v1", "type": "string" },
-    { "key": "token", "value": "", "type": "string" },
-    { "key": "donor_email", "value": "donor1@test.com", "type": "string" },
-    { "key": "charity_email", "value": "charity1@test.com", "type": "string" },
-    { "key": "admin_token", "value": "", "type": "string" },
-    { "key": "request_id", "value": "1", "type": "string" },
-    { "key": "charity_id", "value": "1", "type": "string" }
-  ],
-  "item": [
-    {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Register Donor",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
-                  "const json = pm.response.json();",
-                  "if (json.data && json.data.token) { pm.collectionVariables.set('token', json.data.token); }"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Ahmad\",\n  \"type\": \"restaurant\",\n  \"email\": \"{{donor_email}}\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/register/donor",
-              "host": ["{{base_url}}"],
-              "path": ["register", "donor"]
-            }
-          }
-        },
-        {
-          "name": "Register Charity",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
-                  "const json = pm.response.json();",
-                  "if (json.data && json.data.token) { pm.collectionVariables.set('token', json.data.token); }"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Al-Birr Charity\",\n  \"email\": \"{{charity_email}}\",\n  \"phone\": \"0911111111\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"has_kitchen\": true,\n  \"address\": \"Aleppo - Al-Furqan\",\n  \"work_start\": \"08:00\",\n  \"work_end\": \"16:00\",\n  \"license_document\": null\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/register/charity",
-              "host": ["{{base_url}}"],
-              "path": ["register", "charity"]
-            }
-          }
-        },
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
-                  "const json = pm.response.json();",
-                  "if (json.data && json.data.token) { pm.collectionVariables.set('token', json.data.token); }"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{donor_email}}\",\n  \"password\": \"password123\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/login",
-              "host": ["{{base_url}}"],
-              "path": ["login"]
-            }
-          }
-        },
-        {
-          "name": "Me",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/me",
-              "host": ["{{base_url}}"],
-              "path": ["me"]
-            }
-          }
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/logout",
-              "host": ["{{base_url}}"],
-              "path": ["logout"]
-            }
-          }
-        }
-      ]
+{
+    "info": {
+        "_postman_id": "a409ce3d-6ef0-4556-8b85-9149672bc348",
+        "name": "Food Surplus API",
+        "description": "Food Surplus platform API — auth, food categories, and admin.\n\n=== SETUP ===\n1. Set `base_url` if the API is not on http://127.0.0.1:8000/api\n2. Run any Register or Login request — the token is saved into the `token` variable automatically, so every other request just works.\n\n=== RESPONSE SHAPE ===\nEvery response, success or error, looks like this:\n{ \"success\": bool, \"data\": object|null, \"message\": string|null, \"errors\": object|null }\n\nSo you can write ONE response handler for the whole app:\n- success == true  -> read `data`\n- success == false -> show `message`, and on 422 show `errors` under each field\n\nStatus codes: 200 OK · 201 Created · 401 Unauthenticated · 403 Forbidden · 404 Not found · 422 Validation error · 429 Too many requests.\n\n=== ENUMS (fixed values — never send anything else) ===\n\n1) account_type — which kind of account to create (register only)\n   \"donor\"   -> a person/business giving away surplus food\n   \"charity\" -> an organization that collects and distributes it\n\n2) type — the donor's kind. REQUIRED when account_type = \"donor\"\n   \"individual\" -> a private person\n   \"restaurant\" -> a restaurant\n   \"hotel\"      -> a hotel\n   \"company\"    -> a company\n\n3) status — the charity's account state. READ-ONLY (the API sets it, you only display it)\n   \"pending\"   -> just registered, waiting for the admin. Can log in, but every charity feature returns 403.\n   \"active\"    -> approved by the admin. Full access.\n   \"suspended\" -> blocked by the admin. Can log in to see this, but no access.\n   => After login, if data.type == \"charity\", branch on data.user.status to pick the screen.\n\n4) data.type — which kind of account just logged in (returned by register / login / me)\n   \"donor\" | \"charity\"  -> use it to decide which home screen to open.\n\nBooleans are real JSON booleans (true/false), not 0/1 or \"true\".\nTimes are \"HH:MM:SS\" (e.g. \"08:00:00\"). Dates are ISO 8601 UTC.\n\n\n5) status (on a donation request) — READ-ONLY, the API drives it\n   \"pending\"    -> published, waiting for a charity to accept\n   \"accepted\"   -> a charity took it; charity + eta_minutes are now filled in\n   \"picked_up\"  -> the donor confirmed the handover; the food changed hands\n   \"completed\"  -> the charity filed its distribution numbers\n   \"cancelled\"  -> the donor cancelled (see cancel_reason)\n   \"expired\"    -> valid_until passed with nobody taking it\n   \"no_show\"    -> the charity accepted but never came (phase 3)\n   CAREFUL: \"pending\" here means \"waiting for a charity\". The charity ACCOUNT\n   status (item 3) also has a \"pending\" — different field, different meaning.\n\n=== PAGINATION (every list endpoint) ===\nRows      -> data.data      (array)\nPage info -> data.meta      (current_page, last_page, per_page, total)\nPage URLs -> data.links     (first, last, prev, next — null at the edges)\nNext page -> add ?page=2\n\n=== HEADS UP: RATE LIMIT ===\n/register and /login accept only 5 requests per minute per IP. Going over returns 429 \"Too many requests\". If registration suddenly stops working while testing, that is why — wait a minute and continue. Nothing is broken.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
-    {
-      "name": "Food Categories",
-      "item": [
+    "variable": [
         {
-          "name": "Get Food Categories",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/food-categories",
-              "host": ["{{base_url}}"],
-              "path": ["food-categories"]
-            }
-          }
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000/api/v1",
+            "type": "string"
+        },
+        {
+            "key": "token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "donor_email",
+            "value": "ahmad.donor@example.com",
+            "type": "string"
+        },
+        {
+            "key": "charity_email",
+            "value": "birr@example.com",
+            "type": "string"
+        },
+        {
+            "key": "admin_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "charity_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "request_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "notification_id",
+            "value": "2",
+            "type": "string"
         }
-      ]
-    },
-    {
-      "name": "Donor",
-      "item": [
+    ],
+    "item": [
         {
-          "name": "List My Requests",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/donor/requests",
-              "host": ["{{base_url}}"],
-              "path": ["donor", "requests"]
-            }
-          }
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Register (Donor)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                                    "const json = pm.response.json();",
+                                    "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"account_type\": \"donor\",\n  \"name\": \"Ahmad\",\n  \"type\": \"restaurant\",\n  \"email\": \"{{donor_email}}\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/register",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "register"
+                            ]
+                        },
+                        "description": "Creates a donor account. Usable immediately — no admin approval needed.\n\nFIELDS\n- account_type : \"donor\"  (fixed)\n- name         : max 120 chars\n- type         : \"individual\" | \"restaurant\" | \"hotel\" | \"company\"   <- dropdown in the UI\n- email        : must not exist as a donor OR a charity\n- phone        : max 20 chars\n- password     : min 8 chars\n- password_confirmation : must match password\n\nRETURNS a token — save it and send it as `Authorization: Bearer <token>` on every protected request.\n\nNote: re-running this returns 422 (email taken). Change the `donor_email` variable to register again."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"account_type\": \"donor\",\n  \"name\": \"Ahmad\",\n  \"type\": \"restaurant\",\n  \"email\": \"ahmad.donor@example.com\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/register",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "register"
+                                    ]
+                                }
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"donor\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Ahmad\",\n      \"type\": \"restaurant\",\n      \"email\": \"ahmad.donor@example.com\",\n      \"phone\": \"0999999999\",\n      \"created_at\": \"2026-08-24T19:02:47.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:47.000000Z\"\n    },\n    \"token\": \"5|yc1UXJuPBZ1JitKy8j6AzypVSfCHLGrnp3wTz0EHd1e76285\"\n  },\n  \"message\": \"Registered successfully\"\n}"
+                        },
+                        {
+                            "name": "422 Email already taken",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"account_type\": \"donor\",\n  \"name\": \"Ahmad\",\n  \"type\": \"restaurant\",\n  \"email\": \"ahmad.donor@example.com\",\n  \"phone\": \"0999999999\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/register",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "register"
+                                    ]
+                                }
+                            },
+                            "status": "Unprocessable Content",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"email\": [\"This email is already registered.\"]\n  }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Register (Charity)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                                    "const json = pm.response.json();",
+                                    "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"account_type\": \"charity\",\n  \"name\": \"Al-Birr Charity\",\n  \"email\": \"{{charity_email}}\",\n  \"phone\": \"0911111111\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"has_kitchen\": true,\n  \"address\": \"Aleppo - Al-Furqan\",\n  \"work_start\": \"08:00\",\n  \"work_end\": \"16:00\",\n  \"license_document\": null\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/register",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "register"
+                            ]
+                        },
+                        "description": "Creates a charity account. It always starts as status = \"pending\".\n\nIMPORTANT FOR THE APP FLOW\nA pending charity CAN log in and call /me — so it can see its own status — but it CANNOT use any charity feature until an admin approves it. Show a \"waiting for approval\" screen while status is \"pending\".\n\nFIELDS\n- account_type     : \"charity\"  (fixed)\n- name             : max 120 chars\n- email            : must not exist as a donor OR a charity\n- phone            : max 20 chars\n- password         : min 8 chars\n- password_confirmation : must match password\n- has_kitchen      : true | false  <- true means it can cook raw food. A charity with false is NEVER shown food that needs cooking.\n- address          : max 255 chars\n- work_start       : \"HH:MM\" 24h, e.g. \"08:00\"\n- work_end         : \"HH:MM\" 24h, must be after work_start\n- license_document : optional, send null or omit it\n\nRETURNS status = \"pending\" plus a token (usable for /me and /logout right away)."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created (pending approval)",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"account_type\": \"charity\",\n  \"name\": \"Al-Birr Charity\",\n  \"email\": \"birr@example.com\",\n  \"phone\": \"0911111111\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"has_kitchen\": true,\n  \"address\": \"Aleppo - Al-Furqan\",\n  \"work_start\": \"08:00\",\n  \"work_end\": \"16:00\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/register",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "register"
+                                    ]
+                                }
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"charity\",\n    \"user\": {\n      \"id\": 2,\n      \"name\": \"Al-Birr Charity\",\n      \"email\": \"birr@example.com\",\n      \"phone\": \"0911111111\",\n      \"has_kitchen\": true,\n      \"status\": \"pending\",\n      \"license_document\": null,\n      \"rating_avg\": null,\n      \"ratings_count\": 0,\n      \"address\": \"Aleppo - Al-Furqan\",\n      \"work_start\": \"08:00:00\",\n      \"work_end\": \"16:00:00\",\n      \"created_at\": \"2026-08-24T19:02:48.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:48.000000Z\",\n      \"logo_url\": null\n    },\n    \"token\": \"6|wkgRz0KlIJ1IVj65OZGVhD0OtscnVpu6XmvYEJ5B5c6f5155\"\n  },\n  \"message\": \"Registered successfully. Your account is pending admin approval.\"\n}"
+                        },
+                        {
+                            "name": "422 Missing charity fields",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"account_type\": \"charity\",\n  \"name\": \"Y\",\n  \"email\": \"y@example.com\",\n  \"phone\": \"0911111111\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/register",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "register"
+                                    ]
+                                }
+                            },
+                            "status": "Unprocessable Content",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"has_kitchen\": [\"The has kitchen field is required when account type is charity.\"],\n    \"address\": [\"The address field is required when account type is charity.\"],\n    \"work_start\": [\"The work start field is required when account type is charity.\"],\n    \"work_end\": [\"The work end field is required when account type is charity.\"]\n  }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                                    "const json = pm.response.json();",
+                                    "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"{{donor_email}}\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "description": "ONE login endpoint for both account types — do not ask the user whether they are a donor or a charity, the API works it out.\n\nHOW TO ROUTE AFTER LOGIN\n1. Read `data.type`:\n   \"donor\"   -> open the donor home screen\n   \"charity\" -> go to step 2\n2. For a charity, read `data.user.status`:\n   \"active\"    -> charity home screen\n   \"pending\"   -> \"waiting for admin approval\" screen\n   \"suspended\" -> \"account suspended\" screen\n\nA pending or suspended charity logs in successfully (200) on purpose, so it can see where it stands.\n\nBODY: email, password. Wrong email or wrong password both return the same 401 \"Invalid credentials\" — deliberate, so nobody can discover which emails exist."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK (donor)",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"ahmad.donor@example.com\",\n  \"password\": \"password123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/login",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "login"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"donor\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Ahmad\",\n      \"type\": \"restaurant\",\n      \"email\": \"ahmad.donor@example.com\",\n      \"phone\": \"0999999999\",\n      \"created_at\": \"2026-08-24T19:02:47.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:47.000000Z\"\n    },\n    \"token\": \"7|b2Hg3zyLpGRVgUTZsNFnkWrttNI1fDPKD02HuQ2qc26bba8b\"\n  },\n  \"message\": null\n}"
+                        },
+                        {
+                            "name": "200 OK (charity)",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"birr@example.com\",\n  \"password\": \"password123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/login",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "login"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"charity\",\n    \"user\": {\n      \"id\": 2,\n      \"name\": \"Al-Birr Charity\",\n      \"email\": \"birr@example.com\",\n      \"phone\": \"0911111111\",\n      \"has_kitchen\": true,\n      \"status\": \"pending\",\n      \"license_document\": null,\n      \"rating_avg\": null,\n      \"ratings_count\": 0,\n      \"address\": \"Aleppo - Al-Furqan\",\n      \"work_start\": \"08:00:00\",\n      \"work_end\": \"16:00:00\",\n      \"created_at\": \"2026-08-24T19:02:48.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:48.000000Z\",\n      \"logo_url\": null\n    },\n    \"token\": \"8|wkgRz0KlIJ1IVj65OZGVhD0OtscnVpu6XmvYEJ5B5c6f5155\"\n  },\n  \"message\": null\n}"
+                        },
+                        {
+                            "name": "401 Invalid credentials",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"ahmad.donor@example.com\",\n  \"password\": \"wrongpass\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/login",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "login"
+                                    ]
+                                }
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Invalid credentials\",\n  \"errors\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Me",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/me",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "me"
+                            ]
+                        },
+                        "description": "Returns the currently authenticated donor or charity.\n\nUse this on app start: if the saved token still returns 200, skip the login screen. A 401 means the token is gone or was revoked — send the user back to login."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/me",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "me"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"donor\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Ahmad\",\n      \"type\": \"restaurant\",\n      \"email\": \"ahmad.donor@example.com\",\n      \"phone\": \"0999999999\",\n      \"created_at\": \"2026-08-24T19:02:47.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:47.000000Z\"\n    }\n  },\n  \"message\": null\n}"
+                        },
+                        {
+                            "name": "401 Unauthenticated",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{base_url}}/me",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "me"
+                                    ]
+                                }
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Unauthenticated\",\n  \"errors\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Logout",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                                    "if (pm.response.code === 200) pm.collectionVariables.set('token', '');"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/logout",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "logout"
+                            ]
+                        },
+                        "description": "Revokes only the token used for this request, so signing out on one device does not sign the user out everywhere else. Delete the token from local storage after this succeeds."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/logout",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "logout"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": null,\n  \"message\": \"Logged out\"\n}"
+                        }
+                    ]
+                }
+            ]
         },
         {
-          "name": "Create Donation Request",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"food_category_id\": 1,\n  \"title\": \"Fresh vegetables\",\n  \"description\": \"10kg of vegetables ready for pickup\",\n  \"quantity\": 10,\n  \"unit\": \"kg\",\n  \"pickup_time\": \"2026-08-30T18:00:00Z\",\n  \"location\": \"Aleppo City Center\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/donor/requests",
-              "host": ["{{base_url}}"],
-              "path": ["donor", "requests"]
-            }
-          }
+            "name": "Reference",
+            "item": [
+                {
+                    "name": "Food Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/food-categories",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "food-categories"
+                            ]
+                        },
+                        "description": "The list that fills the food-category dropdown on the \"create donation request\" screen. Short and fixed, so it is NOT paginated — `data` is a plain array.\n\nEach item has both `name_ar` and `name_en`; show `name_ar` in the Arabic UI.\n\n`default_needs_cooking` is a suggestion, not a rule: when the donor picks a category, pre-fill the \"needs cooking?\" switch from this value but let them change it. It matters because food that needs cooking is never shown to a charity without a kitchen."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/food-categories",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "food-categories"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": [\n    { \"id\": 1, \"name_ar\": \"طعام مطبوخ جاهز\", \"name_en\": \"Cooked / Ready\", \"default_needs_cooking\": false },\n    { \"id\": 2, \"name_ar\": \"خضار وفواكه\", \"name_en\": \"Fruits & Vegetables\", \"default_needs_cooking\": false },\n    { \"id\": 3, \"name_ar\": \"مخبوزات وحلويات\", \"name_en\": \"Bakery & Sweets\", \"default_needs_cooking\": false },\n    { \"id\": 4, \"name_ar\": \"معلّبات وأطعمة جافة\", \"name_en\": \"Canned & Dry\", \"default_needs_cooking\": false },\n    { \"id\": 5, \"name_ar\": \"لحوم ودواجن نيئة\", \"name_en\": \"Raw Meat & Poultry\", \"default_needs_cooking\": true },\n    { \"id\": 6, \"name_ar\": \"حبوب نيئة\", \"name_en\": \"Raw Grains\", \"default_needs_cooking\": true },\n    { \"id\": 7, \"name_ar\": \"غير ذلك\", \"name_en\": \"Other\", \"default_needs_cooking\": false }\n  ],\n  \"message\": null\n}"
+                        }
+                    ]
+                }
+            ]
         },
         {
-          "name": "Get Donation Request By ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/donor/requests/{{request_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["donor", "requests", "{{request_id}}"]
-            }
-          }
+            "name": "Donor — Donations",
+            "description": "Everything the donor does with a donation request.\n\nTHE LIFECYCLE (read this once, it explains every screen)\n\n  pending  ──charity accepts──>  accepted  ──donor confirms──>  picked_up\n     │                              │                               │\n     │                              │                               └──charity files numbers──> completed\n     ├──donor cancels──> cancelled  │\n     └──expiry passes──> expired    └──donor cancels──> cancelled\n\nThe donor screens map to it like this:\n  pending    -> \"waiting for a charity to accept\" (poll GET /donor/requests/{id})\n  accepted   -> show the charity card + eta_minutes, and the \"Delivered\" button\n  picked_up  -> handover done; show the rating prompt\n  completed  -> the charity filed its distribution numbers\n  cancelled  -> show cancel_reason\n  expired    -> nobody took it in time",
+            "item": [
+                {
+                    "name": "Create Donation Request",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                                    "const json = pm.response.json();",
+                                    "if (json.data && json.data.id) pm.collectionVariables.set('request_id', json.data.id);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"food_category_id\": 1,\n  \"quantity_desc\": \"about 20 meals\",\n  \"description\": \"rice and chicken\",\n  \"valid_until\": \"2026-08-30 20:00:00\",\n  \"pickup_until\": \"2026-08-30 18:00:00\",\n  \"pickup_address\": \"Aleppo - Al-Furqan, near the mosque\",\n  \"contact_phone\": \"0999999999\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/donor/requests",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "donor",
+                                "requests"
+                            ]
+                        },
+                        "description": "Publishes a new donation request. It starts as status \"pending\" and becomes visible to every eligible charity.\n\nFIELDS\n- food_category_id : REQUIRED. An id from GET /food-categories.\n- quantity_desc    : REQUIRED. Free text, max 150. The donor's rough estimate (\"about 20 meals\", \"3 trays\"). Real numbers come from the charity later.\n- description      : optional, max 255. Ingredients, allergy notes, anything extra.\n- needs_cooking    : OPTIONAL true/false. If you omit it, the API fills it from the category's default_needs_cooking. Send it only when the donor overrides the switch.\n- valid_until      : REQUIRED. \"YYYY-MM-DD HH:MM:SS\". Must be in the FUTURE. Last moment the food is still edible.\n- pickup_until     : REQUIRED. Same format. Must be in the future AND not later than valid_until. Last moment the donor can hand it over.\n- pickup_address   : REQUIRED, max 255. Written location — the donor always types where they are.\n- latitude         : OPTIONAL, -90..90. Map pin.\n- longitude        : OPTIONAL, -180..180. Map pin.\n- contact_phone    : REQUIRED, max 20.\n\nABOUT THE MAP PIN: latitude and longitude are optional, but they travel together — sending one without the other is a 422. Send both, or neither.\n\nWHY needs_cooking MATTERS: food flagged as needing cooking is NEVER shown to a charity that has no kitchen. Pre-tick the switch from the category's default_needs_cooking and let the donor change it."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"food_category_id\": 1,\n  \"quantity_desc\": \"about 20 meals\",\n  \"description\": \"rice and chicken\",\n  \"valid_until\": \"2026-08-30 20:00:00\",\n  \"pickup_until\": \"2026-08-30 18:00:00\",\n  \"pickup_address\": \"Aleppo - Al-Furqan\",\n  \"contact_phone\": \"0999999999\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests"
+                                    ]
+                                }
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"status\": \"pending\",\n    \"food_category\": {\n      \"id\": 1,\n      \"name_ar\": \"طعام مطبوخ جاهز\",\n      \"name_en\": \"Cooked / Ready\",\n      \"default_needs_cooking\": false\n    },\n    \"needs_cooking\": false,\n    \"quantity_desc\": \"about 20 meals\",\n    \"description\": \"rice and chicken\",\n    \"valid_until\": \"2026-08-30T20:00:00.000000Z\",\n    \"pickup_until\": \"2026-08-30T18:00:00.000000Z\",\n    \"pickup_address\": \"Aleppo - Al-Furqan\",\n    \"latitude\": null,\n    \"longitude\": null,\n    \"contact_phone\": \"0999999999\",\n    \"charity\": null,\n    \"eta_minutes\": null,\n    \"accepted_at\": null,\n    \"picked_up_at\": null,\n    \"cancel_reason\": null,\n    \"created_at\": \"2026-08-27T17:43:14.000000Z\"\n  },\n  \"message\": \"Donation request published\"\n}"
+                        },
+                        {
+                            "name": "422 Pickup later than expiry",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"food_category_id\": 1,\n  \"quantity_desc\": \"20 meals\",\n  \"valid_until\": \"2026-08-30 12:00:00\",\n  \"pickup_until\": \"2026-08-30 20:00:00\",\n  \"pickup_address\": \"Aleppo\",\n  \"contact_phone\": \"0999999999\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests"
+                                    ]
+                                }
+                            },
+                            "status": "Unprocessable Content",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"pickup_until\": [\"Pickup time cannot be later than the food expiry time.\"]\n  }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "My Requests (list)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/donor/requests?status=pending",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "donor",
+                                "requests"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "pending",
+                                    "description": "Optional filter: pending | accepted | picked_up | completed | expired | cancelled | no_show. Remove to list all.",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "The donor's own requests, newest first, 15 per page.\n\nPAGINATION SHAPE — important:\nThe rows are in data.data (an array).\nPage info is in data.meta: current_page, last_page, per_page, total.\nPage links are in data.links: first, last, prev, next (prev/next are null at the edges).\nFetch page 2 with ?page=2.\n\nAn invalid ?status value returns 422, it does not silently ignore the filter."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"data\": [\n      {\n        \"id\": 2,\n        \"status\": \"cancelled\",\n        \"food_category\": {\n          \"id\": 5,\n          \"name_ar\": \"لحوم ودواجن نيئة\",\n          \"name_en\": \"Raw Meat & Poultry\",\n          \"default_needs_cooking\": true\n        },\n        \"needs_cooking\": true,\n        \"quantity_desc\": \"5 kg raw chicken\",\n        \"description\": null,\n        \"valid_until\": \"2026-08-30T20:00:00.000000Z\",\n        \"pickup_until\": \"2026-08-30T18:00:00.000000Z\",\n        \"pickup_address\": \"Aleppo\",\n        \"latitude\": null,\n        \"longitude\": null,\n        \"contact_phone\": \"0999999999\",\n        \"charity\": null,\n        \"eta_minutes\": null,\n        \"accepted_at\": null,\n        \"picked_up_at\": null,\n        \"cancel_reason\": \"Changed my mind\",\n        \"created_at\": \"2026-08-27T17:58:20.000000Z\"\n      }\n    ],\n    \"links\": {\n      \"first\": \"http://127.0.0.1:8000/api/v1/donor/requests?page=1\",\n      \"last\": \"http://127.0.0.1:8000/api/v1/donor/requests?page=1\",\n      \"prev\": null,\n      \"next\": null\n    },\n    \"meta\": {\n      \"current_page\": 1,\n      \"from\": 1,\n      \"last_page\": 1,\n      \"path\": \"http://127.0.0.1:8000/api/v1/donor/requests\",\n      \"per_page\": 15,\n      \"to\": 2,\n      \"total\": 2\n    }\n  },\n  \"message\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Request Details (track status)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/donor/requests/{{request_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "donor",
+                                "requests",
+                                "{{request_id}}"
+                            ]
+                        },
+                        "description": "Full details of one of the donor's own requests. This is the endpoint the \"waiting\" and \"accepted\" screens poll.\n\nWHAT APPEARS WHEN\n- charity      : null while pending. Once a charity accepts, it holds that charity's card: id, name, phone, address, logo_url, rating_avg, ratings_count, completed_donations_count.\n- eta_minutes  : null while pending. After acceptance, the minutes the charity said it needs to arrive — show it as \"arriving in about N minutes\".\n- rating_avg   : null when the charity has no ratings yet. Show \"no ratings yet\", not a zero.\n- distribution : null until the charity files its numbers (families_count, individuals_count, area).\n- rating       : null until the donor rates. Non-null means already rated — hide the rating button.\n\nRequesting another donor's request id returns 404 (not 403) on purpose, so ids cannot be probed."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK (picked up, rated)",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests/1",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests",
+                                        "1"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"status\": \"picked_up\",\n    \"food_category\": {\n      \"id\": 1,\n      \"name_ar\": \"طعام مطبوخ جاهز\",\n      \"name_en\": \"Cooked / Ready\",\n      \"default_needs_cooking\": false\n    },\n    \"needs_cooking\": false,\n    \"quantity_desc\": \"about 20 meals\",\n    \"description\": \"rice and chicken\",\n    \"valid_until\": \"2026-08-30T20:00:00.000000Z\",\n    \"pickup_until\": \"2026-08-30T18:00:00.000000Z\",\n    \"pickup_address\": \"Aleppo - Al-Furqan\",\n    \"latitude\": null,\n    \"longitude\": null,\n    \"contact_phone\": \"0999999999\",\n    \"charity\": {\n      \"id\": 1,\n      \"name\": \"Al-Birr\",\n      \"phone\": \"0911111111\",\n      \"address\": \"Aleppo\",\n      \"logo_url\": null,\n      \"rating_avg\": 5,\n      \"ratings_count\": 1,\n      \"completed_donations_count\": 0\n    },\n    \"eta_minutes\": 30,\n    \"accepted_at\": \"2026-08-27T17:52:45.000000Z\",\n    \"picked_up_at\": \"2026-08-27T17:52:47.000000Z\",\n    \"cancel_reason\": null,\n    \"created_at\": \"2026-08-27T17:43:14.000000Z\",\n    \"distribution\": null,\n    \"rating\": {\n      \"id\": 1,\n      \"stars\": 5,\n      \"comment\": \"fast and professional\",\n      \"created_at\": \"2026-08-27T17:52:48.000000Z\"\n    }\n  },\n  \"message\": null\n}"
+                        },
+                        {
+                            "name": "404 Not yours / does not exist",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests/999",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests",
+                                        "999"
+                                    ]
+                                }
+                            },
+                            "status": "Not Found",
+                            "code": 404,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Not found\",\n  \"errors\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Cancel Request",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Changed my mind\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/donor/requests/{{request_id}}/cancel",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "donor",
+                                "requests",
+                                "{{request_id}}",
+                                "cancel"
+                            ]
+                        },
+                        "description": "Cancels the request.\n\nALLOWED ONLY from status \"pending\" or \"accepted\". Anything else (already picked_up, completed, cancelled) returns 422 — so hide the cancel button once the status leaves those two.\n\nBODY\n- reason : optional, max 255. Comes back as cancel_reason on the request."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"reason\": \"Changed my mind\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests/2/cancel",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests",
+                                        "2",
+                                        "cancel"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 2,\n    \"status\": \"cancelled\",\n    \"cancel_reason\": \"Changed my mind\",\n    \"charity\": null,\n    \"eta_minutes\": null\n  },\n  \"message\": \"Donation request cancelled\"\n}"
+                        },
+                        {
+                            "name": "422 Cannot cancel from this state",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests/2/cancel",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests",
+                                        "2",
+                                        "cancel"
+                                    ]
+                                }
+                            },
+                            "status": "Unprocessable Content",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"status\": [\"Invalid state transition\"]\n  }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Confirm Handover",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/donor/requests/{{request_id}}/confirm",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "donor",
+                                "requests",
+                                "{{request_id}}",
+                                "confirm"
+                            ]
+                        },
+                        "description": "The donor states the food has changed hands. This is what moves the request to \"picked_up\".\n\nHOW IT WORKS ON SCREEN\n1. The charity arrives and collects the food.\n2. The donor taps \"Delivered\" on the request screen.\n3. Send this request — no body is needed.\n4. On success the status becomes \"picked_up\" — now show the rating prompt.\n\nBODY\n- None. Send an empty request.\n\nWHAT HAPPENS BEHIND THE SCENES\nThe backend records a notification for the admin (\"charity X received from donor Y\") and one for the charity. You do not need to do anything for that.\n\nERRORS\n- 422 if the request is not in status \"accepted\" (already confirmed, cancelled, or never accepted). Do not retry on 422.\n- 404 if the request does not belong to this donor."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests/1/confirm",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests",
+                                        "1",
+                                        "confirm"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"status\": \"picked_up\",\n    \"quantity_desc\": \"20 meals\",\n    \"eta_minutes\": 30,\n    \"accepted_at\": \"2026-08-30T10:05:00.000000Z\",\n    \"picked_up_at\": \"2026-08-30T10:35:00.000000Z\",\n    \"charity\": { \"id\": 1, \"name\": \"Al-Birr\", \"rating_avg\": \"4.80\" }\n  },\n  \"message\": \"Handover confirmed\"\n}"
+                        },
+                        {
+                            "name": "422 Not in accepted state",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests/1/confirm",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests",
+                                        "1",
+                                        "confirm"
+                                    ]
+                                }
+                            },
+                            "status": "Unprocessable Content",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"status\": [\"Invalid state transition\"]\n  }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Rate the Charity",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"stars\": 5,\n  \"comment\": \"Fast pickup, very professional\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/donor/requests/{{request_id}}/rate",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "donor",
+                                "requests",
+                                "{{request_id}}",
+                                "rate"
+                            ]
+                        },
+                        "description": "The donor rates the charity for this donation.\n\nWHEN IT IS ALLOWED: from status \"picked_up\" onwards (picked_up or completed). The donor does not have to wait for the charity to file its distribution numbers.\n\nONE RATING PER DONATION. A second attempt returns 422. Before showing the rating button, check the `rating` field on the request — if it is not null, it was already rated.\n\nBODY\n- stars   : REQUIRED, integer 1..5\n- comment : optional, max 500\n\nThe charity's rating_avg and ratings_count are recalculated immediately."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"stars\": 5,\n  \"comment\": \"Fast pickup, very professional\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests/1/rate",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests",
+                                        "1",
+                                        "rate"
+                                    ]
+                                }
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"stars\": 5,\n    \"comment\": \"Fast pickup, very professional\",\n    \"created_at\": \"2026-08-27T17:52:48.000000Z\"\n  },\n  \"message\": \"Thank you for your rating\"\n}"
+                        },
+                        {
+                            "name": "422 Already rated",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"stars\": 3\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/donor/requests/1/rate",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "donor",
+                                        "requests",
+                                        "1",
+                                        "rate"
+                                    ]
+                                }
+                            },
+                            "status": "Unprocessable Content",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"stars\": [\"This donation has already been rated.\"]\n  }\n}"
+                        }
+                    ]
+                }
+            ]
         },
         {
-          "name": "Cancel Donation Request",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"reason\": \"Not needed anymore\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/donor/requests/{{request_id}}/cancel",
-              "host": ["{{base_url}}"],
-              "path": ["donor", "requests", "{{request_id}}", "cancel"]
-            }
-          }
+            "name": "Charity — Donations",
+            "description": "What an APPROVED charity can do.\n\nGATE: every request in this folder requires the charity's status to be \"active\". A pending or suspended charity gets 403 \"Charity account is not active\". Log in, read data.user.status, and show the waiting/suspended screen instead of these features.\n\nTHE KITCHEN RULE (the most important rule in the project): a charity with has_kitchen = false NEVER sees food flagged needs_cooking = true. It is filtered out of the available list, and even a hand-crafted accept call for such a request is rejected with 422.",
+            "item": [
+                {
+                    "name": "Available Requests",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests/available",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests",
+                                "available"
+                            ]
+                        },
+                        "description": "Open requests this charity is eligible to take, newest first, 15 per page.\n\nA request appears here only if ALL of these hold:\n1. status is \"pending\" (nobody has taken it)\n2. valid_until is still in the future\n3. if it needs cooking, this charity has a kitchen\n4. this charity did not previously no-show on it\n\nSame pagination shape as the donor list: rows in data.data, page info in data.meta.\n\nEach row includes pickup_until so the charity can judge whether it can get there within its own working hours — that judgement is left to the charity, the API does not filter on it."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/available",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "available"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"data\": [\n      {\n        \"id\": 1,\n        \"status\": \"pending\",\n        \"food_category\": {\n          \"id\": 1,\n          \"name_ar\": \"طعام مطبوخ جاهز\",\n          \"name_en\": \"Cooked / Ready\",\n          \"default_needs_cooking\": false\n        },\n        \"needs_cooking\": false,\n        \"quantity_desc\": \"about 20 meals\",\n        \"description\": \"rice and chicken\",\n        \"valid_until\": \"2026-08-30T20:00:00.000000Z\",\n        \"pickup_until\": \"2026-08-30T18:00:00.000000Z\",\n        \"pickup_address\": \"Aleppo - Al-Furqan\",\n        \"latitude\": null,\n        \"longitude\": null,\n        \"contact_phone\": \"0999999999\",\n        \"charity\": null,\n        \"eta_minutes\": null,\n        \"created_at\": \"2026-08-27T17:43:14.000000Z\"\n      }\n    ],\n    \"links\": { \"first\": \"...?page=1\", \"last\": \"...?page=1\", \"prev\": null, \"next\": null },\n    \"meta\": { \"current_page\": 1, \"last_page\": 1, \"per_page\": 15, \"total\": 1 }\n  },\n  \"message\": null\n}"
+                        },
+                        {
+                            "name": "403 Charity not approved yet",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/available",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "available"
+                                    ]
+                                }
+                            },
+                            "status": "Forbidden",
+                            "code": 403,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Charity account is not active\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Accept Request",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"eta_minutes\": 30\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests/{{request_id}}/accept",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests",
+                                "{{request_id}}",
+                                "accept"
+                            ]
+                        },
+                        "description": "The charity claims the request. Status becomes \"accepted\" and the donor is now waiting for this charity.\n\nBODY\n- eta_minutes : REQUIRED, integer 5..480. How long the charity needs to reach the donor. The donor sees it as \"arriving in about N minutes\".\n\nFIRST COME, FIRST SERVED\nOne request goes to exactly one charity. If another charity claimed it a moment earlier you get 422 \"Request is no longer available\" — refresh the available list.\n\nKITCHEN RULE\nA charity with has_kitchen = false cannot accept food where needs_cooking = true. Those requests never appear in the available list, and a direct attempt returns 422.\n\nWHAT THE DONOR SEES\nThe backend notifies the donor which charity accepted and the ETA. Nothing extra to send."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"eta_minutes\": 30\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/1/accept",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "1",
+                                        "accept"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"status\": \"accepted\",\n    \"needs_cooking\": false,\n    \"quantity_desc\": \"20 meals\",\n    \"pickup_address\": \"Aleppo - Al-Furqan\",\n    \"contact_phone\": \"0999999999\",\n    \"eta_minutes\": 30,\n    \"accepted_at\": \"2026-08-30T10:05:00.000000Z\",\n    \"category\": { \"id\": 1, \"name_ar\": \"طعام مطبوخ جاهز\", \"name_en\": \"Cooked / Ready\" },\n    \"donor\": { \"id\": 1, \"name\": \"Ahmad\", \"type\": \"restaurant\" }\n  },\n  \"message\": \"Request accepted\"\n}"
+                        },
+                        {
+                            "name": "422 Already taken",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"eta_minutes\": 30\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/1/accept",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "1",
+                                        "accept"
+                                    ]
+                                }
+                            },
+                            "status": "Unprocessable Content",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"status\": [\"Request is no longer available\"]\n  }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "My Accepted Requests",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests"
+                            ]
+                        },
+                        "description": "Everything this charity has taken — its work queue and its history. Newest first, 15 per page, same pagination shape as the other lists.\n\nGroup them in the UI by status: accepted = still to collect, picked_up = collected, awaiting distribution numbers, completed = done."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"data\": [\n      {\n        \"id\": 1,\n        \"status\": \"picked_up\",\n        \"quantity_desc\": \"about 20 meals\",\n        \"pickup_address\": \"Aleppo - Al-Furqan\",\n        \"contact_phone\": \"0999999999\",\n        \"eta_minutes\": 30,\n        \"accepted_at\": \"2026-08-27T17:52:45.000000Z\",\n        \"picked_up_at\": \"2026-08-27T17:52:47.000000Z\",\n        \"distribution\": null\n      }\n    ],\n    \"links\": { \"first\": \"...?page=1\", \"last\": \"...?page=1\", \"prev\": null, \"next\": null },\n    \"meta\": { \"current_page\": 1, \"last_page\": 1, \"per_page\": 15, \"total\": 1 }\n  },\n  \"message\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Accepted Request Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests/{{request_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests",
+                                "{{request_id}}"
+                            ]
+                        },
+                        "description": "Full details of a request this charity has taken, including the donor's contact details for the pickup.\n\nMust be assigned to this charity — otherwise 404."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/1",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "1"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"status\": \"accepted\",\n    \"food_category\": {\n      \"id\": 1,\n      \"name_ar\": \"طعام مطبوخ جاهز\",\n      \"name_en\": \"Cooked / Ready\",\n      \"default_needs_cooking\": false\n    },\n    \"needs_cooking\": false,\n    \"quantity_desc\": \"about 20 meals\",\n    \"description\": \"rice and chicken\",\n    \"valid_until\": \"2026-08-30T20:00:00.000000Z\",\n    \"pickup_until\": \"2026-08-30T18:00:00.000000Z\",\n    \"pickup_address\": \"Aleppo - Al-Furqan\",\n    \"latitude\": null,\n    \"longitude\": null,\n    \"contact_phone\": \"0999999999\",\n    \"eta_minutes\": 30,\n    \"accepted_at\": \"2026-08-27T17:52:45.000000Z\",\n    \"distribution\": null\n  },\n  \"message\": null\n}"
+                        }
+                    ]
+                }
+            ]
         },
         {
-          "name": "Confirm Pickup",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"qr_token\": \"example-qr-token\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/donor/requests/{{request_id}}/confirm",
-              "host": ["{{base_url}}"],
-              "path": ["donor", "requests", "{{request_id}}", "confirm"]
-            }
-          }
-        },
-        {
-          "name": "Rate Donation",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great coordination\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/donor/requests/{{request_id}}/rate",
-              "host": ["{{base_url}}"],
-              "path": ["donor", "requests", "{{request_id}}", "rate"]
-            }
-          }
+            "name": "Admin",
+            "description": "Admin endpoints. These do NOT use a Bearer token — they use the static `X-Admin-Token` header instead.\n\nSet the `admin_token` collection variable to the ADMIN_TOKEN value from the backend .env before running these. The value is deliberately left empty here so it never gets committed to the repository.",
+            "item": [
+                {
+                    "name": "List Charities",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Admin-Token",
+                                "value": "{{admin_token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/charities?status=pending",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "charities"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "pending",
+                                    "description": "Optional: pending | active | suspended. Remove to list all."
+                                }
+                            ]
+                        },
+                        "description": "Lists charities, newest first, paginated 15 per page. Each row includes `strikes_count` (no-show count).\n\nThe response `data` is Laravel's paginator object — the actual rows are in `data.data`, and `data.current_page` / `data.last_page` / `data.total` drive pagination."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "X-Admin-Token",
+                                        "value": "{{admin_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/charities?status=pending",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "charities"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "status",
+                                            "value": "pending"
+                                        }
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"current_page\": 1,\n    \"data\": [\n      {\n        \"id\": 1,\n        \"name\": \"Al-Birr Charity\",\n        \"email\": \"birr@example.com\",\n        \"phone\": \"0911111111\",\n        \"has_kitchen\": true,\n        \"status\": \"pending\",\n        \"license_document\": null,\n        \"rating_avg\": null,\n        \"ratings_count\": 0,\n        \"address\": \"Aleppo - Al-Furqan\",\n        \"work_start\": \"08:00:00\",\n        \"work_end\": \"16:00:00\",\n        \"created_at\": \"2026-08-24T19:30:20.000000Z\",\n        \"updated_at\": \"2026-08-24T19:30:20.000000Z\",\n        \"strikes_count\": 0,\n        \"logo_url\": null\n      }\n    ],\n    \"first_page_url\": \"http://127.0.0.1:8000/api/v1/admin/charities?page=1\",\n    \"from\": 1,\n    \"last_page\": 1,\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  },\n  \"message\": null\n}"
+                        },
+                        {
+                            "name": "401 Invalid admin token",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "X-Admin-Token",
+                                        "value": "wrong-token"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/charities",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "charities"
+                                    ]
+                                }
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Invalid admin token\",\n  \"errors\": null\n}"
+                        },
+                        {
+                            "name": "422 Invalid status filter",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "X-Admin-Token",
+                                        "value": "{{admin_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/charities?status=xyz",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "charities"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "status",
+                                            "value": "xyz"
+                                        }
+                                    ]
+                                }
+                            },
+                            "status": "Unprocessable Content",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Validation failed\",\n  \"errors\": {\n    \"status\": [\"The selected status is invalid.\"]\n  }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Approve Charity",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Admin-Token",
+                                "value": "{{admin_token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/charities/{{charity_id}}/approve",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "charities",
+                                "{{charity_id}}",
+                                "approve"
+                            ]
+                        },
+                        "description": "Sets the charity status to `active` so it can start using charity features.\n\nAlso used to reinstate a suspended charity — in that case its strikes are cleared, so a single later no-show does not immediately re-suspend it."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-Admin-Token",
+                                        "value": "{{admin_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/charities/1/approve",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "charities",
+                                        "1",
+                                        "approve"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Al-Birr Charity\",\n    \"email\": \"birr@example.com\",\n    \"phone\": \"0911111111\",\n    \"has_kitchen\": true,\n    \"status\": \"active\",\n    \"license_document\": null,\n    \"rating_avg\": null,\n    \"ratings_count\": 0,\n    \"address\": \"Aleppo - Al-Furqan\",\n    \"work_start\": \"08:00:00\",\n    \"work_end\": \"16:00:00\",\n    \"created_at\": \"2026-08-24T19:30:20.000000Z\",\n    \"updated_at\": \"2026-08-24T22:24:39.000000Z\",\n    \"logo_url\": null\n  },\n  \"message\": \"Charity approved\"\n}"
+                        },
+                        {
+                            "name": "404 Not found",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-Admin-Token",
+                                        "value": "{{admin_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/charities/999/approve",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "charities",
+                                        "999",
+                                        "approve"
+                                    ]
+                                }
+                            },
+                            "status": "Not Found",
+                            "code": 404,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Not found\",\n  \"errors\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Suspend Charity",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Admin-Token",
+                                "value": "{{admin_token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/charities/{{charity_id}}/suspend",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "charities",
+                                "{{charity_id}}",
+                                "suspend"
+                            ]
+                        },
+                        "description": "Sets the charity status to `suspended`. It can still log in and see its own status, but every charity feature returns 403 until an admin approves it again."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-Admin-Token",
+                                        "value": "{{admin_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/charities/1/suspend",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "charities",
+                                        "1",
+                                        "suspend"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Al-Birr Charity\",\n    \"email\": \"birr@example.com\",\n    \"phone\": \"0911111111\",\n    \"has_kitchen\": true,\n    \"status\": \"suspended\",\n    \"license_document\": null,\n    \"rating_avg\": null,\n    \"ratings_count\": 0,\n    \"address\": \"Aleppo - Al-Furqan\",\n    \"work_start\": \"08:00:00\",\n    \"work_end\": \"16:00:00\",\n    \"created_at\": \"2026-08-24T19:30:20.000000Z\",\n    \"updated_at\": \"2026-08-24T22:30:11.000000Z\",\n    \"logo_url\": null\n  },\n  \"message\": \"Charity suspended\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Notifications (activity feed)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Admin-Token",
+                                "value": "{{admin_token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/notifications?is_read=false",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "notifications"
+                            ],
+                            "query": [
+                                {
+                                    "key": "is_read",
+                                    "value": "false",
+                                    "description": "Optional: true | false. Remove to list all."
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "handover_confirmed",
+                                    "disabled": true,
+                                    "description": "Optional: request_accepted | handover_confirmed"
+                                }
+                            ]
+                        },
+                        "description": "The admin's activity feed. Right now it is the handover trail: which charity received from which donor.\n\nNOTIFICATION TYPES\n- \"handover_confirmed\" -> the donor confirmed the food changed hands. payload carries donor_id, donor_name, charity_id, charity_name.\n- \"request_accepted\"   -> a charity claimed a request. This one is addressed to the donor, so it does NOT appear in this admin feed.\n\nFILTERS (both optional)\n- is_read : true | false\n- type    : one of the types above\n\nPaginated 15 per page, newest first. Rows are in data.data.\n\nNOTE: this endpoint returns ONLY notifications addressed to the admin. Donor and charity notifications are not visible here."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "X-Admin-Token",
+                                        "value": "{{admin_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/notifications",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "notifications"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"data\": [\n      {\n        \"id\": 2,\n        \"type\": \"handover_confirmed\",\n        \"recipient_type\": \"admin\",\n        \"recipient_id\": null,\n        \"payload\": {\n          \"donor_id\": 1,\n          \"donor_name\": \"Ahmad\",\n          \"charity_id\": 1,\n          \"charity_name\": \"Al-Birr\"\n        },\n        \"is_read\": false,\n        \"donation_request_id\": 1,\n        \"created_at\": \"2026-08-30T10:35:00.000000Z\"\n      }\n    ],\n    \"links\": { \"first\": \"...\", \"last\": \"...\", \"prev\": null, \"next\": null },\n    \"meta\": { \"current_page\": 1, \"last_page\": 1, \"per_page\": 15, \"total\": 1 }\n  },\n  \"message\": null\n}"
+                        },
+                        {
+                            "name": "401 Invalid admin token",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "X-Admin-Token",
+                                        "value": "wrong"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/notifications",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "notifications"
+                                    ]
+                                }
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"data\": null,\n  \"message\": \"Invalid admin token\",\n  \"errors\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Mark Notification Read",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Admin-Token",
+                                "value": "{{admin_token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/notifications/{{notification_id}}/read",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "admin",
+                                "notifications",
+                                "{{notification_id}}",
+                                "read"
+                            ]
+                        },
+                        "description": "Marks one admin notification as read. No body.\n\nOnly works on notifications addressed to the admin — passing the id of a donor or charity notification returns 404, on purpose."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-Admin-Token",
+                                        "value": "{{admin_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/notifications/2/read",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "admin",
+                                        "notifications",
+                                        "2",
+                                        "read"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 2,\n    \"type\": \"handover_confirmed\",\n    \"recipient_type\": \"admin\",\n    \"recipient_id\": null,\n    \"payload\": {\n      \"donor_id\": 1,\n      \"donor_name\": \"Ahmad\",\n      \"charity_id\": 1,\n      \"charity_name\": \"Al-Birr\"\n    },\n    \"is_read\": true,\n    \"donation_request_id\": 1,\n    \"created_at\": \"2026-08-30T10:35:00.000000Z\"\n  },\n  \"message\": \"Notification marked as read\"\n}"
+                        }
+                    ]
+                }
+            ]
         }
-      ]
-    },
-    {
-      "name": "Charity",
-      "item": [
-        {
-          "name": "Get Available Requests",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/charity/requests/available",
-              "host": ["{{base_url}}"],
-              "path": ["charity", "requests", "available"]
-            }
-          }
-        },
-        {
-          "name": "List Charity Requests",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/charity/requests",
-              "host": ["{{base_url}}"],
-              "path": ["charity", "requests"]
-            }
-          }
-        },
-        {
-          "name": "Get Charity Request By ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/charity/requests/{{request_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["charity", "requests", "{{request_id}}"]
-            }
-          }
-        },
-        {
-          "name": "Accept Donation Request",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "{{token}}" },
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"eta_minutes\": 30\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/charity/requests/{{request_id}}/accept",
-              "host": ["{{base_url}}"],
-              "path": ["charity", "requests", "{{request_id}}", "accept"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin",
-      "item": [
-        {
-          "name": "List Charities",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "X-Admin-Token", "value": "{{admin_token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/charities",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "charities"]
-            }
-          }
-        },
-        {
-          "name": "Approve Charity",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "X-Admin-Token", "value": "{{admin_token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/charities/{{charity_id}}/approve",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "charities", "{{charity_id}}", "approve"]
-            }
-          }
-        },
-        {
-          "name": "Suspend Charity",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "X-Admin-Token", "value": "{{admin_token}}" },
-              { "key": "Accept", "value": "application/json" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin/charities/{{charity_id}}/suspend",
-              "host": ["{{base_url}}"],
-              "path": ["admin", "charities", "{{charity_id}}", "suspend"]
-            }
-          }
-        }
-      ]
-    }
-  ]
+    ]
 }
