@@ -2,18 +2,30 @@
 
 Base URL (local): `http://127.0.0.1:8000/api/v1`
 
-> ### ⚠️ Breaking change — 2026-08-26: every endpoint moved under `/v1`
+> ### ⚠️ Breaking changes so far — read once, then re-import the Postman collection
 >
-> `POST /api/register` is now `POST /api/v1/register`, and so on for all eight
-> endpoints. The old paths return `404` with the normal error envelope.
+> **Every endpoint moved under `/v1`.** `POST /api/register` is now
+> `POST /api/v1/...`. Old paths return `404` in the normal error envelope.
+> Change the one base-URL constant in the app — nothing else.
 >
-> **App fix:** change the one base-URL constant — nothing else. The Postman
-> collection is already updated, so re-import it and its `base_url` variable
-> carries the new path.
+> **Registration was split in two.** There is no `POST /register` and no
+> `account_type` field any more:
 >
-> Everything else in this release is additive: three new read-only fields on
-> the charity object (`rating_avg`, `ratings_count`, `logo_url`), which older
-> clients can safely ignore.
+> | Old | New |
+> |---|---|
+> | `POST /register` + `"account_type": "donor"` | `POST /register/donor` |
+> | `POST /register` + `"account_type": "charity"` | `POST /register/charity` |
+>
+> `POST /register/charity` takes **multipart/form-data**, because
+> `license_document` is an uploaded file (pdf/jpg/jpeg/png, max 5 MB). Plain
+> JSON still works when no file is attached.
+>
+> **QR handover is gone.** `accept` no longer returns a `qr_token` and
+> `confirm` no longer takes one — the donor confirms with an empty body, and
+> every confirmation is recorded as a notification instead.
+>
+> Additive only: `rating_avg`, `ratings_count` and `logo_url` on the charity
+> object, and the notification feed below. Older clients can ignore them.
 >
 > Also fixed: a request without an `Accept: application/json` header used to
 > get a `500` when its token was missing or expired. It now returns the same
@@ -212,10 +224,28 @@ pending ──charity accepts──> accepted ──donor scans QR──> picked
 | GET | `/requests` | Own requests, paginated. Optional `?status=`. |
 | GET | `/requests/{id}` | Own request only, else `404`. |
 | POST | `/requests/{id}/cancel` | Only from `pending` or `accepted`. |
-| POST | `/requests/{id}/confirm` | Body `qr_token`. `accepted` → `picked_up`. |
+| POST | `/requests/{id}/confirm` | Empty body. `accepted` → `picked_up`. |
 | POST | `/requests/{id}/rate` | From `picked_up` onward. Once only. |
 
 **Create validation:** `food_category_id` exists · `quantity_desc` required, max 150 · `needs_cooking` optional (falls back to the category default) · `valid_until` after now · `pickup_until` after now and `before_or_equal:valid_until` · `pickup_address` required · `latitude`/`longitude` optional but required together · `contact_phone` required.
+
+**One request at a time.** A donor may only hold one request in `pending` or `accepted`. A second create returns `422` with `errors.active_request_id`, whose message carries the id already in flight so the app can route straight to it. Confirming the handover releases the lock — the donor is free again even though the charity has yet to file its distribution numbers.
+
+## Notifications — `/api/v1/notifications` (Bearer token, donor **or** charity)
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/notifications` | Own feed, 15/page, newest first. Filters `?is_read=` and `?type=`. |
+| POST | `/notifications/{id}/read` | Own notification only, else `404`. |
+
+The same two endpoints serve both account types — the API works out who you are from the token. Donor and charity ids are numbered separately, so a notification is matched on **type + id**, never on id alone.
+
+| Type | Goes to | Fires when | Payload |
+|---|---|---|---|
+| `request_accepted` | donor | a charity accepts | `charity_name`, `eta_minutes` |
+| `handover_confirmed` | charity | the donor confirms handover | `donor_name`, `charity_name`, `donor_id`, `charity_id` |
+
+The admin has a separate feed at `/api/v1/admin/notifications` (also receives `handover_confirmed`). Poll `?is_read=false` for the unread badge.
 
 ## Charity — `/api/v1/charity/*` (Bearer token, **active** charity)
 
@@ -224,14 +254,12 @@ pending ──charity accepts──> accepted ──donor scans QR──> picked
 | GET | `/requests/available` | Eligible open requests. |
 | GET | `/requests` | Ones this charity took. |
 | GET | `/requests/{id}` | Must be assigned to it, else `404`. |
-| POST | `/requests/{id}/accept` | Body `eta_minutes` (5–480). **Returns `qr_token` once.** |
+| POST | `/requests/{id}/accept` | Body `eta_minutes` (5–480). Notifies the donor. |
 
 **Available filter:** `status = pending` AND `valid_until > now` AND (charity has a kitchen OR the food does not need cooking) AND the charity has no strike on that request.
 
 ## Decisions worth knowing
 
-- **The QR token is single-use.** Confirming destroys it, so a scanned code cannot be replayed.
-- **It is returned only by `accept`** — never in any listing or detail response.
 - **Accept is locked** (`lockForUpdate`) so two charities racing on one request cannot both win.
 - **The kitchen rule is enforced twice** — in the available filter and again on accept.
 - **Ownership violations return `404`, not `403`**, so ids cannot be probed.
