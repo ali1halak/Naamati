@@ -49,4 +49,19 @@ enum RequestStatus: string
     {
         return ! $this->isTerminal();
     }
+
+    /**
+     * The statuses that stop a donor from opening a second request.
+     *
+     * Narrower than isActive() on purpose. "In flight" ends the moment the food
+     * changes hands: from `picked_up` on, the request is only waiting for the
+     * charity to file its distribution numbers, and that paperwork is no reason
+     * to stop the donor from donating again.
+     *
+     * @return array<int, string>
+     */
+    public static function blockingNewRequestValues(): array
+    {
+        return [self::Pending->value, self::Accepted->value];
+    }
 }

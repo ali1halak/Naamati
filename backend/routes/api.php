@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Charity\CharityRequestController;
 use App\Http\Controllers\Api\Donor\DonationRequestController;
 use App\Http\Controllers\Api\FoodCategoryController;
+use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -20,6 +21,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
         Route::get('/food-categories', [FoodCategoryController::class, 'index']);
+
+        // Shared by donors and charities — each only ever sees its own feed.
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
 
         // ---- Donor ----
         Route::middleware('type:donor')->prefix('donor')->group(function () {

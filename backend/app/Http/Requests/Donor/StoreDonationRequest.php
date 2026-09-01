@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\Donor;
 
+use App\Enums\RequestStatus;
+use App\Models\DonationRequest;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreDonationRequest extends FormRequest
 {
@@ -33,6 +36,34 @@ class StoreDonationRequest extends FormRequest
             'longitude'      => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
 
             'contact_phone' => ['required', 'string', 'max:20'],
+        ];
+    }
+
+    /**
+     * One live request per donor.
+     *
+     * The home screen shows a single "current request" card, and a charity
+     * browsing the list should not have to guess which of a donor's duplicate
+     * posts is the real one. The id is returned so the app can jump straight
+     * to the request already in flight.
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator) {
+                $active = DonationRequest::query()
+                    ->where('donor_id', $this->user()->id)
+                    ->whereIn('status', RequestStatus::blockingNewRequestValues())
+                    ->latest('id')
+                    ->first();
+
+                if ($active) {
+                    $validator->errors()->add(
+                        'active_request_id',
+                        "You already have an active request (#{$active->id}). Finish or cancel it first."
+                    );
+                }
+            },
         ];
     }
 
