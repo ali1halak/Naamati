@@ -8,7 +8,10 @@ use App\Http\Controllers\Api\FoodCategoryController;
 use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function () {
+// Route ids are numeric. Without this a request for /requests/abc reaches the
+// controller, fails to coerce "abc" into its int parameter, and surfaces as a
+// 500 that leaks the class name — instead of a plain 404.
+Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(function () {
     // Throttled: these are the only unauthenticated write endpoints, so they are
     // the ones worth brute-forcing. 5 attempts per minute per IP.
     Route::middleware('throttle:5,1')->group(function () {
@@ -31,6 +34,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/requests', [DonationRequestController::class, 'index']);
             Route::post('/requests', [DonationRequestController::class, 'store']);
             Route::get('/requests/{id}', [DonationRequestController::class, 'show']);
+            Route::get('/requests/{id}/audit', [DonationRequestController::class, 'audit']);
             Route::post('/requests/{id}/cancel', [DonationRequestController::class, 'cancel']);
             Route::post('/requests/{id}/confirm', [DonationRequestController::class, 'confirm']);
             Route::post('/requests/{id}/rate', [DonationRequestController::class, 'rate']);
@@ -42,6 +46,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/requests', [CharityRequestController::class, 'index']);
             Route::get('/requests/{id}', [CharityRequestController::class, 'show']);
             Route::post('/requests/{id}/accept', [CharityRequestController::class, 'accept']);
+            Route::post('/requests/{id}/distribute', [CharityRequestController::class, 'distribute']);
         });
     });
 

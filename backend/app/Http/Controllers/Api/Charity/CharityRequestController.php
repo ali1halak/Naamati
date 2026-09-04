@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Charity;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Charity\AcceptDonationRequest;
+use App\Http\Requests\Charity\StoreDistributionRequest;
 use App\Http\Resources\DonationRequestResource;
 use App\Models\DonationRequest;
 use App\Services\DonationRequestService;
@@ -65,6 +66,26 @@ class CharityRequestController extends Controller
         return $this->ok(
             new DonationRequestResource($donationRequest->load('foodCategory', 'donor')),
             'Request accepted'
+        );
+    }
+
+    /**
+     * File how many people the food actually reached. Closes the request.
+     */
+    public function distribute(StoreDistributionRequest $request, int $id)
+    {
+        $donationRequest = $this->requests->recordDistribution(
+            DonationRequest::findOrFail($id),
+            $request->user(),
+            $request->validated()
+        );
+
+        return $this->ok(
+            new DonationRequestResource(
+                $donationRequest->load(['foodCategory', 'donor', 'distribution'])
+            ),
+            'Distribution recorded',
+            201
         );
     }
 }

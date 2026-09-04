@@ -8,6 +8,7 @@ use App\Http\Requests\Donor\CancelDonationRequest;
 use App\Http\Requests\Donor\ConfirmPickupRequest;
 use App\Http\Requests\Donor\StoreDonationRequest;
 use App\Http\Requests\Donor\StoreRatingRequest;
+use App\Http\Resources\DonationAuditResource;
 use App\Http\Resources\DonationRequestResource;
 use App\Http\Resources\RatingResource;
 use App\Models\DonationRequest;
@@ -55,7 +56,21 @@ class DonationRequestController extends Controller
             $query->where('status', $status);
         }
 
-        return $this->ok(DonationRequestResource::collection($query->paginate(15))->response()->getData(true));
+        // Capped so one client cannot ask for the whole table in one page.
+        $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
+
+        return $this->ok(DonationRequestResource::collection($query->paginate($perPage))->response()->getData(true));
+    }
+
+    /**
+     * The audit view: what was given, how it travelled, and who it reached.
+     */
+    public function audit(Request $request, int $id)
+    {
+        $donationRequest = $this->ownedRequest($request, $id)
+            ->load(['foodCategory', 'charity', 'distribution', 'rating']);
+
+        return $this->ok(new DonationAuditResource($donationRequest));
     }
 
     public function store(StoreDonationRequest $request)

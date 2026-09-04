@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class FoodCategory extends Model
 {
-    protected $fillable = ['name_ar', 'name_en', 'default_needs_cooking'];
+    protected $fillable = ['name_ar', 'name_en', 'icon', 'default_needs_cooking'];
 
     protected function casts(): array
     {

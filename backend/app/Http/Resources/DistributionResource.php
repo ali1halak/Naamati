@@ -17,6 +17,7 @@ class DistributionResource extends JsonResource
             'families_count'    => $this->families_count,
             'individuals_count' => $this->individuals_count,
             'area'              => $this->area,
+            'notes'             => $this->notes,
             'distributed_at'    => $this->distributed_at,
         ];
     }

@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Distribution extends Model
 {
-    protected $fillable = ['donation_request_id', 'families_count', 'individuals_count', 'area', 'distributed_at'];
+    protected $fillable = [
+        'donation_request_id', 'families_count', 'individuals_count',
+        'area', 'notes', 'distributed_at',
+    ];
 
     protected function casts(): array
     {

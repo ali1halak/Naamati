@@ -128,6 +128,60 @@ class DonationRequestService
         return $request->refresh();
     }
 
+    /**
+     * The charity reports what it actually handed out, which closes the
+     * request for good.
+     *
+     * This is the only way a request reaches `completed`: the donor confirming
+     * the handover proves the food changed hands, but the donation is not
+     * really done until somebody has eaten. Aggregate counts only — no
+     * beneficiary is ever identified.
+     */
+    public function recordDistribution(DonationRequest $request, Charity $charity, array $data): DonationRequest
+    {
+        // 404-style guard would leak nothing, but the charity is legitimately
+        // authenticated here — it just picked someone else's request.
+        if ($request->charity_id !== $charity->id) {
+            throw ValidationException::withMessages([
+                'status' => 'This request was accepted by another charity',
+            ]);
+        }
+
+        // Answered before the generic guard so a charity filing twice is told
+        // what actually happened, instead of the misleading "not confirmed yet".
+        if ($request->status === RequestStatus::Completed) {
+            throw ValidationException::withMessages([
+                'status' => 'Distribution has already been recorded for this request',
+            ]);
+        }
+
+        $this->guard(
+            $request,
+            [RequestStatus::PickedUp],
+            'The donor has not confirmed the handover yet'
+        );
+
+        return DB::transaction(function () use ($request, $data) {
+            $request->distribution()->create([
+                'families_count'    => $data['families_count'],
+                'individuals_count' => $data['individuals_count'],
+                'area'              => $data['area'],
+                'notes'             => $data['notes'] ?? null,
+                'distributed_at'    => $data['distributed_at'] ?? now(),
+            ]);
+
+            $from = $request->status;
+            $request->update([
+                'status'       => RequestStatus::Completed,
+                'completed_at' => now(),
+            ]);
+
+            $this->log($request, $from, RequestStatus::Completed, 'distribution reported by charity');
+
+            return $request->refresh();
+        });
+    }
+
     public function cancel(DonationRequest $request, ?string $reason = null): DonationRequest
     {
         $this->guard($request, [RequestStatus::Pending, RequestStatus::Accepted]);

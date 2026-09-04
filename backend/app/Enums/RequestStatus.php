@@ -13,6 +13,43 @@ enum RequestStatus: string
     case NoShow    = 'no_show';
 
     /**
+     * Short Arabic label for the status badge on the history list.
+     *
+     * The API ships the text rather than a translation key: the app is
+     * Arabic-only today, and one source of wording keeps the badge, the audit
+     * screen and any future admin view from drifting apart. `status` is still
+     * returned next to it, so a client that wants to localise itself can.
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::Pending   => 'بانتظار جمعية',
+            self::Accepted  => 'تم قبوله',
+            self::PickedUp  => 'مأخوذ',
+            self::Completed => 'مكتمل',
+            self::Expired   => 'منتهي الصلاحية',
+            self::Cancelled => 'ملغى',
+            self::NoShow    => 'لم تحضر الجمعية',
+        };
+    }
+
+    /**
+     * Fuller wording for the audit screen, which has room for a sentence.
+     */
+    public function detailedLabel(): string
+    {
+        return match ($this) {
+            self::Pending   => 'منشور وبانتظار قبول جمعية',
+            self::Accepted  => 'قبلته جمعية وهي في الطريق',
+            self::PickedUp  => 'تم تسليم الطعام للجمعية',
+            self::Completed => 'تم التوصيل والتوزيع بنجاح',
+            self::Expired   => 'انتهت صلاحيته قبل أن تقبله جمعية',
+            self::Cancelled => 'ألغاه المتبرع',
+            self::NoShow    => 'قبلته جمعية ولم تحضر لاستلامه',
+        };
+    }
+
+    /**
      * Which states this one may legally move to.
      *
      * This describes what is *physically* possible in the donation lifecycle.

@@ -13,6 +13,9 @@ class FoodCategoryResource extends JsonResource
             'name_ar' => $this->name_ar,
             'name_en' => $this->name_en,
 
+            // Stable key the app maps to its own asset — never a URL.
+            'icon' => $this->icon,
+
             // What the form should pre-tick for "needs cooking". The donor can
             // still override it per request.
             'default_needs_cooking' => $this->default_needs_cooking,
