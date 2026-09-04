@@ -255,6 +255,7 @@ The admin has a separate feed at `/api/v1/admin/notifications` (also receives `h
 | GET | `/requests` | Ones this charity took. |
 | GET | `/requests/{id}` | Must be assigned to it, else `404`. |
 | POST | `/requests/{id}/accept` | Body `eta_minutes` (5–480). Notifies the donor. |
+| POST | `/requests/{id}/distribute` | Files the distribution numbers. `picked_up` → `completed`. |
 
 **Available filter:** `status = pending` AND `valid_until > now` AND (charity has a kitchen OR the food does not need cooking) AND the charity has no strike on that request.
 
@@ -266,5 +267,49 @@ The admin has a separate feed at `/api/v1/admin/notifications` (also receives `h
 - **Rating is allowed from `picked_up`**, not `completed` — the donor's part ends at handover.
 - **`rating_avg` is recomputed from the rows**, never incremented, so it cannot drift.
 
-## Not built yet (phase 3)
-Charity distribution numbers (`picked_up` → `completed`), no-show reporting + strikes, auto-expiry job, stats dashboard.
+---
+
+## Donation history & audit (phase 3)
+
+### Display fields on every donation request
+
+The API ships the wording so the list screen needs no mapping table:
+
+| Field | Purpose |
+|---|---|
+| `status` | Machine value — branch on this |
+| `status_label` | Arabic badge text, e.g. `"مكتمل"` — print this |
+| `title` | The food category name |
+| `category_icon` | Stable key the app maps to its own asset |
+| `created_at` | ISO 8601 — sort on this |
+| `created_at_label` | Arabic date, e.g. `"4 سبتمبر 2026"` — print this |
+
+`category_icon` values: `cooked_ready` · `fruits_vegetables` · `bakery_sweets` · `canned_dry` · `raw_meat` · `raw_grains` · `other`. Keys, never URLs — renaming one is a breaking change.
+
+`GET /donor/requests` also takes `per_page` (1–50, default 15).
+
+### `GET /donor/requests/{id}/audit`
+
+Three groups, matching the three cards on the details screen:
+
+- **`order_info`** — `order_number` (`"#105"`), `title`, `status`, `status_label` (a fuller sentence than the badge), `food_type`, `food_condition` (`"نيء"` \| `"جاهز للتوزيع"`), `expiry_date`, `quantity_desc`, `description`.
+- **`logistics_details`** — `charity_id`, `charity_name`, `pickup_address`, and four timestamps, each twice: `submitted_at` as `"02:10 PM"` for display and `submitted_at_iso` raw. **Sort and compute on the `_iso` fields** so the app never parses Arabic. Null until that step happens.
+- **`social_impact`** — `beneficiary_families`, `beneficiary_individuals`, `distribution_zone`, `notes`, `distributed_at`. **`null` until the charity files its numbers — hide the card, do not render zeros.**
+- **`can_rate_charity`** — true only while the donor may still rate. Flips to false once a rating exists, so the popup can never fire twice.
+
+### `POST /charity/requests/{id}/distribute`
+
+Body: `families_count` (1–10000), `individuals_count` (1–100000), `area` (≤100), optional `notes` (≤1000) and `distributed_at` (not in the future — omit it and the server stamps now).
+
+Only the assigned charity, only while `picked_up`. Filing twice returns `422 "Distribution has already been recorded for this request"`.
+
+**This is the only path to `completed`.** The donor confirming the handover proves the food changed hands; the donation is not finished until someone has eaten.
+
+## Decisions worth knowing (phase 3)
+
+- **Arabic labels come from the API**, not a client mapping table, so the badge, the audit page and any future admin view can never word the same status differently.
+- **Dates are formatted without `ext-intl`** — the extension is not enabled everywhere this runs, and its Arabic output shifts between ICU versions, which would silently change what users see after a server upgrade.
+- **Route ids are constrained to digits.** Without that, `/requests/abc` reached the controller and surfaced a `500` that leaked the class name instead of a plain `404`.
+
+## Not built yet (phase 4)
+No-show reporting + strikes, auto-expiry job, refresh tokens, admin login (the dashboard still authenticates with a static header), stats dashboard.
