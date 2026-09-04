@@ -28,9 +28,9 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('نعمتي')
-            ->brandLogo(asset('images/logo.jpg'))
+            ->brandLogo(asset('images/logo.png'))
             ->brandLogoHeight('2.5rem')
-            ->favicon(asset('images/logo.jpg'))
+            ->favicon(asset('images/logo.png'))
             ->colors([
                 // Food-preservation palette: deep green (freshness/sustainability)
                 // as the primary action color, warm harvest amber as the accent.
