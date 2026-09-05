@@ -1,0 +1,1416 @@
+{
+    "info": {
+        "_postman_id": "7c1f2e64-4d1a-4a2b-9c31-2f5b8a0d1e77",
+        "name": "Naamaty — تطبيق الجمعيات",
+        "description": "Everything the charity app needs, and nothing else — the donor and admin\nendpoints live in the separate FoodSurplus collection.\n\n=== SETUP ===\n1. Set `base_url` if the API is not on http://127.0.0.1:8000/api/v1\n2. Run \"إنشاء حساب جمعية\" or \"تسجيل الدخول\" — the token is stored in\n   `charity_token` automatically and every other request just works.\n3. A brand new charity is `pending`. An admin must approve it before any\n   charity endpoint answers; until then they all return 403.\n\n=== RESPONSE SHAPE ===\nEvery response, success or failure, looks like this:\n{ \"success\": bool, \"data\": object|null, \"message\": string|null, \"errors\": object|null }\n\nSo one handler covers the whole app:\n- success == true  -> read `data`\n- success == false -> show `message`, and on 422 show `errors` under each field\n\nMessages are already in Arabic and can be displayed as they arrive.\n\nStatus codes: 200 OK · 201 Created · 401 Unauthenticated · 403 Forbidden ·\n404 Not found · 422 Validation error · 429 Too many requests.\n\n=== THE WORKFLOW ===\npending    الطلب منشور، ظاهر في الطلبات المتاحة\n  -> قبول الطلب\naccepted   الجمعية أخذته، charity_id و accepted_at و eta_minutes مضبوطة\n  -> تأكيد الأخذ من الطرفين\npicked_up  الطعام انتقل فعلاً\n  -> تأكيد التوزيع\ncompleted  انتهى الطلب. أرقام المستفيدين اختيارية ويمكن إدخالها لاحقاً.\n\nTHE HANDOVER NEEDS BOTH SIDES. تأكيد الأخذ is only the charity's half; the\ndonor presses its own button. The status changes only once both have confirmed,\nwhich is what stops either side from claiming a pickup that never happened.\nWhile you are waiting, the status stays \"accepted\" and the message tells you so.\n\nOther statuses you may see, all set by the system, never by this app:\n  expired   انتهت صلاحيته قبل أن تقبله جمعية\n  cancelled ألغاه المتبرع\n  no_show   قبلته جمعية ولم تحضر\n\n=== PAGINATION ===\nRows      -> data.data\nPage info -> data.meta   (current_page, last_page, per_page, total)\nPage URLs -> data.links\nNext page -> add ?page=2\n\n=== HEADS UP ===\nregister and login share a limit of 5 requests per minute per IP. Going over\nreturns 429 \"محاولات كثيرة جداً\". Nothing is broken — wait a minute.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000/api/v1",
+            "type": "string"
+        },
+        {
+            "key": "charity_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "request_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "notification_id",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. الحساب",
+            "item": [
+                {
+                    "name": "إنشاء حساب جمعية",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const b = pm.response.json();",
+                                    "if (b.success && b.data && b.data.token) {",
+                                    "    pm.collectionVariables.set(\"charity_token\", b.data.token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/register/charity",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "register",
+                                "charity"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"جمعية البر الخيرية\",\n    \"email\": \"birr@example.com\",\n    \"phone\": \"0911111111\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\",\n    \"has_kitchen\": true,\n    \"address\": \"حلب - الفرقان\",\n    \"work_start\": \"08:00\",\n    \"work_end\": \"18:00\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Creates the charity account. It always starts as status = \"pending\" and stays\nunusable until an admin approves it — every charity endpoint answers 403\n\"حساب الجمعية غير مفعّل بعد\" until then. A pending charity CAN log in and call\n/me, so the app can show a \"waiting for approval\" screen.\n\nFIELDS\n- name        : max 120\n- email       : must not already exist as a donor OR a charity\n- phone       : max 20\n- password    : min 8, plus password_confirmation\n- has_kitchen : true|false. false means this charity is never shown food that\n                needs cooking.\n- address     : max 255\n- work_start / work_end : \"HH:MM\", end after start\n- license_document : optional FILE (pdf/jpg/png, max 5MB)\n\nATTACHING THE LICENCE\nSend the whole request as multipart/form-data and add license_document as a\nfile. Without a file, plain JSON works too.\n\nReturns a token that is usable immediately for /me and /logout."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created (pending approval)",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/register/charity",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "register",
+                                        "charity"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"جمعية البر الخيرية\",\n    \"email\": \"birr@example.com\",\n    \"phone\": \"0911111111\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\",\n    \"has_kitchen\": true,\n    \"address\": \"حلب - الفرقان\",\n    \"work_start\": \"08:00\",\n    \"work_end\": \"18:00\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "description": "Creates the charity account. It always starts as status = \"pending\" and stays\nunusable until an admin approves it — every charity endpoint answers 403\n\"حساب الجمعية غير مفعّل بعد\" until then. A pending charity CAN log in and call\n/me, so the app can show a \"waiting for approval\" screen.\n\nFIELDS\n- name        : max 120\n- email       : must not already exist as a donor OR a charity\n- phone       : max 20\n- password    : min 8, plus password_confirmation\n- has_kitchen : true|false. false means this charity is never shown food that\n                needs cooking.\n- address     : max 255\n- work_start / work_end : \"HH:MM\", end after start\n- license_document : optional FILE (pdf/jpg/png, max 5MB)\n\nATTACHING THE LICENCE\nSend the whole request as multipart/form-data and add license_document as a\nfile. Without a file, plain JSON works too.\n\nReturns a token that is usable immediately for /me and /logout."
+                            },
+                            "status": "201",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"type\": \"charity\",\n        \"user\": {\n            \"name\": \"جمعية البر الخيرية\",\n            \"email\": \"pm-charity-a6ad5f@example.invalid\",\n            \"phone\": \"0911111111\",\n            \"has_kitchen\": true,\n            \"status\": \"pending\",\n            \"address\": \"حلب - الفرقان\",\n            \"work_start\": \"08:00\",\n            \"work_end\": \"18:00\",\n            \"license_document\": null,\n            \"updated_at\": \"2026-09-05T18:07:14.000000Z\",\n            \"created_at\": \"2026-09-05T18:07:14.000000Z\",\n            \"id\": 26,\n            \"logo_url\": null\n        },\n        \"token\": \"49|XMOOtJ9WDIjf6WYR7t5afnmnwWyiPz424tXyLh9Cbe8f8b87\"\n    },\n    \"message\": \"تم إنشاء الحساب بنجاح\"\n}"
+                        },
+                        {
+                            "name": "422 Validation failed",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/register/charity",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "register",
+                                        "charity"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"جمعية البر الخيرية\",\n    \"email\": \"birr@example.com\",\n    \"phone\": \"0911111111\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\",\n    \"has_kitchen\": true,\n    \"address\": \"حلب - الفرقان\",\n    \"work_start\": \"08:00\",\n    \"work_end\": \"18:00\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "description": "Creates the charity account. It always starts as status = \"pending\" and stays\nunusable until an admin approves it — every charity endpoint answers 403\n\"حساب الجمعية غير مفعّل بعد\" until then. A pending charity CAN log in and call\n/me, so the app can show a \"waiting for approval\" screen.\n\nFIELDS\n- name        : max 120\n- email       : must not already exist as a donor OR a charity\n- phone       : max 20\n- password    : min 8, plus password_confirmation\n- has_kitchen : true|false. false means this charity is never shown food that\n                needs cooking.\n- address     : max 255\n- work_start / work_end : \"HH:MM\", end after start\n- license_document : optional FILE (pdf/jpg/png, max 5MB)\n\nATTACHING THE LICENCE\nSend the whole request as multipart/form-data and add license_document as a\nfile. Without a file, plain JSON works too.\n\nReturns a token that is usable immediately for /me and /logout."
+                            },
+                            "status": "422",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"data\": null,\n    \"message\": \"فشل التحقق من البيانات\",\n    \"errors\": {\n        \"email\": [\n            \"حقل البريد الإلكتروني مطلوب.\"\n        ],\n        \"phone\": [\n            \"حقل رقم الهاتف مطلوب.\"\n        ],\n        \"password\": [\n            \"حقل كلمة المرور مطلوب.\"\n        ],\n        \"address\": [\n            \"حقل العنوان مطلوب.\"\n        ],\n        \"work_start\": [\n            \"حقل بداية الدوام مطلوب.\"\n        ],\n        \"work_end\": [\n            \"حقل نهاية الدوام مطلوب.\"\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "تسجيل الدخول",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const b = pm.response.json();",
+                                    "if (b.success && b.data && b.data.token) {",
+                                    "    pm.collectionVariables.set(\"charity_token\", b.data.token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"birr@example.com\",\n    \"password\": \"password123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Same endpoint for donors and charities — the response says which one you are in\ndata.type. Rate limited to 5 requests per minute per IP together with register;\ngoing over returns 429.\n\nAfter login, branch on data.user.status:\n  pending   -> \"waiting for admin approval\" screen\n  suspended -> \"account suspended\" screen\n  active    -> normal home"
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/login",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "login"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"birr@example.com\",\n    \"password\": \"password123\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "description": "Same endpoint for donors and charities — the response says which one you are in\ndata.type. Rate limited to 5 requests per minute per IP together with register;\ngoing over returns 429.\n\nAfter login, branch on data.user.status:\n  pending   -> \"waiting for admin approval\" screen\n  suspended -> \"account suspended\" screen\n  active    -> normal home"
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"type\": \"charity\",\n        \"user\": {\n            \"id\": 26,\n            \"name\": \"جمعية البر الخيرية\",\n            \"email\": \"pm-charity-a6ad5f@example.invalid\",\n            \"phone\": \"0911111111\",\n            \"has_kitchen\": true,\n            \"status\": \"active\",\n            \"license_document\": null,\n            \"rating_avg\": null,\n            \"ratings_count\": 0,\n            \"address\": \"حلب - الفرقان\",\n            \"work_start\": \"08:00:00\",\n            \"work_end\": \"18:00:00\",\n            \"created_at\": \"2026-09-05T18:07:14.000000Z\",\n            \"updated_at\": \"2026-09-05T18:07:15.000000Z\",\n            \"logo_url\": null\n        },\n        \"token\": \"50|q80oaiyefldcMqchG5ayWReO1DZktd4wRLINZhZmc93eca63\"\n    },\n    \"message\": null\n}"
+                        },
+                        {
+                            "name": "401 Invalid credentials",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/login",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "login"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"birr@example.com\",\n    \"password\": \"password123\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "description": "Same endpoint for donors and charities — the response says which one you are in\ndata.type. Rate limited to 5 requests per minute per IP together with register;\ngoing over returns 429.\n\nAfter login, branch on data.user.status:\n  pending   -> \"waiting for admin approval\" screen\n  suspended -> \"account suspended\" screen\n  active    -> normal home"
+                            },
+                            "status": "401",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"data\": null,\n    \"message\": \"البريد الإلكتروني أو كلمة المرور غير صحيحة\",\n    \"errors\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "بيانات حسابي",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/me",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "me"
+                            ]
+                        },
+                        "description": "The signed-in charity. Use it on app start to refresh status and rating."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/me",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "me"
+                                    ]
+                                }
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"type\": \"charity\",\n        \"user\": {\n            \"id\": 26,\n            \"name\": \"جمعية البر الخيرية\",\n            \"email\": \"pm-charity-a6ad5f@example.invalid\",\n            \"phone\": \"0911111111\",\n            \"has_kitchen\": true,\n            \"status\": \"active\",\n            \"license_document\": null,\n            \"rating_avg\": null,\n            \"ratings_count\": 0,\n            \"address\": \"حلب - الفرقان\",\n            \"work_start\": \"08:00:00\",\n            \"work_end\": \"18:00:00\",\n            \"created_at\": \"2026-09-05T18:07:14.000000Z\",\n            \"updated_at\": \"2026-09-05T18:07:15.000000Z\",\n            \"logo_url\": null\n        }\n    },\n    \"message\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "تسجيل الخروج",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/logout",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "logout"
+                            ]
+                        },
+                        "description": "Revokes only the token used for this call; other devices stay signed in."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/logout",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "logout"
+                                    ]
+                                }
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": null,\n    \"message\": \"تم تسجيل الخروج\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "2. الطلبات المتاحة",
+            "item": [
+                {
+                    "name": "الطلبات المتاحة",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const b = pm.response.json();",
+                                    "const first = b.data && b.data.data && b.data.data[0];",
+                                    "if (first) { pm.collectionVariables.set(\"request_id\", first.id); }"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests/available",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests",
+                                "available"
+                            ]
+                        },
+                        "description": "Screen 1 — الطلبات المتاحة.\n\nOpen requests this charity may take. Already filtered for you:\n- only status \"pending\", and not past valid_until\n- if the charity has no kitchen, food that needs cooking is hidden\n- a request this charity previously no-showed on never reappears\n\nCARD FIELDS\n- title            : the food category, in Arabic\n- description      : the donor's note, or the quantity when there is no note\n- image_url        : first photo, null when the donor uploaded none\n- images           : every photo\n- category_icon    : stable key for your own asset (\"cooked_ready\", ...)\n- expiry_date      : \"YYYY-MM-DD\"\n- pickup_deadline  : ready to print, e.g. \"05:00 مساءً\"\n- location_zone    : the pickup address as the donor typed it\n- latitude/longitude : map pin, null when the donor skipped it\n- *_iso fields     : raw timestamps for sorting or countdowns\n\nThe donor's phone number is deliberately NOT here — it appears once you accept.\nPaginated 15 per page; rows in data.data."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/available",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "available"
+                                    ]
+                                },
+                                "description": "Screen 1 — الطلبات المتاحة.\n\nOpen requests this charity may take. Already filtered for you:\n- only status \"pending\", and not past valid_until\n- if the charity has no kitchen, food that needs cooking is hidden\n- a request this charity previously no-showed on never reappears\n\nCARD FIELDS\n- title            : the food category, in Arabic\n- description      : the donor's note, or the quantity when there is no note\n- image_url        : first photo, null when the donor uploaded none\n- images           : every photo\n- category_icon    : stable key for your own asset (\"cooked_ready\", ...)\n- expiry_date      : \"YYYY-MM-DD\"\n- pickup_deadline  : ready to print, e.g. \"05:00 مساءً\"\n- location_zone    : the pickup address as the donor typed it\n- latitude/longitude : map pin, null when the donor skipped it\n- *_iso fields     : raw timestamps for sorting or countdowns\n\nThe donor's phone number is deliberately NOT here — it appears once you accept.\nPaginated 15 per page; rows in data.data."
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"data\": [\n            {\n                \"id\": 19,\n                \"title\": \"طعام مطبوخ جاهز\",\n                \"description\": \"أرز ودجاج، تكفي 5 عائلات\",\n                \"image_url\": \"http://localhost:8000/storage/donation-images/PvZwIhtZq6uTcpIj68hVZkjrZ6PHJ9yeJKke6xCV.png\",\n                \"images\": [\n                    \"http://localhost:8000/storage/donation-images/PvZwIhtZq6uTcpIj68hVZkjrZ6PHJ9yeJKke6xCV.png\"\n                ],\n                \"category_icon\": \"cooked_ready\",\n                \"quantity_desc\": \"حوالي 30 وجبة عائلية ساخنة\",\n                \"needs_cooking\": false,\n                \"expiry_date\": \"2026-09-30\",\n                \"pickup_deadline\": \"05:00 مساءً\",\n                \"valid_until_iso\": \"2026-09-30T20:00:00.000000Z\",\n                \"pickup_until_iso\": \"2026-09-28T17:00:00.000000Z\",\n                \"location_zone\": \"حلب - الفرقان، مقابل الحديقة\",\n                \"latitude\": \"36.2021000\",\n                \"longitude\": \"37.1343000\",\n                \"created_at\": \"2026-09-05T18:07:18.000000Z\",\n                \"created_at_label\": \"5 سبتمبر 2026\"\n            }\n        ],\n        \"links\": {\n            \"first\": \"http://127.0.0.1:8031/api/v1/charity/requests/available?page=1\",\n            \"last\": \"http://127.0.0.1:8031/api/v1/charity/requests/available?page=1\",\n            \"prev\": null,\n            \"next\": null\n        },\n        \"meta\": {\n            \"current_page\": 1,\n            \"from\": 1,\n            \"last_page\": 1,\n            \"links\": [\n                {\n                    \"url\": null,\n                    \"label\": \"&laquo; Previous\",\n                    \"page\": null,\n                    \"active\": false\n                },\n                {\n                    \"url\": \"http://127.0.0.1:8031/api/v1/charity/requests/available?page=1\",\n                    \"label\": \"1\",\n                    \"page\": 1,\n                    \"active\": true\n                },\n                {\n                    \"url\": null,\n                    \"label\": \"Next &raquo;\",\n                    \"page\": null,\n                    \"active\": false\n                }\n            ],\n            \"path\": \"http://127.0.0.1:8031/api/v1/charity/requests/available\",\n            \"per_page\": 15,\n            \"to\": 1,\n            \"total\": 1\n        }\n    },\n    \"message\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "قبول الطلب",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests/{{request_id}}/accept",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests",
+                                "{{request_id}}",
+                                "accept"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"eta_minutes\": 30\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Screen 1 -> Screen 2. Claims the request and moves it pending -> accepted.\n\neta_minutes: how long you need to arrive, 5 to 480.\n\nTwo charities can press this at the same time; only the first wins and the\nother gets 422 \"لم يعد هذا الطلب متاحاً\". Other 422 reasons: the request\nexpired, or it needs cooking and your charity has no kitchen.\n\nAccepting notifies the donor which charity is coming and when."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Accepted",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/{{request_id}}/accept",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "{{request_id}}",
+                                        "accept"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"eta_minutes\": 30\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "description": "Screen 1 -> Screen 2. Claims the request and moves it pending -> accepted.\n\neta_minutes: how long you need to arrive, 5 to 480.\n\nTwo charities can press this at the same time; only the first wins and the\nother gets 422 \"لم يعد هذا الطلب متاحاً\". Other 422 reasons: the request\nexpired, or it needs cooking and your charity has no kitchen.\n\nAccepting notifies the donor which charity is coming and when."
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 19,\n        \"status\": \"accepted\",\n        \"status_label\": \"تم قبوله\",\n        \"title\": \"طعام مطبوخ جاهز\",\n        \"category_icon\": \"cooked_ready\",\n        \"created_at_label\": \"5 سبتمبر 2026\",\n        \"food_category\": {\n            \"id\": 1,\n            \"name_ar\": \"طعام مطبوخ جاهز\",\n            \"name_en\": \"Cooked / Ready\",\n            \"icon\": \"cooked_ready\",\n            \"default_needs_cooking\": false\n        },\n        \"needs_cooking\": false,\n        \"quantity_desc\": \"حوالي 30 وجبة عائلية ساخنة\",\n        \"description\": \"أرز ودجاج، تكفي 5 عائلات\",\n        \"valid_until\": \"2026-09-30T20:00:00.000000Z\",\n        \"pickup_until\": \"2026-09-28T17:00:00.000000Z\",\n        \"pickup_address\": \"حلب - الفرقان، مقابل الحديقة\",\n        \"latitude\": \"36.2021000\",\n        \"longitude\": \"37.1343000\",\n        \"contact_phone\": \"0999999999\",\n        \"charity\": {\n            \"id\": 26,\n            \"name\": \"جمعية البر الخيرية\",\n            \"phone\": \"0911111111\",\n            \"address\": \"حلب - الفرقان\",\n            \"logo_url\": null,\n            \"rating_avg\": null,\n            \"ratings_count\": 0,\n            \"completed_donations_count\": 0\n        },\n        \"eta_minutes\": 30,\n        \"accepted_at\": \"2026-09-05T18:07:19.000000Z\",\n        \"donor_confirmed_at\": null,\n        \"charity_confirmed_at\": null,\n        \"picked_up_at\": null,\n        \"completed_at\": null,\n        \"cancel_reason\": null,\n        \"created_at\": \"2026-09-05T18:07:18.000000Z\"\n    },\n    \"message\": \"تم قبول الطلب\"\n}"
+                        },
+                        {
+                            "name": "422 ETA out of range",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/{{request_id}}/accept",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "{{request_id}}",
+                                        "accept"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"eta_minutes\": 30\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "description": "Screen 1 -> Screen 2. Claims the request and moves it pending -> accepted.\n\neta_minutes: how long you need to arrive, 5 to 480.\n\nTwo charities can press this at the same time; only the first wins and the\nother gets 422 \"لم يعد هذا الطلب متاحاً\". Other 422 reasons: the request\nexpired, or it needs cooking and your charity has no kitchen.\n\nAccepting notifies the donor which charity is coming and when."
+                            },
+                            "status": "422",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"data\": null,\n    \"message\": \"فشل التحقق من البيانات\",\n    \"errors\": {\n        \"eta_minutes\": [\n            \"مدة الوصول يجب أن تكون بين 5 و 480 دقيقة.\"\n        ]\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "3. متابعة الطلب",
+            "item": [
+                {
+                    "name": "طلباتي المقبولة",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests"
+                            ]
+                        },
+                        "description": "Everything this charity has taken — the work queue and the history. Paginated 15 per page."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests"
+                                    ]
+                                }
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"data\": [\n            {\n                \"id\": 19,\n                \"status\": \"picked_up\",\n                \"status_label\": \"مأخوذ\",\n                \"title\": \"طعام مطبوخ جاهز\",\n                \"category_icon\": \"cooked_ready\",\n                \"created_at_label\": \"5 سبتمبر 2026\",\n                \"food_category\": {\n                    \"id\": 1,\n                    \"name_ar\": \"طعام مطبوخ جاهز\",\n                    \"name_en\": \"Cooked / Ready\",\n                    \"icon\": \"cooked_ready\",\n                    \"default_needs_cooking\": false\n                },\n                \"needs_cooking\": false,\n                \"quantity_desc\": \"حوالي 30 وجبة عائلية ساخنة\",\n                \"description\": \"أرز ودجاج، تكفي 5 عائلات\",\n                \"valid_until\": \"2026-09-30T20:00:00.000000Z\",\n                \"pickup_until\": \"2026-09-28T17:00:00.000000Z\",\n                \"pickup_address\": \"حلب - الفرقان، مقابل الحديقة\",\n                \"latitude\": \"36.2021000\",\n                \"longitude\": \"37.1343000\",\n                \"contact_phone\": \"0999999999\",\n                \"eta_minutes\": 30,\n                \"images\": [\n                    \"http://localhost:8000/storage/donation-images/PvZwIhtZq6uTcpIj68hVZkjrZ6PHJ9yeJKke6xCV.png\"\n                ],\n                \"image_url\": \"http://localhost:8000/storage/donation-images/PvZwIhtZq6uTcpIj68hVZkjrZ6PHJ9yeJKke6xCV.png\",\n                \"accepted_at\": \"2026-09-05T18:07:19.000000Z\",\n                \"donor_confirmed_at\": \"2026-09-05T18:07:20.000000Z\",\n                \"charity_confirmed_at\": \"2026-09-05T18:07:19.000000Z\",\n                \"picked_up_at\": \"2026-09-05T18:07:20.000000Z\",\n                \"completed_at\": null,\n                \"cancel_reason\": null,\n                \"created_at\": \"2026-09-05T18:07:18.000000Z\",\n                \"distribution\": null\n            }\n        ],\n        \"links\": {\n            \"first\": \"http://127.0.0.1:8031/api/v1/charity/requests?page=1\",\n            \"last\": \"http://127.0.0.1:8031/api/v1/charity/requests?page=1\",\n            \"prev\": null,\n            \"next\": null\n        },\n        \"meta\": {\n            \"current_page\": 1,\n            \"from\": 1,\n            \"last_page\": 1,\n            \"links\": [\n                {\n                    \"url\": null,\n                    \"label\": \"&laquo; Previous\",\n                    \"page\": null,\n                    \"active\": false\n                },\n                {\n                    \"url\": \"http://127.0.0.1:8031/api/v1/charity/requests?page=1\",\n                    \"label\": \"1\",\n                    \"page\": 1,\n                    \"active\": true\n                },\n                {\n                    \"url\": null,\n                    \"label\": \"Next &raquo;\",\n                    \"page\": null,\n                    \"active\": false\n                }\n            ],\n            \"path\": \"http://127.0.0.1:8031/api/v1/charity/requests\",\n            \"per_page\": 15,\n            \"to\": 1,\n            \"total\": 1\n        }\n    },\n    \"message\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "تفاصيل الطلب",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests/{{request_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests",
+                                "{{request_id}}"
+                            ]
+                        },
+                        "description": "Full detail for one accepted request, including the donor and the contact phone."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/{{request_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "{{request_id}}"
+                                    ]
+                                }
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 19,\n        \"status\": \"picked_up\",\n        \"status_label\": \"مأخوذ\",\n        \"title\": \"طعام مطبوخ جاهز\",\n        \"category_icon\": \"cooked_ready\",\n        \"created_at_label\": \"5 سبتمبر 2026\",\n        \"food_category\": {\n            \"id\": 1,\n            \"name_ar\": \"طعام مطبوخ جاهز\",\n            \"name_en\": \"Cooked / Ready\",\n            \"icon\": \"cooked_ready\",\n            \"default_needs_cooking\": false\n        },\n        \"needs_cooking\": false,\n        \"quantity_desc\": \"حوالي 30 وجبة عائلية ساخنة\",\n        \"description\": \"أرز ودجاج، تكفي 5 عائلات\",\n        \"valid_until\": \"2026-09-30T20:00:00.000000Z\",\n        \"pickup_until\": \"2026-09-28T17:00:00.000000Z\",\n        \"pickup_address\": \"حلب - الفرقان، مقابل الحديقة\",\n        \"latitude\": \"36.2021000\",\n        \"longitude\": \"37.1343000\",\n        \"contact_phone\": \"0999999999\",\n        \"eta_minutes\": 30,\n        \"images\": [\n            \"http://localhost:8000/storage/donation-images/PvZwIhtZq6uTcpIj68hVZkjrZ6PHJ9yeJKke6xCV.png\"\n        ],\n        \"image_url\": \"http://localhost:8000/storage/donation-images/PvZwIhtZq6uTcpIj68hVZkjrZ6PHJ9yeJKke6xCV.png\",\n        \"accepted_at\": \"2026-09-05T18:07:19.000000Z\",\n        \"donor_confirmed_at\": \"2026-09-05T18:07:20.000000Z\",\n        \"charity_confirmed_at\": \"2026-09-05T18:07:19.000000Z\",\n        \"picked_up_at\": \"2026-09-05T18:07:20.000000Z\",\n        \"completed_at\": null,\n        \"cancel_reason\": null,\n        \"created_at\": \"2026-09-05T18:07:18.000000Z\",\n        \"distribution\": null\n    },\n    \"message\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "تأكيد الأخذ",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests/{{request_id}}/pickup",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests",
+                                "{{request_id}}",
+                                "pickup"
+                            ]
+                        },
+                        "description": "Screen 2, step 2 — تأكيد الأخذ.\n\nTHE HANDOVER NEEDS BOTH SIDES. This is only the charity's half; the donor\npresses its own button separately. The request reaches \"picked_up\" ONLY once\nboth have confirmed, so neither side can record a handover the other never\nagreed to.\n\nWHAT YOU GET BACK\n- still waiting on the donor -> status stays \"accepted\",\n  message \"تم تسجيل تأكيدك، بانتظار تأكيد المتبرع\"\n- the donor already confirmed -> status becomes \"picked_up\",\n  message \"تم تأكيد استلام الطعام\"\n\nRead data.donor_confirmed_at / data.charity_confirmed_at to draw the timeline.\nPressing twice returns 422."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Waiting for the donor",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/{{request_id}}/pickup",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "{{request_id}}",
+                                        "pickup"
+                                    ]
+                                },
+                                "description": "Screen 2, step 2 — تأكيد الأخذ.\n\nTHE HANDOVER NEEDS BOTH SIDES. This is only the charity's half; the donor\npresses its own button separately. The request reaches \"picked_up\" ONLY once\nboth have confirmed, so neither side can record a handover the other never\nagreed to.\n\nWHAT YOU GET BACK\n- still waiting on the donor -> status stays \"accepted\",\n  message \"تم تسجيل تأكيدك، بانتظار تأكيد المتبرع\"\n- the donor already confirmed -> status becomes \"picked_up\",\n  message \"تم تأكيد استلام الطعام\"\n\nRead data.donor_confirmed_at / data.charity_confirmed_at to draw the timeline.\nPressing twice returns 422."
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 19,\n        \"status\": \"accepted\",\n        \"status_label\": \"تم قبوله\",\n        \"title\": \"طعام مطبوخ جاهز\",\n        \"category_icon\": \"cooked_ready\",\n        \"created_at_label\": \"5 سبتمبر 2026\",\n        \"food_category\": {\n            \"id\": 1,\n            \"name_ar\": \"طعام مطبوخ جاهز\",\n            \"name_en\": \"Cooked / Ready\",\n            \"icon\": \"cooked_ready\",\n            \"default_needs_cooking\": false\n        },\n        \"needs_cooking\": false,\n        \"quantity_desc\": \"حوالي 30 وجبة عائلية ساخنة\",\n        \"description\": \"أرز ودجاج، تكفي 5 عائلات\",\n        \"valid_until\": \"2026-09-30T20:00:00.000000Z\",\n        \"pickup_until\": \"2026-09-28T17:00:00.000000Z\",\n        \"pickup_address\": \"حلب - الفرقان، مقابل الحديقة\",\n        \"latitude\": \"36.2021000\",\n        \"longitude\": \"37.1343000\",\n        \"contact_phone\": \"0999999999\",\n        \"eta_minutes\": 30,\n        \"accepted_at\": \"2026-09-05T18:07:19.000000Z\",\n        \"donor_confirmed_at\": null,\n        \"charity_confirmed_at\": \"2026-09-05T18:07:19.000000Z\",\n        \"picked_up_at\": null,\n        \"completed_at\": null,\n        \"cancel_reason\": null,\n        \"created_at\": \"2026-09-05T18:07:18.000000Z\"\n    },\n    \"message\": \"تم تسجيل تأكيدك، بانتظار تأكيد المتبرع\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "تأكيد التوزيع",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests/{{request_id}}/complete",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests",
+                                "{{request_id}}",
+                                "complete"
+                            ]
+                        },
+                        "description": "Screen 2, step 3 — تأكيد التوزيع.\n\nThe food has been handed out. This closes the request: status becomes\n\"completed\" and completed_at is stamped.\n\nDeliberately separate from the numbers below, so \"تعبئة لاحقاً\" works — the\nrequest is finished even if nobody has counted families yet.\n\n422 while the handover is not fully confirmed by both sides."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Completed",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/{{request_id}}/complete",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "{{request_id}}",
+                                        "complete"
+                                    ]
+                                },
+                                "description": "Screen 2, step 3 — تأكيد التوزيع.\n\nThe food has been handed out. This closes the request: status becomes\n\"completed\" and completed_at is stamped.\n\nDeliberately separate from the numbers below, so \"تعبئة لاحقاً\" works — the\nrequest is finished even if nobody has counted families yet.\n\n422 while the handover is not fully confirmed by both sides."
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 19,\n        \"status\": \"completed\",\n        \"status_label\": \"مكتمل\",\n        \"title\": \"طعام مطبوخ جاهز\",\n        \"category_icon\": \"cooked_ready\",\n        \"created_at_label\": \"5 سبتمبر 2026\",\n        \"food_category\": {\n            \"id\": 1,\n            \"name_ar\": \"طعام مطبوخ جاهز\",\n            \"name_en\": \"Cooked / Ready\",\n            \"icon\": \"cooked_ready\",\n            \"default_needs_cooking\": false\n        },\n        \"needs_cooking\": false,\n        \"quantity_desc\": \"حوالي 30 وجبة عائلية ساخنة\",\n        \"description\": \"أرز ودجاج، تكفي 5 عائلات\",\n        \"valid_until\": \"2026-09-30T20:00:00.000000Z\",\n        \"pickup_until\": \"2026-09-28T17:00:00.000000Z\",\n        \"pickup_address\": \"حلب - الفرقان، مقابل الحديقة\",\n        \"latitude\": \"36.2021000\",\n        \"longitude\": \"37.1343000\",\n        \"contact_phone\": \"0999999999\",\n        \"eta_minutes\": 30,\n        \"accepted_at\": \"2026-09-05T18:07:19.000000Z\",\n        \"donor_confirmed_at\": \"2026-09-05T18:07:20.000000Z\",\n        \"charity_confirmed_at\": \"2026-09-05T18:07:19.000000Z\",\n        \"picked_up_at\": \"2026-09-05T18:07:20.000000Z\",\n        \"completed_at\": \"2026-09-05T18:07:21.000000Z\",\n        \"cancel_reason\": null,\n        \"created_at\": \"2026-09-05T18:07:18.000000Z\"\n    },\n    \"message\": \"تم تأكيد التوزيع\"\n}"
+                        },
+                        {
+                            "name": "422 Handover not confirmed yet",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/{{request_id}}/complete",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "{{request_id}}",
+                                        "complete"
+                                    ]
+                                },
+                                "description": "Screen 2, step 3 — تأكيد التوزيع.\n\nThe food has been handed out. This closes the request: status becomes\n\"completed\" and completed_at is stamped.\n\nDeliberately separate from the numbers below, so \"تعبئة لاحقاً\" works — the\nrequest is finished even if nobody has counted families yet.\n\n422 while the handover is not fully confirmed by both sides."
+                            },
+                            "status": "422",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"data\": null,\n    \"message\": \"فشل التحقق من البيانات\",\n    \"errors\": {\n        \"status\": [\n            \"لم يكتمل تأكيد الاستلام من الطرفين بعد\"\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "حفظ بيانات التوزيع",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests/{{request_id}}/impact",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests",
+                                "{{request_id}}",
+                                "impact"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"families_count\": 5,\n    \"individuals_count\": 25,\n    \"area\": \"حي الفرقان\",\n    \"notes\": \"وزعت بعد صلاة العصر\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Screen 3 — بيانات التوزيع / حفظ البيانات.\n\nHow many people the food reached. Can be sent right after تأكيد التوزيع or any\ntime later, which is what the \"تعبئة لاحقاً\" button does — just skip this call.\n\nFIELDS\n- families_count    : integer, at least 1\n- individuals_count : integer, at least 1\n- area              : the distribution zone, max 100\n- notes             : optional, max 1000\n- distributed_at    : optional, defaults to now, cannot be in the future\n\nAggregate counts only — never send anything identifying a beneficiary.\nAccepted once per request; a second call returns 422. Requires the request to\nalready be \"completed\"."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Saved",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/{{request_id}}/impact",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "{{request_id}}",
+                                        "impact"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"families_count\": 5,\n    \"individuals_count\": 25,\n    \"area\": \"حي الفرقان\",\n    \"notes\": \"وزعت بعد صلاة العصر\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "description": "Screen 3 — بيانات التوزيع / حفظ البيانات.\n\nHow many people the food reached. Can be sent right after تأكيد التوزيع or any\ntime later, which is what the \"تعبئة لاحقاً\" button does — just skip this call.\n\nFIELDS\n- families_count    : integer, at least 1\n- individuals_count : integer, at least 1\n- area              : the distribution zone, max 100\n- notes             : optional, max 1000\n- distributed_at    : optional, defaults to now, cannot be in the future\n\nAggregate counts only — never send anything identifying a beneficiary.\nAccepted once per request; a second call returns 422. Requires the request to\nalready be \"completed\"."
+                            },
+                            "status": "201",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 19,\n        \"status\": \"completed\",\n        \"status_label\": \"مكتمل\",\n        \"title\": \"طعام مطبوخ جاهز\",\n        \"category_icon\": \"cooked_ready\",\n        \"created_at_label\": \"5 سبتمبر 2026\",\n        \"food_category\": {\n            \"id\": 1,\n            \"name_ar\": \"طعام مطبوخ جاهز\",\n            \"name_en\": \"Cooked / Ready\",\n            \"icon\": \"cooked_ready\",\n            \"default_needs_cooking\": false\n        },\n        \"needs_cooking\": false,\n        \"quantity_desc\": \"حوالي 30 وجبة عائلية ساخنة\",\n        \"description\": \"أرز ودجاج، تكفي 5 عائلات\",\n        \"valid_until\": \"2026-09-30T20:00:00.000000Z\",\n        \"pickup_until\": \"2026-09-28T17:00:00.000000Z\",\n        \"pickup_address\": \"حلب - الفرقان، مقابل الحديقة\",\n        \"latitude\": \"36.2021000\",\n        \"longitude\": \"37.1343000\",\n        \"contact_phone\": \"0999999999\",\n        \"eta_minutes\": 30,\n        \"accepted_at\": \"2026-09-05T18:07:19.000000Z\",\n        \"donor_confirmed_at\": \"2026-09-05T18:07:20.000000Z\",\n        \"charity_confirmed_at\": \"2026-09-05T18:07:19.000000Z\",\n        \"picked_up_at\": \"2026-09-05T18:07:20.000000Z\",\n        \"completed_at\": \"2026-09-05T18:07:21.000000Z\",\n        \"cancel_reason\": null,\n        \"created_at\": \"2026-09-05T18:07:18.000000Z\",\n        \"distribution\": {\n            \"id\": 7,\n            \"families_count\": 5,\n            \"individuals_count\": 25,\n            \"area\": \"حي الفرقان\",\n            \"notes\": \"وزعت بعد صلاة العصر\",\n            \"distributed_at\": \"2026-09-05T18:07:21.000000Z\"\n        }\n    },\n    \"message\": \"تم حفظ بيانات التوزيع\"\n}"
+                        },
+                        {
+                            "name": "422 Validation failed",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/{{request_id}}/impact",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "{{request_id}}",
+                                        "impact"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"families_count\": 5,\n    \"individuals_count\": 25,\n    \"area\": \"حي الفرقان\",\n    \"notes\": \"وزعت بعد صلاة العصر\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "description": "Screen 3 — بيانات التوزيع / حفظ البيانات.\n\nHow many people the food reached. Can be sent right after تأكيد التوزيع or any\ntime later, which is what the \"تعبئة لاحقاً\" button does — just skip this call.\n\nFIELDS\n- families_count    : integer, at least 1\n- individuals_count : integer, at least 1\n- area              : the distribution zone, max 100\n- notes             : optional, max 1000\n- distributed_at    : optional, defaults to now, cannot be in the future\n\nAggregate counts only — never send anything identifying a beneficiary.\nAccepted once per request; a second call returns 422. Requires the request to\nalready be \"completed\"."
+                            },
+                            "status": "422",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"data\": null,\n    \"message\": \"فشل التحقق من البيانات\",\n    \"errors\": {\n        \"families_count\": [\n            \"يجب أن تكون عائلة واحدة على الأقل قد استلمت الطعام.\"\n        ]\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "4. الإشعارات",
+            "item": [
+                {
+                    "name": "إشعاراتي",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/notifications",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "notifications"
+                            ]
+                        },
+                        "description": "This charity's own feed. Optional filters: ?type=handover_confirmed and\n?is_read=false. Paginated 15 per page.\n\nTYPES YOU RECEIVE\n- handover_confirmed : a handover you took part in is now confirmed\n\npayload carries denormalised names so an old notification still reads correctly\neven if a name changes later."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/notifications",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "notifications"
+                                    ]
+                                }
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"data\": [\n            {\n                \"id\": 31,\n                \"type\": \"handover_confirmed\",\n                \"recipient_type\": \"charity\",\n                \"recipient_id\": 26,\n                \"payload\": {\n                    \"donor_id\": 19,\n                    \"charity_id\": 26,\n                    \"donor_name\": \"مطعم الشام\",\n                    \"charity_name\": \"جمعية البر الخيرية\"\n                },\n                \"is_read\": false,\n                \"donation_request_id\": 19,\n                \"created_at\": \"2026-09-05T18:07:20.000000Z\"\n            }\n        ],\n        \"links\": {\n            \"first\": \"http://127.0.0.1:8031/api/v1/notifications?page=1\",\n            \"last\": \"http://127.0.0.1:8031/api/v1/notifications?page=1\",\n            \"prev\": null,\n            \"next\": null\n        },\n        \"meta\": {\n            \"current_page\": 1,\n            \"from\": 1,\n            \"last_page\": 1,\n            \"links\": [\n                {\n                    \"url\": null,\n                    \"label\": \"&laquo; Previous\",\n                    \"page\": null,\n                    \"active\": false\n                },\n                {\n                    \"url\": \"http://127.0.0.1:8031/api/v1/notifications?page=1\",\n                    \"label\": \"1\",\n                    \"page\": 1,\n                    \"active\": true\n                },\n                {\n                    \"url\": null,\n                    \"label\": \"Next &raquo;\",\n                    \"page\": null,\n                    \"active\": false\n                }\n            ],\n            \"path\": \"http://127.0.0.1:8031/api/v1/notifications\",\n            \"per_page\": 15,\n            \"to\": 1,\n            \"total\": 1\n        }\n    },\n    \"message\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "تعليم إشعار كمقروء",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/notifications/{{notification_id}}/read",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "notifications",
+                                "{{notification_id}}",
+                                "read"
+                            ]
+                        },
+                        "description": "Marks one of your own notifications read. Another account's notification id returns 404."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/notifications/{{notification_id}}/read",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "notifications",
+                                        "{{notification_id}}",
+                                        "read"
+                                    ]
+                                }
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 31,\n        \"type\": \"handover_confirmed\",\n        \"recipient_type\": \"charity\",\n        \"recipient_id\": 26,\n        \"payload\": {\n            \"donor_id\": 19,\n            \"charity_id\": 26,\n            \"donor_name\": \"مطعم الشام\",\n            \"charity_name\": \"جمعية البر الخيرية\"\n        },\n        \"is_read\": true,\n        \"donation_request_id\": 19,\n        \"created_at\": \"2026-09-05T18:07:20.000000Z\"\n    },\n    \"message\": \"تم تعليم الإشعار كمقروء\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "5. مرجع",
+            "item": [
+                {
+                    "name": "أصناف الطعام",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/food-categories",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "food-categories"
+                            ]
+                        },
+                        "description": "The fixed category list. `icon` is a stable key you map to your own asset; `default_needs_cooking` drives the kitchen rule."
+                    },
+                    "response": [
+                        {
+                            "name": "200 OK",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/food-categories",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "food-categories"
+                                    ]
+                                }
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"name_ar\": \"طعام مطبوخ جاهز\",\n            \"name_en\": \"Cooked / Ready\",\n            \"icon\": \"cooked_ready\",\n            \"default_needs_cooking\": false,\n            \"created_at\": \"2026-08-25T00:00:36.000000Z\",\n            \"updated_at\": \"2026-09-04T13:45:58.000000Z\"\n        },\n        {\n            \"id\": 2,\n            \"name_ar\": \"خضار وفواكه\",\n            \"name_en\": \"Fruits & Vegetables\",\n            \"icon\": \"fruits_vegetables\",\n            \"default_needs_cooking\": false,\n            \"created_at\": \"2026-08-25T00:00:36.000000Z\",\n            \"updated_at\": \"2026-09-04T13:45:58.000000Z\"\n        },\n        {\n            \"id\": 3,\n            \"name_ar\": \"مخبوزات وحلويات\",\n            \"name_en\": \"Bakery & Sweets\",\n            \"icon\": \"bakery_sweets\",\n            \"default_needs_cooking\": false,\n            \"created_at\": \"2026-08-25T00:00:36.000000Z\",\n            \"updated_at\": \"2026-09-04T13:45:58.000000Z\"\n        },\n        {\n            \"id\": 4,\n            \"name_ar\": \"معلّبات وأطعمة جافة\",\n            \"name_en\": \"Canned & Dry\",\n            \"icon\": \"canned_dry\",\n            \"default_needs_cooking\": false,\n            \"created_at\": \"2026-08-25T00:00:36.000000Z\",\n            \"updated_at\": \"2026-09-04T13:45:58.000000Z\"\n        },\n        {\n            \"id\": 5,\n            \"name_ar\": \"لحوم ودواجن نيئة\",\n            \"name_en\": \"Raw Meat & Poultry\",\n            \"icon\": \"raw_meat\",\n            \"default_needs_cooking\": true,\n            \"created_at\": \"2026-08-25T00:00:36.000000Z\",\n            \"updated_at\": \"2026-09-04T13:45:58.000000Z\"\n        },\n        {\n            \"id\": 6,\n            \"name_ar\": \"حبوب نيئة\",\n            \"name_en\": \"Raw Grains\",\n            \"icon\": \"raw_grains\",\n            \"default_needs_cooking\": true,\n            \"created_at\": \"2026-08-25T00:00:36.000000Z\",\n            \"updated_at\": \"2026-09-04T13:45:58.000000Z\"\n        },\n        {\n            \"id\": 7,\n            \"name_ar\": \"غير ذلك\",\n            \"name_en\": \"Other\",\n            \"icon\": \"other\",\n            \"default_needs_cooking\": false,\n            \"created_at\": \"2026-08-25T00:00:36.000000Z\",\n            \"updated_at\": \"2026-08-25T00:00:36.000000Z\"\n        }\n    ],\n    \"message\": null\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "محاولة وصول قبل الاعتماد",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{charity_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/charity/requests/available",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "charity",
+                                "requests",
+                                "available"
+                            ]
+                        },
+                        "description": "What every charity endpoint returns while the account is still pending. Kept here so the app can be built against it."
+                    },
+                    "response": [
+                        {
+                            "name": "403 Not approved yet",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{charity_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/charity/requests/available",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "charity",
+                                        "requests",
+                                        "available"
+                                    ]
+                                }
+                            },
+                            "status": "403",
+                            "code": 403,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"data\": null,\n    \"message\": \"حساب الجمعية غير مفعّل بعد\"\n}"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -2,6 +2,9 @@
 
 Base URL (local): `http://127.0.0.1:8000/api/v1`
 
+> The charity app has its own contract in **[CHARITY_API.md](CHARITY_API.md)** and
+> its own Postman collection. This file covers the donor and admin sides.
+
 > ### ⚠️ Breaking changes so far — read once, then re-import the Postman collection
 >
 > **Every endpoint moved under `/v1`.** `POST /api/register` is now
@@ -179,26 +182,27 @@ app can code against these values today.
 |---|---|---|
 | `pending` | Posted, waiting for a charity to take it | donor (on create) |
 | `accepted` | A charity claimed it and is on the way | charity |
-| `picked_up` | Handover confirmed — **reserved, not used yet** | later phase (QR) |
+| `picked_up` | Handover confirmed by **both** donor and charity | donor + charity |
 | `completed` | Delivered and closed. The rating prompt fires here. | donor |
 | `expired` | Nobody accepted it before `valid_until` | system |
 | `cancelled` | Donor pulled it back before a charity accepted | donor |
 | `no_show` | Charity accepted then never showed up | system / admin |
 
 Terminal states — `completed`, `expired`, `cancelled`, `no_show` — never change
-again. `picked_up` is returned by the API only once the QR handover ships; treat
-it as valid input anyway so the app does not break when it does.
+again. `picked_up` is reached only when the donor and the charity have each
+confirmed — see **Confirming the handover** below.
 
 > Note for anyone holding the Phase 2 PDF: that document lists only four
 > statuses and calls the first one `pending`. The name matches; the list does
-> not. The extra three (`expired`, `no_show`, `picked_up`) exist because the
-> app has to handle food going stale, charities failing to collect, and the
-> strike system that suspends them. Build the app against **this** table.
+> not. The extra three (`picked_up`, `expired`, `no_show`) exist because the
+> app has to handle a handover both sides sign off on, food going stale, and
+> charities failing to collect — which feeds the strike system. Build the app
+> against **this** table.
 
 ---
 
 ## Next up (not built yet)
-Donor: create/list/show/cancel donation request · Charity: available requests + accept · rating · QR confirm · distribute · no-show/strikes · stats.
+no-show reporting + strikes · auto-expiry job · admin login and dashboard · refresh tokens · stats.
 This section will be updated the moment each slice is done — this file is the single source of truth for the contract, matching the team plan's "API First" rule. Do not hand-build request shapes from memory; check here first.
 
 ---
@@ -208,7 +212,8 @@ This section will be updated the moment each slice is done — this file is the 
 ## The state machine
 
 ```
-pending ──charity accepts──> accepted ──donor scans QR──> picked_up ──charity files numbers──> completed
+pending ──charity accepts──> accepted ──BOTH sides confirm──> picked_up ──charity confirms distribution──> completed
+                                                                                    (beneficiary numbers optional, any time after)
    │                            │
    ├──donor cancels──────────> cancelled <──donor cancels──┘
    └──valid_until passes────> expired
@@ -224,13 +229,45 @@ pending ──charity accepts──> accepted ──donor scans QR──> picked
 | GET | `/requests` | Own requests, paginated. Optional `?status=`. |
 | GET | `/requests/{id}` | Own request only, else `404`. |
 | POST | `/requests/{id}/cancel` | Only from `pending` or `accepted`. |
-| POST | `/requests/{id}/confirm` | Empty body. `accepted` → `picked_up`. |
+| POST | `/requests/{id}/confirm` | Empty body. Sets the **donor half** of the handover. Reaches `picked_up` only once the charity has confirmed too. |
 | POST | `/requests/{id}/rate` | From `picked_up` onward. Once only. |
 
 **Create validation:** `food_category_id` exists · `quantity_desc` required, max 150 · `needs_cooking` optional (falls back to the category default) · `valid_until` after now · `pickup_until` after now and `before_or_equal:valid_until` · `pickup_address` required · `latitude`/`longitude` optional but required together · `contact_phone` required.
 
 **One request at a time.** A donor may only hold one request in `pending` or `accepted`. A second create returns `422` with `errors.active_request_id`, whose message carries the id already in flight so the app can route straight to it. Confirming the handover releases the lock — the donor is free again even though the charity has yet to file its distribution numbers.
 
+## Confirming the handover — both sides
+
+`picked_up` needs **two** confirmations, one from each party:
+
+| Who | Endpoint |
+|---|---|
+| Donor | `POST /api/v1/donor/requests/{id}/confirm` |
+| Charity | `POST /api/v1/charity/requests/{id}/pickup` |
+
+Neither alone changes the status. Whoever presses first gets `200` with the
+status still `accepted` and the message `تم تسجيل تأكيدك، بانتظار تأكيد ...`;
+the second press flips it to `picked_up` and stamps `picked_up_at`.
+
+The response always carries `donor_confirmed_at` and `charity_confirmed_at`, so
+each app can show whether it is still waiting on the other side. Pressing twice
+returns `422`.
+
+This replaces the old QR scan: a single party can no longer record a handover
+the other never agreed to.
+
+## Photos
+
+The donor may attach up to **4 images** when creating a request — send
+`POST /api/v1/donor/requests` as `multipart/form-data` with `images[0]`,
+`images[1]`, … Each must be jpg/png/webp and at most 3 MB.
+
+Every request payload then carries:
+
+- `images` — array of absolute URLs, in upload order
+- `image_url` — the first one, or `null` when none were uploaded
+
+Falling back to `food_category.icon` is fine when `image_url` is `null`.
 ## Notifications — `/api/v1/notifications` (Bearer token, donor **or** charity)
 
 | Method | Path | Notes |
@@ -255,7 +292,9 @@ The admin has a separate feed at `/api/v1/admin/notifications` (also receives `h
 | GET | `/requests` | Ones this charity took. |
 | GET | `/requests/{id}` | Must be assigned to it, else `404`. |
 | POST | `/requests/{id}/accept` | Body `eta_minutes` (5–480). Notifies the donor. |
-| POST | `/requests/{id}/distribute` | Files the distribution numbers. `picked_up` → `completed`. |
+| POST | `/requests/{id}/pickup` | Empty body. Sets the **charity half** of the handover. |
+| POST | `/requests/{id}/complete` | Empty body. `picked_up` → `completed`. |
+| POST | `/requests/{id}/impact` | Files the beneficiary numbers. Optional, any time after `complete`. |
 
 **Available filter:** `status = pending` AND `valid_until > now` AND (charity has a kitchen OR the food does not need cooking) AND the charity has no strike on that request.
 
@@ -297,13 +336,18 @@ Three groups, matching the three cards on the details screen:
 - **`social_impact`** — `beneficiary_families`, `beneficiary_individuals`, `distribution_zone`, `notes`, `distributed_at`. **`null` until the charity files its numbers — hide the card, do not render zeros.**
 - **`can_rate_charity`** — true only while the donor may still rate. Flips to false once a rating exists, so the popup can never fire twice.
 
-### `POST /charity/requests/{id}/distribute`
+### `POST /charity/requests/{id}/complete` and `/impact`
 
 Body: `families_count` (1–10000), `individuals_count` (1–100000), `area` (≤100), optional `notes` (≤1000) and `distributed_at` (not in the future — omit it and the server stamps now).
 
-Only the assigned charity, only while `picked_up`. Filing twice returns `422 "Distribution has already been recorded for this request"`.
+`complete` takes no body and closes the request. `impact` carries the numbers and
+may be sent later — that is what the app's "تعبئة لاحقاً" button does.
 
-**This is the only path to `completed`.** The donor confirming the handover proves the food changed hands; the donation is not finished until someone has eaten.
+Only the charity that accepted the request, and only in the right state. Filing
+either twice returns `422`.
+
+**`complete` is the only path to `completed`.** The two-sided handover proves the
+food changed hands; the distribution confirmation says it reached people.
 
 ## Decisions worth knowing (phase 3)
 
