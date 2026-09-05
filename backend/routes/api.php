@@ -46,7 +46,15 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
             Route::get('/requests', [CharityRequestController::class, 'index']);
             Route::get('/requests/{id}', [CharityRequestController::class, 'show']);
             Route::post('/requests/{id}/accept', [CharityRequestController::class, 'accept']);
-            Route::post('/requests/{id}/distribute', [CharityRequestController::class, 'distribute']);
+
+            // Handover needs both sides: this is the charity's half, the donor
+            // presses its own /donor/requests/{id}/confirm.
+            Route::post('/requests/{id}/pickup', [CharityRequestController::class, 'pickup']);
+
+            // Confirming the distribution closes the request; the beneficiary
+            // numbers are a separate call so they can be filed later.
+            Route::post('/requests/{id}/complete', [CharityRequestController::class, 'complete']);
+            Route::post('/requests/{id}/impact', [CharityRequestController::class, 'impact']);
         });
     });
 

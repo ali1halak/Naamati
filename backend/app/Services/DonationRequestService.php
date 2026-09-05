@@ -51,24 +51,35 @@ class DonationRequestService
         $needsCooking = $data['needs_cooking']
             ?? FoodCategory::findOrFail($data['food_category_id'])->default_needs_cooking;
 
-        $request = DonationRequest::create([
-            'donor_id'         => $donorId,
-            'food_category_id' => $data['food_category_id'],
-            'needs_cooking'    => $needsCooking,
-            'quantity_desc'    => $data['quantity_desc'],
-            'description'      => $data['description'] ?? null,
-            'valid_until'      => $data['valid_until'],
-            'pickup_until'     => $data['pickup_until'],
-            'pickup_address'   => $data['pickup_address'],
-            'latitude'         => $data['latitude'] ?? null,
-            'longitude'        => $data['longitude'] ?? null,
-            'contact_phone'    => $data['contact_phone'],
-            'status'           => RequestStatus::Pending,
-        ]);
+        return DB::transaction(function () use ($donorId, $data, $needsCooking) {
+            $request = DonationRequest::create([
+                'donor_id'         => $donorId,
+                'food_category_id' => $data['food_category_id'],
+                'needs_cooking'    => $needsCooking,
+                'quantity_desc'    => $data['quantity_desc'],
+                'description'      => $data['description'] ?? null,
+                'valid_until'      => $data['valid_until'],
+                'pickup_until'     => $data['pickup_until'],
+                'pickup_address'   => $data['pickup_address'],
+                'latitude'         => $data['latitude'] ?? null,
+                'longitude'        => $data['longitude'] ?? null,
+                'contact_phone'    => $data['contact_phone'],
+                'status'           => RequestStatus::Pending,
+            ]);
 
-        $this->log($request, null, RequestStatus::Pending);
+            // Stored inside the transaction so a failure halfway through does
+            // not leave a request whose photos are missing.
+            foreach (array_values($data['images'] ?? []) as $position => $file) {
+                $request->images()->create([
+                    'path'       => $file->store('donation-images', 'public'),
+                    'sort_order' => $position,
+                ]);
+            }
 
-        return $request;
+            $this->log($request, null, RequestStatus::Pending);
+
+            return $request;
+        });
     }
 
     /**
@@ -108,78 +119,150 @@ class DonationRequestService
     }
 
     /**
-     * The donor states the food changed hands. The admin is notified so there is
-     * a record of which charity received from which donor.
+     * One side states the food changed hands.
+     *
+     * The request only reaches `picked_up` once BOTH sides have pressed their
+     * own button. A single party cannot record a handover the other never
+     * agreed to, which is the whole point: neither can claim the food moved
+     * when it did not.
+     *
+     * The donor's half. Ownership is already established by the caller, which
+     * loads the request scoped to the signed-in donor.
      */
-    public function confirmHandover(DonationRequest $request): DonationRequest
+    public function confirmHandoverByDonor(DonationRequest $request): DonationRequest
     {
-        $this->guard($request, [RequestStatus::Accepted]);
-
-        $from = $request->status;
-        $request->update([
-            'status'       => RequestStatus::PickedUp,
-            'picked_up_at' => now(),
-            'confirmed_at' => now(),
-        ]);
-
-        $this->log($request, $from, RequestStatus::PickedUp, 'confirmed by donor');
-        $this->notifications->handoverConfirmed($request);
-
-        return $request->refresh();
+        return $this->confirmHandoverBy($request, 'donor');
     }
 
     /**
-     * The charity reports what it actually handed out, which closes the
-     * request for good.
-     *
-     * This is the only way a request reaches `completed`: the donor confirming
-     * the handover proves the food changed hands, but the donation is not
-     * really done until somebody has eaten. Aggregate counts only — no
-     * beneficiary is ever identified.
+     * The charity's half. Unlike the donor route there is no owner-scoped
+     * lookup here, so the claim has to be checked: without this any active
+     * charity could confirm a handover on a request it never accepted.
      */
-    public function recordDistribution(DonationRequest $request, Charity $charity, array $data): DonationRequest
+    public function confirmHandoverByCharity(DonationRequest $request, Charity $charity): DonationRequest
     {
-        // 404-style guard would leak nothing, but the charity is legitimately
-        // authenticated here — it just picked someone else's request.
-        if ($request->charity_id !== $charity->id) {
+        $this->assertAcceptedBy($request, $charity);
+
+        return $this->confirmHandoverBy($request, 'charity');
+    }
+
+    /**
+     * @param 'donor'|'charity' $party
+     */
+    private function confirmHandoverBy(DonationRequest $request, string $party): DonationRequest
+    {
+        $this->guard($request, [RequestStatus::Accepted]);
+
+        $column = $party === 'donor' ? 'donor_confirmed_at' : 'charity_confirmed_at';
+
+        if ($request->{$column} !== null) {
             throw ValidationException::withMessages([
-                'status' => 'هذا الطلب قبلته جمعية أخرى.',
+                'status' => 'سبق أن أكّدت تسليم هذا الطلب.',
             ]);
         }
 
-        // Answered before the generic guard so a charity filing twice is told
-        // what actually happened, instead of the misleading "not confirmed yet".
+        return DB::transaction(function () use ($request, $column, $party) {
+            $request->update([$column => now()]);
+            $request->refresh();
+
+            // Still waiting on the other side — the status deliberately stays
+            // `accepted` so the app can show "بانتظار تأكيد الطرف الآخر".
+            if (! $request->handoverFullyConfirmed()) {
+                return $request;
+            }
+
+            $from = $request->status;
+            $request->update([
+                'status'       => RequestStatus::PickedUp,
+                'picked_up_at' => now(),
+            ]);
+
+            $this->log($request, $from, RequestStatus::PickedUp, "confirmed by both sides, last: {$party}");
+            $this->notifications->handoverConfirmed($request);
+
+            return $request->refresh();
+        });
+    }
+
+    /**
+     * The charity states the food has been handed out, which closes the
+     * request.
+     *
+     * Deliberately separate from the beneficiary numbers: a charity finishing
+     * a distribution at night should not have to count families before it can
+     * mark the job done, and a request left waiting on paperwork would never
+     * reach `completed`.
+     */
+    public function completeDistribution(DonationRequest $request, Charity $charity): DonationRequest
+    {
+        $this->assertAcceptedBy($request, $charity);
+
         if ($request->status === RequestStatus::Completed) {
             throw ValidationException::withMessages([
-                'status' => 'تم تسجيل التوزيع لهذا الطلب مسبقاً.',
+                'status' => 'سبق تأكيد توزيع هذا الطلب.',
             ]);
         }
 
         $this->guard(
             $request,
             [RequestStatus::PickedUp],
-            'لم يؤكد المتبرع تسليم الطعام بعد'
+            'لم يكتمل تأكيد الاستلام من الطرفين بعد'
         );
 
-        return DB::transaction(function () use ($request, $data) {
-            $request->distribution()->create([
-                'families_count'    => $data['families_count'],
-                'individuals_count' => $data['individuals_count'],
-                'area'              => $data['area'],
-                'notes'             => $data['notes'] ?? null,
-                'distributed_at'    => $data['distributed_at'] ?? now(),
+        $from = $request->status;
+        $request->update([
+            'status'       => RequestStatus::Completed,
+            'completed_at' => now(),
+        ]);
+
+        $this->log($request, $from, RequestStatus::Completed, 'distribution confirmed by charity');
+
+        return $request->refresh();
+    }
+
+    /**
+     * How many people the food actually reached. Filed right after the
+     * distribution or any time later — "تعبئة لاحقاً" on the impact screen.
+     * Aggregate counts only; no beneficiary is ever identified.
+     */
+    public function recordImpact(DonationRequest $request, Charity $charity, array $data): DonationRequest
+    {
+        $this->assertAcceptedBy($request, $charity);
+
+        if ($request->status !== RequestStatus::Completed) {
+            throw ValidationException::withMessages([
+                'status' => 'أكّد التوزيع أولاً قبل إدخال أرقام المستفيدين.',
             ]);
+        }
 
-            $from = $request->status;
-            $request->update([
-                'status'       => RequestStatus::Completed,
-                'completed_at' => now(),
+        if ($request->distribution()->exists()) {
+            throw ValidationException::withMessages([
+                'status' => 'تم تسجيل أرقام التوزيع لهذا الطلب مسبقاً.',
             ]);
+        }
 
-            $this->log($request, $from, RequestStatus::Completed, 'distribution reported by charity');
+        $request->distribution()->create([
+            'families_count'    => $data['families_count'],
+            'individuals_count' => $data['individuals_count'],
+            'area'              => $data['area'],
+            'notes'             => $data['notes'] ?? null,
+            'distributed_at'    => $data['distributed_at'] ?? now(),
+        ]);
 
-            return $request->refresh();
-        });
+        return $request->refresh();
+    }
+
+    /**
+     * A 404 would leak nothing, but the charity here is legitimately signed in
+     * and simply acting on a request it never claimed — say so plainly.
+     */
+    private function assertAcceptedBy(DonationRequest $request, Charity $charity): void
+    {
+        if ($request->charity_id !== $charity->id) {
+            throw ValidationException::withMessages([
+                'status' => 'هذا الطلب قبلته جمعية أخرى.',
+            ]);
+        }
     }
 
     public function cancel(DonationRequest $request, ?string $reason = null): DonationRequest
@@ -214,7 +297,7 @@ class DonationRequestService
                     ->where('charity_id', $charity->id)
                     ->whereNotNull('donation_request_id');
             })
-            ->with(['foodCategory', 'donor'])
+            ->with(['foodCategory', 'images'])
             ->latest();
     }
 }

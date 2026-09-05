@@ -41,7 +41,7 @@ class DonationRequestController extends Controller
     public function index(Request $request)
     {
         $query = DonationRequest::where('donor_id', $request->user()->id)
-            ->with(['foodCategory', 'charity'])
+            ->with(['foodCategory', 'charity', 'images'])
             ->latest();
 
         if ($status = $request->query('status')) {
@@ -68,7 +68,7 @@ class DonationRequestController extends Controller
     public function audit(Request $request, int $id)
     {
         $donationRequest = $this->ownedRequest($request, $id)
-            ->load(['foodCategory', 'charity', 'distribution', 'rating']);
+            ->load(['foodCategory', 'charity', 'distribution', 'rating', 'images']);
 
         return $this->ok(new DonationAuditResource($donationRequest));
     }
@@ -78,7 +78,7 @@ class DonationRequestController extends Controller
         $donationRequest = $this->requests->create($request->user()->id, $request->validated());
 
         return $this->ok(
-            new DonationRequestResource($donationRequest->load('foodCategory')),
+            new DonationRequestResource($donationRequest->load(['foodCategory', 'images'])),
             'تم نشر طلب التبرع',
             201
         );
@@ -87,7 +87,7 @@ class DonationRequestController extends Controller
     public function show(Request $request, int $id)
     {
         $donationRequest = $this->ownedRequest($request, $id)
-            ->load(['foodCategory', 'charity', 'distribution', 'rating']);
+            ->load(['foodCategory', 'charity', 'distribution', 'rating', 'images']);
 
         return $this->ok(new DonationRequestResource($donationRequest));
     }
@@ -100,7 +100,7 @@ class DonationRequestController extends Controller
         );
 
         return $this->ok(
-            new DonationRequestResource($donationRequest->load('foodCategory')),
+            new DonationRequestResource($donationRequest->load(['foodCategory', 'images'])),
             'تم إلغاء طلب التبرع'
         );
     }
@@ -111,13 +111,19 @@ class DonationRequestController extends Controller
      */
     public function confirm(Request $request, int $id)
     {
-        $donationRequest = $this->requests->confirmHandover(
+        $donationRequest = $this->requests->confirmHandoverByDonor(
             $this->ownedRequest($request, $id)
         );
 
+        // Both buttons must be pressed before the food counts as handed over,
+        // so say which of the two just happened.
+        $message = $donationRequest->handoverFullyConfirmed()
+            ? 'تم تأكيد تسليم الطعام'
+            : 'تم تسجيل تأكيدك، بانتظار تأكيد الجمعية';
+
         return $this->ok(
             new DonationRequestResource($donationRequest->load(['foodCategory', 'charity'])),
-            'تم تأكيد تسليم الطعام'
+            $message
         );
     }
 

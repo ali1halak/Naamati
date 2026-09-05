@@ -36,6 +36,12 @@ class StoreDonationRequest extends FormRequest
             'longitude'      => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
 
             'contact_phone' => ['required', 'string', 'max:20'],
+
+            // Photos of the food. Optional, but they are what a charity looks
+            // at first when deciding whether to drive out for a request.
+            // Sent as multipart: images[0], images[1], ...
+            'images'   => ['sometimes', 'array', 'max:4'],
+            'images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ];
     }
 
@@ -74,6 +80,10 @@ class StoreDonationRequest extends FormRequest
             'pickup_until.before_or_equal' => 'لا يمكن أن يكون موعد الاستلام بعد انتهاء صلاحية الطعام.',
             'latitude.required_with'       => 'خط العرض مطلوب عند إرسال خط الطول.',
             'longitude.required_with'      => 'خط الطول مطلوب عند إرسال خط العرض.',
+            'images.max'                   => 'لا يمكن إرفاق أكثر من 4 صور.',
+            'images.*.image'               => 'الملف المرفق يجب أن يكون صورة.',
+            'images.*.mimes'               => 'الصورة يجب أن تكون بصيغة jpg أو png أو webp.',
+            'images.*.max'                 => 'حجم الصورة يجب ألا يزيد عن 3 ميغابايت.',
         ];
     }
 }
