@@ -37,7 +37,7 @@ class DonationRequestService
     /**
      * Refuse the move instead of silently corrupting the record.
      */
-    private function guard(DonationRequest $r, array $allowedFrom, string $message = 'Invalid state transition'): void
+    private function guard(DonationRequest $r, array $allowedFrom, string $message = 'لا يمكن تنفيذ هذا الإجراء على الطلب في حالته الحالية'): void
     {
         if (! in_array($r->status, $allowedFrom, true)) {
             throw ValidationException::withMessages(['status' => $message]);
@@ -80,15 +80,15 @@ class DonationRequestService
         return DB::transaction(function () use ($request, $charity, $etaMinutes) {
             $fresh = DonationRequest::whereKey($request->id)->lockForUpdate()->firstOrFail();
 
-            $this->guard($fresh, [RequestStatus::Pending], 'Request is no longer available');
+            $this->guard($fresh, [RequestStatus::Pending], 'لم يعد هذا الطلب متاحاً');
 
             if ($fresh->valid_until->isPast()) {
-                throw ValidationException::withMessages(['status' => 'Request has expired']);
+                throw ValidationException::withMessages(['status' => 'انتهت صلاحية هذا الطلب']);
             }
 
             if ($fresh->needs_cooking && ! $charity->has_kitchen) {
                 throw ValidationException::withMessages([
-                    'status' => 'This food needs cooking and your charity has no kitchen',
+                    'status' => 'هذا الطعام يحتاج طهياً وجمعيتكم لا تملك مطبخاً.',
                 ]);
             }
 
@@ -143,7 +143,7 @@ class DonationRequestService
         // authenticated here — it just picked someone else's request.
         if ($request->charity_id !== $charity->id) {
             throw ValidationException::withMessages([
-                'status' => 'This request was accepted by another charity',
+                'status' => 'هذا الطلب قبلته جمعية أخرى.',
             ]);
         }
 
@@ -151,14 +151,14 @@ class DonationRequestService
         // what actually happened, instead of the misleading "not confirmed yet".
         if ($request->status === RequestStatus::Completed) {
             throw ValidationException::withMessages([
-                'status' => 'Distribution has already been recorded for this request',
+                'status' => 'تم تسجيل التوزيع لهذا الطلب مسبقاً.',
             ]);
         }
 
         $this->guard(
             $request,
             [RequestStatus::PickedUp],
-            'The donor has not confirmed the handover yet'
+            'لم يؤكد المتبرع تسليم الطعام بعد'
         );
 
         return DB::transaction(function () use ($request, $data) {

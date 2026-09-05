@@ -48,8 +48,8 @@ class DonationRequestController extends Controller
             $allowed = array_column(RequestStatus::cases(), 'value');
 
             if (! in_array($status, $allowed, true)) {
-                return $this->fail('Validation failed', 422, [
-                    'status' => ['The selected status is invalid.'],
+                return $this->fail('فشل التحقق من البيانات', 422, [
+                    'status' => ['الحالة المحددة غير صحيحة.'],
                 ]);
             }
 
@@ -79,7 +79,7 @@ class DonationRequestController extends Controller
 
         return $this->ok(
             new DonationRequestResource($donationRequest->load('foodCategory')),
-            'Donation request published',
+            'تم نشر طلب التبرع',
             201
         );
     }
@@ -101,7 +101,7 @@ class DonationRequestController extends Controller
 
         return $this->ok(
             new DonationRequestResource($donationRequest->load('foodCategory')),
-            'Donation request cancelled'
+            'تم إلغاء طلب التبرع'
         );
     }
 
@@ -117,7 +117,7 @@ class DonationRequestController extends Controller
 
         return $this->ok(
             new DonationRequestResource($donationRequest->load(['foodCategory', 'charity'])),
-            'Handover confirmed'
+            'تم تأكيد تسليم الطعام'
         );
     }
 
@@ -127,12 +127,12 @@ class DonationRequestController extends Controller
 
         if ($donationRequest->rating()->exists()) {
             throw ValidationException::withMessages([
-                'stars' => 'This donation has already been rated.',
+                'stars' => 'تم تقييم هذا التبرع مسبقاً.',
             ]);
         }
 
         $rating = $this->ratings->rate($donationRequest, $request->validated());
 
-        return $this->ok(new RatingResource($rating), 'Thank you for your rating', 201);
+        return $this->ok(new RatingResource($rating), 'شكراً لتقييمك', 201);
     }
 }

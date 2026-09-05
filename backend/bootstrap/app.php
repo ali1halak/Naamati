@@ -33,14 +33,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof \Illuminate\Validation\ValidationException => response()->json([
                     'success' => false,
                     'data'    => null,
-                    'message' => 'Validation failed',
+                    'message' => 'فشل التحقق من البيانات',
                     'errors'  => $e->errors(),
                 ], 422),
 
                 $e instanceof \Illuminate\Auth\AuthenticationException => response()->json([
                     'success' => false,
                     'data'    => null,
-                    'message' => 'Unauthenticated',
+                    'message' => 'يجب تسجيل الدخول أولاً',
                     'errors'  => null,
                 ], 401),
 
@@ -48,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException => response()->json([
                     'success' => false,
                     'data'    => null,
-                    'message' => 'Forbidden',
+                    'message' => 'ليس لديك صلاحية لهذا الإجراء',
                     'errors'  => null,
                 ], 403),
 
@@ -56,14 +56,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException => response()->json([
                     'success' => false,
                     'data'    => null,
-                    'message' => 'Not found',
+                    'message' => 'العنصر المطلوب غير موجود',
                     'errors'  => null,
                 ], 404),
 
                 $e instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException => response()->json([
                     'success' => false,
                     'data'    => null,
-                    'message' => 'Too many requests',
+                    'message' => 'محاولات كثيرة جداً، انتظر قليلاً ثم أعد المحاولة',
                     'errors'  => null,
                 ], 429),
 
@@ -77,7 +77,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 default => response()->json([
                     'success' => false,
                     'data'    => null,
-                    'message' => config('app.debug') ? $e->getMessage() : 'Server error',
+                    'message' => config('app.debug') ? $e->getMessage() : 'حدث خطأ في الخادم',
                     'errors'  => null,
                 ], 500),
             };

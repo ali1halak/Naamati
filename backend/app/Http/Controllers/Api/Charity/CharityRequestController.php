@@ -65,7 +65,7 @@ class CharityRequestController extends Controller
 
         return $this->ok(
             new DonationRequestResource($donationRequest->load('foodCategory', 'donor')),
-            'Request accepted'
+            'تم قبول الطلب'
         );
     }
 
@@ -84,7 +84,7 @@ class CharityRequestController extends Controller
             new DonationRequestResource(
                 $donationRequest->load(['foodCategory', 'donor', 'distribution'])
             ),
-            'Distribution recorded',
+            'تم تسجيل التوزيع',
             201
         );
     }

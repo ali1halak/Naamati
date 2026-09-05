@@ -60,7 +60,7 @@ class StoreDonationRequest extends FormRequest
                 if ($active) {
                     $validator->errors()->add(
                         'active_request_id',
-                        "You already have an active request (#{$active->id}). Finish or cancel it first."
+                        "لديك طلب نشط بالفعل (رقم {$active->id}). أنهِه أو ألغِه قبل إنشاء طلب جديد."
                     );
                 }
             },
@@ -70,10 +70,10 @@ class StoreDonationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'valid_until.after'                => 'The food expiry time must be in the future.',
-            'pickup_until.before_or_equal'     => 'Pickup time cannot be later than the food expiry time.',
-            'latitude.required_with'           => 'Latitude is required when longitude is provided.',
-            'longitude.required_with'          => 'Longitude is required when latitude is provided.',
+            'valid_until.after'            => 'يجب أن يكون وقت انتهاء صلاحية الطعام في المستقبل.',
+            'pickup_until.before_or_equal' => 'لا يمكن أن يكون موعد الاستلام بعد انتهاء صلاحية الطعام.',
+            'latitude.required_with'       => 'خط العرض مطلوب عند إرسال خط الطول.',
+            'longitude.required_with'      => 'خط الطول مطلوب عند إرسال خط العرض.',
         ];
     }
 }

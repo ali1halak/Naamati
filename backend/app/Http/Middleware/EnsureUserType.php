@@ -20,7 +20,7 @@ class EnsureUserType
             return response()->json([
                 'success' => false,
                 'data'    => null,
-                'message' => 'Forbidden: wrong account type',
+                'message' => 'هذا الإجراء غير متاح لنوع حسابك',
             ], 403);
         }
 
@@ -28,7 +28,7 @@ class EnsureUserType
             return response()->json([
                 'success' => false,
                 'data'    => null,
-                'message' => 'Charity account is not active',
+                'message' => 'حساب الجمعية غير مفعّل بعد',
             ], 403);
         }
 

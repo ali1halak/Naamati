@@ -21,13 +21,13 @@ class RatingService
     {
         if (! in_array($request->status, [RequestStatus::PickedUp, RequestStatus::Completed], true)) {
             throw ValidationException::withMessages([
-                'status' => 'You can only rate a donation after the handover is confirmed.',
+                'status' => 'لا يمكن التقييم إلا بعد تأكيد تسليم الطعام.',
             ]);
         }
 
         if (! $request->charity_id) {
             throw ValidationException::withMessages([
-                'status' => 'This donation has no charity to rate.',
+                'status' => 'لا توجد جمعية مرتبطة بهذا التبرع لتقييمها.',
             ]);
         }
 

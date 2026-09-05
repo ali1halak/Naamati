@@ -40,8 +40,8 @@ class CharityRegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.unique'   => 'This email is already registered.',
-            'work_end.after' => 'Work end time must be after work start time.',
+            'email.unique'   => 'هذا البريد الإلكتروني مسجّل مسبقاً.',
+            'work_end.after' => 'يجب أن تكون نهاية الدوام بعد بدايتها.',
         ];
     }
 }

@@ -32,7 +32,7 @@ class AdminController extends Controller
     {
         return $this->ok(
             $this->charityService->approve($charity),
-            'Charity approved'
+            'تم اعتماد الجمعية'
         );
     }
 
@@ -40,7 +40,7 @@ class AdminController extends Controller
     {
         return $this->ok(
             $this->charityService->suspend($charity),
-            'Charity suspended'
+            'تم تعليق الجمعية'
         );
     }
 
@@ -77,6 +77,6 @@ class AdminController extends Controller
 
         $notification->update(['is_read' => true]);
 
-        return $this->ok(new NotificationResource($notification), 'Notification marked as read');
+        return $this->ok(new NotificationResource($notification), 'تم تعليم الإشعار كمقروء');
     }
 }

@@ -50,7 +50,7 @@ class NotificationController extends Controller
 
         $notification->update(['is_read' => true]);
 
-        return $this->ok(new NotificationResource($notification), 'Notification marked as read');
+        return $this->ok(new NotificationResource($notification), 'تم تعليم الإشعار كمقروء');
     }
 
     /**
