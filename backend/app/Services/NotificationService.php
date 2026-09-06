@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CancelledBy;
 use App\Enums\NotificationType;
 use App\Enums\RecipientType;
 use App\Models\DonationRequest;
@@ -52,6 +53,33 @@ class NotificationService
 
         $this->record(RecipientType::Admin, null, NotificationType::HandoverConfirmed, $request, $payload);
         $this->record(RecipientType::Charity, $request->charity_id, NotificationType::HandoverConfirmed, $request, $payload);
+    }
+
+    /**
+     * A request was cancelled. The other side always finds out: the donor is
+     * told when the admin pulls their request, and the admin (plus an
+     * attached charity, if any) is told when the donor pulls it back.
+     */
+    public function requestCancelled(DonationRequest $request, CancelledBy $by): void
+    {
+        $request->loadMissing(['donor', 'charity']);
+
+        $payload = [
+            'cancelled_by' => $by->value,
+            'reason'       => $request->cancel_reason,
+            'donor_name'   => $request->donor?->name,
+        ];
+
+        if ($by === CancelledBy::Admin) {
+            $this->record(RecipientType::Donor, $request->donor_id, NotificationType::RequestCancelled, $request, $payload);
+
+            return;
+        }
+
+        $this->record(RecipientType::Admin, null, NotificationType::RequestCancelled, $request, $payload);
+        if ($request->charity_id !== null) {
+            $this->record(RecipientType::Charity, $request->charity_id, NotificationType::RequestCancelled, $request, $payload);
+        }
     }
 
     private function record(

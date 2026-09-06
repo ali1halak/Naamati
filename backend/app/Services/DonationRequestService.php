@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\CancelledBy;
 use App\Enums\RequestStatus;
+use App\Enums\StrikeReason;
 use App\Models\Charity;
 use App\Models\DonationRequest;
 use App\Models\FoodCategory;
 use App\Models\RequestStatusLog;
+use App\Models\Strike;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -44,10 +47,46 @@ class DonationRequestService
         }
     }
 
+    /**
+     * Normalise authored fields before they touch the model.
+     *
+     * `custom_category` is honoured ONLY under the "غير ذلك" category — a
+     * donor sending it alongside a real category would otherwise spoof the
+     * rendered title of the request.
+     */
+    private function sanitizeAuthored(array $data): array
+    {
+        $category = FoodCategory::findOrFail($data['food_category_id']);
+
+        $custom = trim((string) ($data['custom_category'] ?? ''));
+        $data['custom_category'] = $category->icon === 'other' && $custom !== ''
+            ? $custom
+            : null;
+
+        // Same rule as the UI: only "غير ذلك" lets the donor pick the cooking
+        // state — every real category forces its own default, so raw meat can
+        // never be posted as "ready to eat" via a hand-crafted request.
+        if ($category->icon !== 'other') {
+            $data['needs_cooking'] = $category->default_needs_cooking;
+        }
+
+        if (array_key_exists('description', $data) && $data['description'] !== null) {
+            $data['description'] = trim($data['description']) ?: null;
+        }
+
+        $data['pickup_address'] = trim((string) $data['pickup_address']);
+
+        return $data;
+    }
+
     public function create(int $donorId, array $data): DonationRequest
     {
-        // The donor may override it, but by default the category decides whether
-        // the food needs cooking — that flag drives the no-kitchen filter.
+        // Sanitise first so the cooking state below derives from the cleaned
+        // data (the category default overrides any spoofed needs_cooking).
+        $data = $this->sanitizeAuthored($data);
+
+        // The donor may override it, but only under "غير ذلك" (sanitize keeps
+        // the override); otherwise the category default wins.
         $needsCooking = $data['needs_cooking']
             ?? FoodCategory::findOrFail($data['food_category_id'])->default_needs_cooking;
 
@@ -57,6 +96,7 @@ class DonationRequestService
             'needs_cooking'    => $needsCooking,
             'quantity_desc'    => $data['quantity_desc'],
             'description'      => $data['description'] ?? null,
+            'custom_category'  => $data['custom_category'] ?? null,
             'valid_until'      => $data['valid_until'],
             'pickup_until'     => $data['pickup_until'],
             'pickup_address'   => $data['pickup_address'],
@@ -69,6 +109,46 @@ class DonationRequestService
         $this->log($request, null, RequestStatus::Pending);
 
         return $request;
+    }
+
+    /**
+     * The donor rewrites the details of a request nobody has claimed yet.
+     *
+     * Only `pending` is editable: once a charity accepted, people may already
+     * be on the way, so the honest exits are confirm or cancel. The editable
+     * set is exactly what the donor authored at create time — status, charity
+     * and audit data are never touched here.
+     */
+    public function update(int $donorId, int $id, array $data): DonationRequest
+    {
+        $request = DonationRequest::where('id', $id)
+            ->where('donor_id', $donorId)
+            ->firstOrFail();
+
+        if ($request->status !== RequestStatus::Pending) {
+            throw ValidationException::withMessages([
+                'status' => 'Only pending requests can be edited',
+            ]);
+        }
+
+        $data = $this->sanitizeAuthored($data);
+
+        $request->update([
+            'food_category_id' => $data['food_category_id'],
+            'needs_cooking'    => $data['needs_cooking']
+                ?? FoodCategory::findOrFail($data['food_category_id'])->default_needs_cooking,
+            'quantity_desc'    => $data['quantity_desc'],
+            'description'      => $data['description'] ?? null,
+            'custom_category'  => $data['custom_category'] ?? null,
+            'valid_until'      => $data['valid_until'],
+            'pickup_until'     => $data['pickup_until'],
+            'pickup_address'   => $data['pickup_address'],
+            'latitude'         => $data['latitude'] ?? null,
+            'longitude'        => $data['longitude'] ?? null,
+            'contact_phone'    => $data['contact_phone'],
+        ]);
+
+        return $request->refresh();
     }
 
     /**
@@ -184,15 +264,37 @@ class DonationRequestService
 
     public function cancel(DonationRequest $request, ?string $reason = null): DonationRequest
     {
+        return $this->doCancel($request, $reason, CancelledBy::Donor);
+    }
+
+    /**
+     * Admin moderation cancel — for fake or invalid requests that would
+     * otherwise stay stuck. Independent of the donor's own cancel path: any
+     * pending/accepted request is cancellable regardless of its owner.
+     */
+    public function adminCancel(int $id, ?string $reason = null): DonationRequest
+    {
+        $request = DonationRequest::findOrFail($id);
+
+        return $this->doCancel($request, $reason, CancelledBy::Admin);
+    }
+
+    private function doCancel(
+        DonationRequest $request,
+        ?string $reason,
+        CancelledBy $by,
+    ): DonationRequest {
         $this->guard($request, [RequestStatus::Pending, RequestStatus::Accepted]);
 
         $from = $request->status;
         $request->update([
             'status'        => RequestStatus::Cancelled,
             'cancel_reason' => $reason,
+            'cancelled_by'  => $by,
         ]);
 
-        $this->log($request, $from, RequestStatus::Cancelled, $reason);
+        $this->log($request, $from, RequestStatus::Cancelled, $reason ?? "cancelled by {$by->value}");
+        $this->notifications->requestCancelled($request, $by);
 
         return $request->refresh();
     }
@@ -216,5 +318,98 @@ class DonationRequestService
             })
             ->with(['foodCategory', 'donor'])
             ->latest();
+    }
+
+    /**
+     * Time-driven transitions no player triggers:
+     *
+     *  - `pending` past `valid_until`  -> `expired`
+     *    (nobody wanted the food while it was still edible)
+     *  - `accepted` past `pickup_until` -> `no_show`
+     *    (a charity committed and never came — it takes a strike)
+     *
+     * Invoked by the scheduled `donations:expire-stale` command. Each row is
+     * re-checked under a lock inside its own transaction, so the command is
+     * safe to run repeatedly or concurrently and can never double-strike.
+     *
+     * @return array{expired: int, no_show: int}
+     */
+    public function expireStale(): array
+    {
+        return [
+            'expired' => $this->expirePendingPastValidity(),
+            'no_show' => $this->expireAcceptedPastPickup(),
+        ];
+    }
+
+    private function expirePendingPastValidity(): int
+    {
+        $ids = DonationRequest::query()
+            ->where('status', RequestStatus::Pending)
+            ->where('valid_until', '<', now())
+            ->pluck('id');
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $changed = DB::transaction(function () use ($id) {
+                $r = DonationRequest::whereKey($id)->lockForUpdate()->first();
+
+                if ($r === null || $r->status !== RequestStatus::Pending) {
+                    return false; // already moved on (accepted/cancelled/…)
+                }
+                if ($r->valid_until->isFuture()) {
+                    return false; // raced against the clock — leave it
+                }
+
+                $from = $r->status;
+                $r->update(['status' => RequestStatus::Expired]);
+                $this->log($r, $from, RequestStatus::Expired, 'انتهت صلاحية الطعام قبل أن تقبله جمعية');
+
+                return true;
+            });
+            $count += $changed ? 1 : 0;
+        }
+
+        return $count;
+    }
+
+    private function expireAcceptedPastPickup(): int
+    {
+        $ids = DonationRequest::query()
+            ->where('status', RequestStatus::Accepted)
+            ->where('pickup_until', '<', now())
+            ->pluck('id');
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $changed = DB::transaction(function () use ($id) {
+                $r = DonationRequest::whereKey($id)->lockForUpdate()->first();
+
+                if ($r === null || $r->status !== RequestStatus::Accepted) {
+                    return false; // confirmed or cancelled meanwhile
+                }
+                if ($r->pickup_until->isFuture()) {
+                    return false;
+                }
+
+                $from = $r->status;
+                $r->update(['status' => RequestStatus::NoShow]);
+                $this->log($r, $from, RequestStatus::NoShow, 'لم تحضر الجمعية في الموعد المحدد');
+
+                if ($r->charity_id !== null) {
+                    Strike::create([
+                        'charity_id'          => $r->charity_id,
+                        'donation_request_id' => $r->id,
+                        'reason'              => StrikeReason::NoShow,
+                        'note'                => 'أوتوماتيكياً: تخطّت آخر وقت للاستلام دون تأكيد تسليم',
+                    ]);
+                }
+
+                return true;
+            });
+            $count += $changed ? 1 : 0;
+        }
+
+        return $count;
     }
 }

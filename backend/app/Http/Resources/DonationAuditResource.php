@@ -22,9 +22,15 @@ class DonationAuditResource extends JsonResource
         return [
             'order_info' => [
                 'order_number'  => '#' . $this->id,
-                'title'         => $this->foodCategory?->name_ar,
+                // A "غير ذلك" request reads by its custom name here too —
+                // matching the history list title.
+                'title'         => $this->custom_category
+                    ?? $this->foodCategory?->name_ar,
                 'status'        => $this->status->value,
-                'status_label'  => $this->status->detailedLabel(),
+                'status_label'  => $this->status === \App\Enums\RequestStatus::Cancelled
+                    ? ($this->cancelled_by ?? \App\Enums\CancelledBy::Donor)->detailedLabel()
+                    : $this->status->detailedLabel(),
+                'cancelled_by'  => $this->cancelled_by?->value,
                 'food_type'     => $this->foodCategory?->name_ar,
                 'food_condition' => $this->needs_cooking ? 'نيء' : 'جاهز للتوزيع',
                 'expiry_date'   => $this->valid_until?->toDateString(),

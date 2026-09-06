@@ -18,8 +18,15 @@ class DonationRequestResource extends JsonResource
 
             // Ready-to-render fields for the history list, so the app does not
             // reimplement the wording. `status` above stays the machine value.
-            'status_label'     => $this->status->label(),
-            'title'            => $this->whenLoaded('foodCategory', fn () => $this->foodCategory->name_ar),
+            // A cancelled request names its canceller — the plain label would
+            // be wrong half the time now that admins can cancel too.
+            'status_label'     => $this->status === \App\Enums\RequestStatus::Cancelled
+                ? ($this->cancelled_by ?? \App\Enums\CancelledBy::Donor)->label()
+                : $this->status->label(),
+            // A custom category name (donor filed under "غير ذلك") reads better
+            // than the generic category name as the list title.
+            'title'            => $this->custom_category
+                ?? $this->whenLoaded('foodCategory', fn () => $this->foodCategory->name_ar),
             'category_icon'    => $this->whenLoaded('foodCategory', fn () => $this->foodCategory->icon),
             'created_at_label' => ArabicDate::day($this->created_at),
 
@@ -27,6 +34,9 @@ class DonationRequestResource extends JsonResource
             'needs_cooking' => $this->needs_cooking,
             'quantity_desc' => $this->quantity_desc,
             'description'   => $this->description,
+
+            // Set only when the donor filed under "غير ذلك" and named the food.
+            'custom_category' => $this->custom_category,
 
             'valid_until'  => $this->valid_until,
             'pickup_until' => $this->pickup_until,
@@ -44,6 +54,7 @@ class DonationRequestResource extends JsonResource
             'accepted_at'   => $this->accepted_at,
             'picked_up_at'  => $this->picked_up_at,
             'cancel_reason' => $this->cancel_reason,
+            'cancelled_by'  => $this->cancelled_by?->value,
             'created_at'    => $this->created_at,
 
             'distribution' => new DistributionResource($this->whenLoaded('distribution')),

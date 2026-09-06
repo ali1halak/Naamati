@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Enums\NotificationType;
 use App\Enums\RecipientType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Donor\CancelDonationRequest;
+use App\Http\Resources\DonationRequestResource;
 use App\Http\Resources\NotificationResource;
 use App\Models\Charity;
 use App\Models\Notification;
 use App\Services\CharityService;
+use App\Services\DonationRequestService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -17,7 +20,28 @@ class AdminController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private readonly CharityService $charityService) {}
+    public function __construct(
+        private readonly CharityService $charityService,
+        private readonly DonationRequestService $requests,
+    ) {}
+
+    /**
+     * Moderation cancel — pulls a fake/invalid request that would otherwise
+     * sit stuck in pending/accepted forever. Distinct from the donor's own
+     * cancel: the audit trail records `cancelled_by = admin`.
+     */
+    public function cancelDonation(CancelDonationRequest $httpRequest, int $id)
+    {
+        $donationRequest = $this->requests->adminCancel(
+            $id,
+            $httpRequest->validated()['reason'] ?? null,
+        );
+
+        return $this->ok(
+            new DonationRequestResource($donationRequest->load('foodCategory')),
+            'Donation request cancelled by admin'
+        );
+    }
 
     public function charities(Request $request)
     {

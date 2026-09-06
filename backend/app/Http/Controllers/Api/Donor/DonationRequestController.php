@@ -7,11 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Donor\CancelDonationRequest;
 use App\Http\Requests\Donor\ConfirmPickupRequest;
 use App\Http\Requests\Donor\StoreDonationRequest;
+use App\Http\Requests\Donor\UpdateDonationRequest;
 use App\Http\Requests\Donor\StoreRatingRequest;
 use App\Http\Resources\DonationAuditResource;
 use App\Http\Resources\DonationRequestResource;
 use App\Http\Resources\RatingResource;
 use App\Models\DonationRequest;
+use App\Models\FoodCategory;
 use App\Services\DonationRequestService;
 use App\Services\RatingService;
 use App\Traits\ApiResponse;
@@ -44,22 +46,121 @@ class DonationRequestController extends Controller
             ->with(['foodCategory', 'charity'])
             ->latest();
 
-        if ($status = $request->query('status')) {
-            $allowed = array_column(RequestStatus::cases(), 'value');
+        $errors = $this->indexFilters($request, $search, $status, $category, $needsCooking, $from, $to);
 
-            if (! in_array($status, $allowed, true)) {
-                return $this->fail('Validation failed', 422, [
-                    'status' => ['The selected status is invalid.'],
-                ]);
-            }
-
-            $query->where('status', $status);
+        if ($errors !== null) {
+            return $this->fail('Validation failed', 422, $errors);
         }
+
+        $query
+            ->when($status !== null, fn ($q) => $q->where('status', $status))
+            ->when($category !== null, fn ($q) => $q->where('food_category_id', $category))
+            ->when($needsCooking !== null, fn ($q) => $q->where('needs_cooking', $needsCooking))
+            ->when($from !== null, fn ($q) => $q->whereDate('created_at', '>=', $from))
+            ->when($to !== null, fn ($q) => $q->whereDate('created_at', '<=', $to))
+            ->when($search !== null, fn ($q) => $q->where(function ($q) use ($search) {
+                // Note: `title` is a computed resource field (category name),
+                // not a column — the category join below covers that text.
+                // LIKE wildcards in the user input are escaped so "100%"
+                // finds "100%" literally instead of matching everything.
+                $term = str_replace(
+                    ['\\', '%', '_'],
+                    ['\\\\', '\\%', '\\_'],
+                    $search,
+                );
+
+                $q->where('description', 'like', "%{$term}%")
+                    ->orWhere('quantity_desc', 'like', "%{$term}%")
+                    ->orWhere('custom_category', 'like', "%{$term}%")
+                    ->orWhereHas(
+                        'foodCategory',
+                        fn ($c) => $c->where('name_ar', 'like', "%{$term}%"),
+                    );
+            }));
 
         // Capped so one client cannot ask for the whole table in one page.
         $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
 
         return $this->ok(DonationRequestResource::collection($query->paginate($perPage))->response()->getData(true));
+    }
+
+    /**
+     * Resolve and validate the history list filters.
+     *
+     * Fills the by-reference filter values and returns the validation error
+     * array to fail the request with (or null when everything is valid).
+     * Supported params: search (matches title/description/quantity/category
+     * name), status, category (food_categories.id), needs_cooking (bool),
+     * from/to (Y-m-d, inclusive, applied on created_at).
+     */
+    private function indexFilters(
+        Request $request,
+        ?string &$search,
+        ?string &$status,
+        ?int &$category,
+        ?bool &$needsCooking,
+        ?string &$from,
+        ?string &$to,
+    ): ?array {
+        $errors = [];
+
+        $search = trim((string) $request->query('search', ''));
+        if ($search === '') {
+            $search = null;
+        }
+
+        $status = $request->query('status');
+        $allowed = array_column(RequestStatus::cases(), 'value');
+        if ($status !== null && ! in_array($status, $allowed, true)) {
+            $errors['status'] = ['The selected status is invalid.'];
+            $status = null;
+        }
+
+        $category = null;
+        if ($raw = $request->query('category')) {
+            if (ctype_digit((string) $raw) && FoodCategory::whereKey($raw)->exists()) {
+                $category = (int) $raw;
+            } else {
+                $errors['category'] = ['The selected category is invalid.'];
+            }
+        }
+
+        $needsCooking = null;
+        if (($raw = $request->query('needs_cooking')) !== null) {
+            if (in_array($raw, ['1', 'true'], true)) {
+                $needsCooking = true;
+            } elseif (in_array($raw, ['0', 'false'], true)) {
+                $needsCooking = false;
+            } else {
+                $errors['needs_cooking'] = ['The needs cooking filter must be true or false.'];
+            }
+        }
+
+        $from = $this->indexDateFilter($request, 'from', $errors);
+        $to = $this->indexDateFilter($request, 'to', $errors);
+
+        return $errors === [] ? null : $errors;
+    }
+
+    /**
+     * Read one Y-m-d date filter param, appending to [$errors] when malformed.
+     */
+    private function indexDateFilter(Request $request, string $key, array &$errors): ?string
+    {
+        $raw = $request->query($key);
+
+        if ($raw === null) {
+            return null;
+        }
+
+        $parts = explode('-', (string) $raw);
+        if (count($parts) === 3 && checkdate((int) $parts[1], (int) $parts[2], (int) $parts[0])) {
+            return $raw;
+        }
+
+        $errors[$key] = ["The $key date must be a valid Y-m-d date."];
+
+        return null;
     }
 
     /**
@@ -90,6 +191,25 @@ class DonationRequestController extends Controller
             ->load(['foodCategory', 'charity', 'distribution', 'rating']);
 
         return $this->ok(new DonationRequestResource($donationRequest));
+    }
+
+    public function update(UpdateDonationRequest $request, int $id)
+    {
+        // 404 rather than 403 so one donor cannot probe another's request ids.
+        $existing = DonationRequest::where('id', $id)
+            ->where('donor_id', $request->user()->id)
+            ->firstOrFail();
+
+        $donationRequest = $this->requests->update(
+            $request->user()->id,
+            $existing->id,
+            $request->validated()
+        );
+
+        return $this->ok(
+            new DonationRequestResource($donationRequest->load('foodCategory')),
+            'Donation request updated'
+        );
     }
 
     public function cancel(CancelDonationRequest $request, int $id)

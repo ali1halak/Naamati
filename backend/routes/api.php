@@ -32,12 +32,20 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
         // ---- Donor ----
         Route::middleware('type:donor')->prefix('donor')->group(function () {
             Route::get('/requests', [DonationRequestController::class, 'index']);
-            Route::post('/requests', [DonationRequestController::class, 'store']);
+            // Mutations are throttled: a buggy or hostile client cannot hammer
+            // the write paths (reads stay open for pagination and refresh).
+            Route::post('/requests', [DonationRequestController::class, 'store'])
+                ->middleware('throttle:10,1');
             Route::get('/requests/{id}', [DonationRequestController::class, 'show']);
+            Route::put('/requests/{id}', [DonationRequestController::class, 'update'])
+                ->middleware('throttle:10,1');
             Route::get('/requests/{id}/audit', [DonationRequestController::class, 'audit']);
-            Route::post('/requests/{id}/cancel', [DonationRequestController::class, 'cancel']);
-            Route::post('/requests/{id}/confirm', [DonationRequestController::class, 'confirm']);
-            Route::post('/requests/{id}/rate', [DonationRequestController::class, 'rate']);
+            Route::post('/requests/{id}/cancel', [DonationRequestController::class, 'cancel'])
+                ->middleware('throttle:10,1');
+            Route::post('/requests/{id}/confirm', [DonationRequestController::class, 'confirm'])
+                ->middleware('throttle:10,1');
+            Route::post('/requests/{id}/rate', [DonationRequestController::class, 'rate'])
+                ->middleware('throttle:10,1');
         });
 
         // ---- Charity (must be approved/active — enforced by the middleware) ----
@@ -55,6 +63,7 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
         Route::get('/charities', [AdminController::class, 'charities']);
         Route::post('/charities/{charity}/approve', [AdminController::class, 'approve']);
         Route::post('/charities/{charity}/suspend', [AdminController::class, 'suspend']);
+        Route::post('/requests/{id}/cancel', [AdminController::class, 'cancelDonation']);
         Route::get('/notifications', [AdminController::class, 'notifications']);
         Route::post('/notifications/{id}/read', [AdminController::class, 'markNotificationRead']);
     });
