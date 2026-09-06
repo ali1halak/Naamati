@@ -44,5 +44,12 @@ class RegisterDonorParams extends Equatable {
   });
 
   @override
-  List<Object> get props => [name, type, email, phone, password, passwordConfirmation];
+  List<Object> get props => [
+    name,
+    type,
+    email,
+    phone,
+    password,
+    passwordConfirmation,
+  ];
 }

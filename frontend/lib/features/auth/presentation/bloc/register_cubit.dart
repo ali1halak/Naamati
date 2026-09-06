@@ -37,7 +37,12 @@ class RegisterCubit extends Cubit<RegisterState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(status: BlocStatus.failure, errorMessage: failure.message)),
+      (failure) => emit(
+        state.copyWith(
+          status: BlocStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
       (user) => emit(state.copyWith(status: BlocStatus.success, user: user)),
     );
   }
@@ -74,7 +79,12 @@ class RegisterCubit extends Cubit<RegisterState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(status: BlocStatus.failure, errorMessage: failure.message)),
+      (failure) => emit(
+        state.copyWith(
+          status: BlocStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
       (user) => emit(state.copyWith(status: BlocStatus.success, user: user)),
     );
   }

@@ -9,7 +9,11 @@ class AuthResponseModel {
   final AuthDataModel data;
   final String? message;
 
-  const AuthResponseModel({required this.success, required this.data, this.message});
+  const AuthResponseModel({
+    required this.success,
+    required this.data,
+    this.message,
+  });
 
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) =>
       _$AuthResponseModelFromJson(json);
@@ -25,7 +29,8 @@ class AuthDataModel {
 
   const AuthDataModel({this.type, required this.user, this.token});
 
-  factory AuthDataModel.fromJson(Map<String, dynamic> json) => _$AuthDataModelFromJson(json);
+  factory AuthDataModel.fromJson(Map<String, dynamic> json) =>
+      _$AuthDataModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$AuthDataModelToJson(this);
 }

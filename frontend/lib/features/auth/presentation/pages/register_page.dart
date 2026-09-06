@@ -108,23 +108,23 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
       withData: true,
     );
 
-    if (result == null) {
+    if (!mounted || result == null) {
       return;
     }
 
     final file = result.files.single;
     if (file.bytes == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تعذر قراءة ملف الترخيص المختار')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر قراءة ملف الترخيص المختار')),
+      );
       return;
     }
 
     const maxLicenseBytes = 5 * 1024 * 1024;
     if (file.bytes!.lengthInBytes > maxLicenseBytes) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('ملف الترخيص يجب أن يكون 5MB أو أقل')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ملف الترخيص يجب أن يكون 5MB أو أقل')),
+      );
       return;
     }
 
@@ -146,7 +146,9 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
   }
 
   String? _charityWorkEndValidator(String? value) {
-    final baseError = requiredFieldValidator(fieldName: 'وقت انتهاء العمل')(value);
+    final baseError = requiredFieldValidator(fieldName: 'وقت انتهاء العمل')(
+      value,
+    );
     if (baseError != null) {
       return baseError;
     }
@@ -194,7 +196,8 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
             child: _SegmentButton(
               title: 'متبرع',
               selected: _accountType == RegisterAccountType.donor,
-              onTap: () => setState(() => _accountType = RegisterAccountType.donor),
+              onTap: () =>
+                  setState(() => _accountType = RegisterAccountType.donor),
             ),
           ),
           SizedBox(width: 8.w),
@@ -202,7 +205,8 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
             child: _SegmentButton(
               title: 'جمعية خيرية',
               selected: _accountType == RegisterAccountType.charity,
-              onTap: () => setState(() => _accountType = RegisterAccountType.charity),
+              onTap: () =>
+                  setState(() => _accountType = RegisterAccountType.charity),
             ),
           ),
         ],
@@ -218,30 +222,54 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'الاسم الكامل',
           hint: 'أدخل اسمك الكامل',
           controller: _donorNameController,
+          isRequired: true,
           validator: requiredFieldValidator(fieldName: 'الاسم الكامل'),
           prefixIcon: Icons.person_outline,
         ),
         SizedBox(height: AppConstants.paddingLG.h),
-        DropdownButtonFormField<String>(
-          initialValue: _donorTypeController.text,
-          decoration: InputDecoration(
-            labelText: 'نوع الحساب',
-            prefixIcon: const Icon(Icons.category_outlined),
-            border: const OutlineInputBorder(),
-            filled: true,
-            fillColor: Theme.of(context).colorScheme.surface,
-          ),
-          items: const [
-            DropdownMenuItem(value: 'individual', child: Text('فرد')),
-            DropdownMenuItem(value: 'restaurant', child: Text('مطعم')),
-            DropdownMenuItem(value: 'hotel', child: Text('فندق')),
-            DropdownMenuItem(value: 'company', child: Text('شركة')),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                children: [
+                  const TextSpan(text: 'نوع الحساب'),
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: AppConstants.paddingXS.h),
+            DropdownButtonFormField<String>(
+              initialValue: _donorTypeController.text,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.category_outlined),
+                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
+              ),
+              items: const [
+                DropdownMenuItem(value: 'individual', child: Text('فرد')),
+                DropdownMenuItem(value: 'restaurant', child: Text('مطعم')),
+                DropdownMenuItem(value: 'hotel', child: Text('فندق')),
+                DropdownMenuItem(value: 'company', child: Text('شركة')),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  _donorTypeController.text = value;
+                }
+              },
+            ),
           ],
-          onChanged: (value) {
-            if (value != null) {
-              _donorTypeController.text = value;
-            }
-          },
         ),
         SizedBox(height: AppConstants.paddingLG.h),
         CustomTextField(
@@ -249,6 +277,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           hint: 'example@domain.com',
           controller: _donorEmailController,
           keyboardType: TextInputType.emailAddress,
+          isRequired: true,
           validator: emailValidator,
           prefixIcon: Icons.email_outlined,
         ),
@@ -258,6 +287,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           hint: '966XXXXXXXXX',
           controller: _donorPhoneController,
           keyboardType: TextInputType.phone,
+          isRequired: true,
           validator: phoneValidator,
           prefixIcon: Icons.phone_outlined,
         ),
@@ -266,6 +296,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'كلمة المرور',
           controller: _donorPasswordController,
           obscureText: true,
+          isRequired: true,
           onChanged: (_) => _revalidateConfirmPasswords(),
           autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: passwordValidator,
@@ -276,8 +307,11 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'تأكيد كلمة المرور',
           controller: _donorConfirmPasswordController,
           obscureText: true,
+          isRequired: true,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          validator: confirmPasswordValidator(() => _donorPasswordController.text),
+          validator: confirmPasswordValidator(
+            () => _donorPasswordController.text,
+          ),
           prefixIcon: Icons.lock_reset_outlined,
         ),
       ],
@@ -292,6 +326,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'اسم الجمعية',
           hint: 'اسم الجمعية الخيرية',
           controller: _charityNameController,
+          isRequired: true,
           validator: requiredFieldValidator(fieldName: 'اسم الجمعية'),
           prefixIcon: Icons.business_outlined,
         ),
@@ -301,6 +336,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           hint: 'charity@example.com',
           controller: _charityEmailController,
           keyboardType: TextInputType.emailAddress,
+          isRequired: true,
           validator: emailValidator,
           prefixIcon: Icons.email_outlined,
         ),
@@ -310,6 +346,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           hint: '0911111111',
           controller: _charityPhoneController,
           keyboardType: TextInputType.phone,
+          isRequired: true,
           validator: phoneValidator,
           prefixIcon: Icons.phone_outlined,
         ),
@@ -318,6 +355,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'كلمة المرور',
           controller: _charityPasswordController,
           obscureText: true,
+          isRequired: true,
           onChanged: (_) => _revalidateConfirmPasswords(),
           autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: passwordValidator,
@@ -328,14 +366,22 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'تأكيد كلمة المرور',
           controller: _charityConfirmPasswordController,
           obscureText: true,
+          isRequired: true,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          validator: confirmPasswordValidator(() => _charityPasswordController.text),
+          validator: confirmPasswordValidator(
+            () => _charityPasswordController.text,
+          ),
           prefixIcon: Icons.lock_reset_outlined,
         ),
         SizedBox(height: AppConstants.paddingLG.h),
         Row(
           children: [
-            Expanded(child: Text('هل لديك مطبخ؟', style: Theme.of(context).textTheme.labelLarge)),
+            Expanded(
+              child: Text(
+                'هل لديك مطبخ؟',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+            ),
             Switch(
               value: _hasKitchen,
               activeThumbColor: Theme.of(context).colorScheme.primary,
@@ -348,6 +394,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           label: 'العنوان',
           hint: 'حلب - طريق النبك',
           controller: _charityAddressController,
+          isRequired: true,
           validator: requiredFieldValidator(fieldName: 'العنوان'),
           prefixIcon: Icons.location_on_outlined,
         ),
@@ -360,7 +407,10 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
                 readOnly: true,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 onTap: () async {
-                  final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
                   if (time != null) {
                     setState(() {
                       _charityWorkStartController.text =
@@ -384,7 +434,10 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
                 readOnly: true,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 onTap: () async {
-                  final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
                   if (time != null) {
                     setState(() {
                       _charityWorkEndController.text =
@@ -408,17 +461,23 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           onPressed: _pickLicenseDocument,
           style: OutlinedButton.styleFrom(
             minimumSize: Size.fromHeight(AppConstants.buttonHeight.h),
-            side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.2),
+            side: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+              width: 1.2,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
             ),
           ),
-          icon: Icon(Icons.upload_file_rounded, color: Theme.of(context).colorScheme.primary),
+          icon: Icon(
+            Icons.upload_file_rounded,
+            color: Theme.of(context).colorScheme.primary,
+          ),
           label: Text(
             _charityLicenseDocumentName ?? 'إرفاق ملف الترخيص',
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary),
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ),
       ],
@@ -433,9 +492,9 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
       listener: (context, state) {
         if (state.isSuccess) {
           final user = state.user;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('تم إنشاء الحساب بنجاح')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تم إنشاء الحساب بنجاح')),
+          );
           if (user?.accountType == 'charity') {
             if (user?.status == 'suspended') {
               context.go(RouteNames.charitySuspended);
@@ -450,9 +509,9 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
             context.go(RouteNames.home);
           }
         } else if (state.isFailure) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.errorMessage ?? 'فشل إنشاء الحساب')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage ?? 'فشل إنشاء الحساب')),
+          );
         }
       },
       child: Scaffold(
@@ -481,7 +540,9 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
                   Card(
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppConstants.radiusLG.r),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusLG.r,
+                      ),
                     ),
                     child: Padding(
                       padding: EdgeInsets.all(AppConstants.paddingLG.w),
@@ -495,9 +556,8 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
                                   ? 'إنشاء حساب متبرع'
                                   : 'إنشاء حساب جمعية خيرية',
                               textAlign: TextAlign.center,
-                              style: Theme.of(
-                                context,
-                              ).textTheme.headlineLarge?.copyWith(color: colorScheme.primary),
+                              style: Theme.of(context).textTheme.headlineLarge
+                                  ?.copyWith(color: colorScheme.primary),
                             ),
                             SizedBox(height: AppConstants.paddingXL.h),
                             if (_accountType == RegisterAccountType.donor)
@@ -531,9 +591,10 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
                                   onPressed: () => context.go(RouteNames.login),
                                   child: Text(
                                     'تسجيل الدخول',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.labelLarge?.copyWith(color: colorScheme.primary),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(color: colorScheme.primary),
                                   ),
                                 ),
                               ],
@@ -554,7 +615,11 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
 }
 
 class _SegmentButton extends StatelessWidget {
-  const _SegmentButton({required this.title, required this.selected, required this.onTap});
+  const _SegmentButton({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String title;
   final bool selected;

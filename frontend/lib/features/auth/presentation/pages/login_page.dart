@@ -17,7 +17,10 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(create: (context) => sl<LoginCubit>(), child: const _LoginPageView());
+    return BlocProvider(
+      create: (context) => sl<LoginCubit>(),
+      child: const _LoginPageView(),
+    );
   }
 }
 
@@ -43,7 +46,10 @@ class _LoginPageViewState extends State<_LoginPageView> {
   void _onLoginPressed() {
     FocusManager.instance.primaryFocus?.unfocus();
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<LoginCubit>().login(_emailController.text.trim(), _passwordController.text);
+      context.read<LoginCubit>().login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
     }
   }
 
@@ -83,9 +89,11 @@ class _LoginPageViewState extends State<_LoginPageView> {
                 context.go(RouteNames.home);
               }
             } else if (state.isFailure) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.errorMessage ?? 'فشل تسجيل الدخول')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage ?? 'فشل تسجيل الدخول'),
+                ),
+              );
             }
           },
           child: SingleChildScrollView(
@@ -106,9 +114,8 @@ class _LoginPageViewState extends State<_LoginPageView> {
                           SizedBox(height: AppConstants.paddingMD.h),
                           Text(
                             'تسجيل الدخول',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.headlineLarge?.copyWith(color: colorScheme.primary),
+                            style: Theme.of(context).textTheme.headlineLarge
+                                ?.copyWith(color: colorScheme.primary),
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(height: AppConstants.paddingSM.h),
@@ -124,6 +131,7 @@ class _LoginPageViewState extends State<_LoginPageView> {
                             hint: 'user@example.com',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            isRequired: true,
                             validator: emailValidator,
                             prefixIcon: Icons.email_outlined,
                           ),
@@ -133,6 +141,7 @@ class _LoginPageViewState extends State<_LoginPageView> {
                             label: 'كلمة المرور',
                             controller: _passwordController,
                             obscureText: true,
+                            isRequired: true,
                             validator: passwordValidator,
                             prefixIcon: Icons.lock_outline,
                             textInputAction: TextInputAction.done,
@@ -165,14 +174,17 @@ class _LoginPageViewState extends State<_LoginPageView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('ليس لديك حساب؟ ', style: Theme.of(context).textTheme.bodyMedium),
+                    Text(
+                      'ليس لديك حساب؟ ',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                     TextButton(
                       onPressed: () => context.push(RouteNames.register),
                       child: Text(
                         'إنشاء حساب جديد',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.labelLarge?.copyWith(color: colorScheme.primary),
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: colorScheme.primary,
+                        ),
                       ),
                     ),
                   ],
