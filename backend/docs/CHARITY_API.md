@@ -200,6 +200,73 @@ to already be `completed`.
 
 ---
 
+## History and audit
+
+### `GET /charity/requests?status=all&page=1`
+الطلبات السابقة — every request this charity has handled, newest first.
+
+| Query | Notes |
+|---|---|
+| `status` | `all` (or omit) · `pending` · `accepted` · `picked_up` · `completed` · `cancelled` · `expired` · `no_show`. An unknown value returns `422` instead of being silently ignored. |
+| `per_page` | 1–50, default 15 |
+| `page` | |
+
+Each row carries `title`, `description`, `status`, `status_label`
+(`"مكتمل"` · `"تم قبوله"` · `"مأخوذ"` · `"ملغى"`), `created_at_label`
+(`"6 سبتمبر 2026"`) and `image_url`.
+
+### `GET /charity/requests/{id}/details`
+تفاصيل الطلب — the full audit record, grouped the way the screen draws it:
+
+```json
+{
+  "order_id": "REQ-2026-09-025",
+  "status": "completed",
+  "status_label": "مكتمل",
+  "donor":        { "name": "...", "phone": "..." },
+  "donation":     { "category", "food_condition", "quantity_desc", "description", "expiry_date", "created_at", "images" },
+  "pickup":       { "accepted_at", "actual_pickup_at", "deadline", "location", "notes", "eta_minutes" },
+  "distribution": { "beneficiary_families", "beneficiary_individuals", "distribution_zone", "notes" }
+}
+```
+
+`pickup.notes` is the donor's own instruction, e.g. "الرجاء الاتصال قبل الوصول
+بـ 15 دقيقة". `distribution` is `null` until the numbers are filed — hide the
+card rather than render zeros. Every Arabic timestamp has an `*_iso` twin so the
+app can build a timeline without parsing Arabic.
+
+`404` for an order this charity never accepted; other charities' ids are neither
+confirmed nor denied.
+
+---
+
+## Compliance
+
+### `GET /charity/violations`
+سجل المخالفات. Read-only — only an admin can file a notice.
+
+Each card:
+
+| Field | Notes |
+|---|---|
+| `reference` | `"VIO-0001"` — quote it when disputing a notice |
+| `title` | What kind of violation, in Arabic |
+| `severity` / `severity_label` | `low` · `medium` · `high` + Arabic label |
+| `admin_note` | The admin's own words, shown as written |
+| `date` | `"6 سبتمبر 2026"` |
+| `donation_request_id` | The order it came from, `null` for a general notice |
+
+`data.compliance` carries `total_weight`, `suspension_threshold` and
+`account_status`. Severity is weighted — low 1, medium 2, high 3 — and reaching
+the threshold (**6**) suspends the account automatically, after which every
+charity endpoint returns `403`.
+
+**Show the charity how close it is.** Being suspended without warning is worse
+than the suspension. An admin reinstating the account clears the record, so
+`total_weight` returns to `0`.
+
+---
+
 ## Notifications
 
 ### `GET /notifications` · `POST /notifications/{id}/read`

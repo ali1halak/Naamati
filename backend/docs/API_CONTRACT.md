@@ -156,16 +156,46 @@ X-Admin-Token: {ADMIN_TOKEN from backend .env}
 Wrong or missing token → `401 "Invalid admin token"`.
 
 ### `GET /api/admin/charities`
-Optional `?status=pending|active|suspended`. Paginated 15/page, newest first, each row carries `strikes_count`.
+Optional `?status=pending|active|suspended`. Paginated 15/page, newest first, each row carries `violations_count`.
 `data` is Laravel's paginator: rows live in `data.data`, with `data.current_page`, `data.last_page`, `data.total`.
 Errors: `422` if `status` is not one of the three values.
 
 ### `POST /api/admin/charities/{id}/approve`
-Sets status to `active`. If the charity was `suspended`, its strikes are cleared too — otherwise one later no-show would instantly re-suspend it.
+Sets status to `active`. If the charity was `suspended`, its violations are cleared too — otherwise the same record would immediately re-suspend it. That clean slate is the point of reinstating an account.
 Success `200`: `{ "success": true, "data": { ...charity, "status": "active" }, "message": "Charity approved" }`
 
 ### `POST /api/admin/charities/{id}/suspend`
-Sets status to `suspended`. Success `200`, message `"Charity suspended"`.
+Sets status to `suspended`. Success `200`, message `"تم تعليق الجمعية"`.
+
+### `POST /api/v1/admin/charities/{id}/violations`
+Files a compliance notice. The charity reads it on its سجل المخالفات screen.
+
+Body:
+```json
+{
+  "reason": "late_pickup",
+  "severity": "medium",
+  "admin_note": "لوحظ تكرار التأخير في استلام الشحنات لأكثر من ساعتين",
+  "donation_request_id": 105
+}
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `reason` | yes | `no_show` · `late_pickup` · `quantity_mismatch` · `impact_mismatch` · `other` |
+| `severity` | no | `low` · `medium` · `high`. Omit it and the type's own default applies — `no_show` is high, mismatches medium, late pickups low. |
+| `admin_note` | yes | 10–1000 chars. **The charity reads this verbatim**, so write what actually happened. |
+| `donation_request_id` | no | Ties the notice to one order. |
+
+Success `201` returns the violation, including its `reference` (`"VIO-0001"`).
+
+**Auto-suspension.** Severity is weighted — low 1, medium 2, high 3 — and once a
+charity's live total reaches **6** the account is suspended automatically. Three
+late arrivals are a pattern worth flagging; they are not three no-shows.
+
+### `GET /api/v1/admin/charities/{id}/violations`
+Everything on file against one charity, paginated 15/page, plus a `compliance`
+block with `total_weight`, `suspension_threshold` and `account_status`.
 
 Both return `404` if the charity id does not exist.
 
@@ -202,7 +232,7 @@ confirmed — see **Confirming the handover** below.
 ---
 
 ## Next up (not built yet)
-no-show reporting + strikes · auto-expiry job · admin login and dashboard · refresh tokens · stats.
+auto-expiry job · admin login and dashboard · refresh tokens · stats.
 This section will be updated the moment each slice is done — this file is the single source of truth for the contract, matching the team plan's "API First" rule. Do not hand-build request shapes from memory; check here first.
 
 ---
@@ -232,7 +262,9 @@ pending ──charity accepts──> accepted ──BOTH sides confirm──> pi
 | POST | `/requests/{id}/confirm` | Empty body. Sets the **donor half** of the handover. Reaches `picked_up` only once the charity has confirmed too. |
 | POST | `/requests/{id}/rate` | From `picked_up` onward. Once only. |
 
-**Create validation:** `food_category_id` exists · `quantity_desc` required, max 150 · `needs_cooking` optional (falls back to the category default) · `valid_until` after now · `pickup_until` after now and `before_or_equal:valid_until` · `pickup_address` required · `latitude`/`longitude` optional but required together · `contact_phone` required.
+**Create validation:** `food_category_id` exists · `quantity_desc` required, max 150 · `needs_cooking` optional (falls back to the category default) · `valid_until` after now · `pickup_until` after now and `before_or_equal:valid_until` · `pickup_address` required · `pickup_notes` optional, max 255 · `latitude`/`longitude` optional but required together · `contact_phone` required · `images` optional, up to 4 files (jpg/png/webp, max 3 MB each) sent as multipart.
+
+`pickup_notes` is how the charity actually finds the donor — "call 15 minutes before", "the side door behind the mosque". It is shown on the charity pickup screen, separately from `description`, which is about the food.
 
 **One request at a time.** A donor may only hold one request in `pending` or `accepted`. A second create returns `422` with `errors.active_request_id`, whose message carries the id already in flight so the app can route straight to it. Confirming the handover releases the lock — the donor is free again even though the charity has yet to file its distribution numbers.
 
@@ -356,4 +388,4 @@ food changed hands; the distribution confirmation says it reached people.
 - **Route ids are constrained to digits.** Without that, `/requests/abc` reached the controller and surfaced a `500` that leaked the class name instead of a plain `404`.
 
 ## Not built yet (phase 4)
-No-show reporting + strikes, auto-expiry job, refresh tokens, admin login (the dashboard still authenticates with a static header), stats dashboard.
+Auto-expiry job, refresh tokens, admin login (the dashboard still authenticates with a static header), stats dashboard.

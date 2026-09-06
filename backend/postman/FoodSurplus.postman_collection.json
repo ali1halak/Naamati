@@ -2230,7 +2230,7 @@
                                 }
                             ]
                         },
-                        "description": "Lists charities, newest first, paginated 15 per page. Each row includes `strikes_count` (no-show count).\n\nThe response `data` is Laravel's paginator object — the actual rows are in `data.data`, and `data.current_page` / `data.last_page` / `data.total` drive pagination."
+                        "description": "Lists charities, newest first, paginated 15 per page. Each row includes `violations_count` (open compliance notices).\n\nThe response `data` is Laravel's paginator object — the actual rows are in `data.data`, and `data.current_page` / `data.last_page` / `data.total` drive pagination."
                     },
                     "response": [
                         {
@@ -2270,7 +2270,7 @@
                                 }
                             ],
                             "cookie": [],
-                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"current_page\": 1,\n    \"data\": [\n      {\n        \"id\": 1,\n        \"name\": \"Al-Birr Charity\",\n        \"email\": \"birr@example.com\",\n        \"phone\": \"0911111111\",\n        \"has_kitchen\": true,\n        \"status\": \"pending\",\n        \"license_document\": null,\n        \"rating_avg\": null,\n        \"ratings_count\": 0,\n        \"address\": \"Aleppo - Al-Furqan\",\n        \"work_start\": \"08:00:00\",\n        \"work_end\": \"16:00:00\",\n        \"created_at\": \"2026-08-24T19:30:20.000000Z\",\n        \"updated_at\": \"2026-08-24T19:30:20.000000Z\",\n        \"strikes_count\": 0,\n        \"logo_url\": null\n      }\n    ],\n    \"first_page_url\": \"http://127.0.0.1:8000/api/v1/admin/charities?page=1\",\n    \"from\": 1,\n    \"last_page\": 1,\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  },\n  \"message\": null\n}"
+                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"current_page\": 1,\n    \"data\": [\n      {\n        \"id\": 1,\n        \"name\": \"Al-Birr Charity\",\n        \"email\": \"birr@example.com\",\n        \"phone\": \"0911111111\",\n        \"has_kitchen\": true,\n        \"status\": \"pending\",\n        \"license_document\": null,\n        \"rating_avg\": null,\n        \"ratings_count\": 0,\n        \"address\": \"Aleppo - Al-Furqan\",\n        \"work_start\": \"08:00:00\",\n        \"work_end\": \"16:00:00\",\n        \"created_at\": \"2026-08-24T19:30:20.000000Z\",\n        \"updated_at\": \"2026-08-24T19:30:20.000000Z\",\n        \"violations_count\": 0,\n        \"logo_url\": null\n      }\n    ],\n    \"first_page_url\": \"http://127.0.0.1:8000/api/v1/admin/charities?page=1\",\n    \"from\": 1,\n    \"last_page\": 1,\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  },\n  \"message\": null\n}"
                         },
                         {
                             "name": "401 Invalid admin token",
@@ -2372,7 +2372,7 @@
                                 "approve"
                             ]
                         },
-                        "description": "Sets the charity status to `active` so it can start using charity features.\n\nAlso used to reinstate a suspended charity — in that case its strikes are cleared, so a single later no-show does not immediately re-suspend it."
+                        "description": "Sets the charity status to `active` so it can start using charity features.\n\nAlso used to reinstate a suspended charity — in that case its violations are cleared, so the same record cannot suspend it a second time."
                     },
                     "response": [
                         {
