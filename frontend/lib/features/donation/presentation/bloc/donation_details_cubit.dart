@@ -34,23 +34,30 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
   Timer? _pollTimer;
   bool _refreshing = false;
 
+  /// Drops updates that arrive after the cubit closed (page popped
+  /// mid-request, or the poll timer raced the provider).
+  void _emit(DonationDetailsState state) {
+    if (isClosed) return;
+    emit(state);
+  }
+
   /// Full load — shows the page-level loading state.
   Future<void> load(int id) async {
-    emit(state.copyWith(status: BlocStatus.loading, errorMessage: null));
+    _emit(state.copyWith(status: BlocStatus.loading, errorMessage: null));
 
     final result = await _getDonationDetailsUseCase(
       GetDonationDetailsParams(id: id),
     );
 
     result.fold(
-      (failure) => emit(
+      (failure) => _emit(
         state.copyWith(
           status: BlocStatus.failure,
           errorMessage: failure.message,
         ),
       ),
       (donation) =>
-          emit(state.copyWith(status: BlocStatus.success, donation: donation)),
+          _emit(state.copyWith(status: BlocStatus.success, donation: donation)),
     );
   }
 
@@ -66,7 +73,7 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
       result.fold(
         // Silent failures keep the last known donation (e.g. flaky network).
         (_) {},
-        (updated) => emit(state.copyWith(donation: updated)),
+        (updated) => _emit(state.copyWith(donation: updated)),
       );
     } finally {
       _refreshing = false;
@@ -94,7 +101,7 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     final donation = state.donation;
     if (donation == null) return;
 
-    emit(
+    _emit(
       state.copyWith(
         actionInProgress: DonationAction.cancel,
         actionErrorMessage: null,
@@ -105,13 +112,13 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     );
 
     result.fold(
-      (failure) => emit(
+      (failure) => _emit(
         state.copyWith(
           actionInProgress: null,
           actionErrorMessage: failure.message,
         ),
       ),
-      (updated) => emit(
+      (updated) => _emit(
         state.copyWith(
           actionInProgress: null,
           donation: updated,
@@ -125,7 +132,7 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     final donation = state.donation;
     if (donation == null) return;
 
-    emit(
+    _emit(
       state.copyWith(
         actionInProgress: DonationAction.confirmPickup,
         actionErrorMessage: null,
@@ -136,13 +143,13 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     );
 
     result.fold(
-      (failure) => emit(
+      (failure) => _emit(
         state.copyWith(
           actionInProgress: null,
           actionErrorMessage: failure.message,
         ),
       ),
-      (updated) => emit(
+      (updated) => _emit(
         state.copyWith(
           actionInProgress: null,
           donation: updated,
@@ -159,7 +166,7 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     final donation = state.donation;
     if (donation == null) return;
 
-    emit(
+    _emit(
       state.copyWith(
         actionInProgress: DonationAction.rate,
         actionErrorMessage: null,
@@ -170,14 +177,14 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     );
 
     result.fold(
-      (failure) => emit(
+      (failure) => _emit(
         state.copyWith(
           actionInProgress: null,
           actionErrorMessage: failure.message,
         ),
       ),
       (_) async {
-        emit(
+        _emit(
           state.copyWith(
             actionInProgress: null,
             successMessage: 'شكراً لتقييمك',
@@ -191,11 +198,11 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
 
   /// Clears one-shot messages after the UI has consumed them.
   void consumeSuccessMessage() {
-    emit(state.copyWith(successMessage: null));
+    _emit(state.copyWith(successMessage: null));
   }
 
   void clearActionError() {
-    emit(state.copyWith(actionErrorMessage: null));
+    _emit(state.copyWith(actionErrorMessage: null));
   }
 
   @override

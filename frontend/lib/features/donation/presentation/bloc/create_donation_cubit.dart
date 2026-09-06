@@ -36,18 +36,24 @@ class CreateDonationCubit extends Cubit<CreateDonationState> {
     final result = await _getFoodCategoriesUseCase(const NoParams());
 
     result.fold(
-      (failure) => emit(
-        state.copyWith(
-          categoriesStatus: BlocStatus.failure,
-          categoriesErrorMessage: failure.message,
-        ),
-      ),
-      (categories) => emit(
-        state.copyWith(
-          categoriesStatus: BlocStatus.success,
-          categories: categories,
-        ),
-      ),
+      (failure) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            categoriesStatus: BlocStatus.failure,
+            categoriesErrorMessage: failure.message,
+          ),
+        );
+      },
+      (categories) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            categoriesStatus: BlocStatus.success,
+            categories: categories,
+          ),
+        );
+      },
     );
   }
 
@@ -73,15 +79,21 @@ class CreateDonationCubit extends Cubit<CreateDonationState> {
     final result = await _createDonationUseCase(params);
 
     result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: BlocStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-      (donation) => emit(
-        state.copyWith(status: BlocStatus.success, createdDonation: donation),
-      ),
+      (failure) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            status: BlocStatus.failure,
+            errorMessage: failure.message,
+          ),
+        );
+      },
+      (donation) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(status: BlocStatus.success, createdDonation: donation),
+        );
+      },
     );
   }
 
@@ -96,15 +108,21 @@ class CreateDonationCubit extends Cubit<CreateDonationState> {
     );
 
     result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: BlocStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-      (donation) => emit(
-        state.copyWith(status: BlocStatus.success, createdDonation: donation),
-      ),
+      (failure) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            status: BlocStatus.failure,
+            errorMessage: failure.message,
+          ),
+        );
+      },
+      (donation) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(status: BlocStatus.success, createdDonation: donation),
+        );
+      },
     );
   }
 

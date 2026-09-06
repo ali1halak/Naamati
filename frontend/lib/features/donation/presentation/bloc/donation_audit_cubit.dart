@@ -23,13 +23,19 @@ class DonationAuditCubit extends Cubit<DonationAuditState> {
     );
 
     result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: BlocStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-      (audit) => emit(state.copyWith(status: BlocStatus.success, audit: audit)),
+      (failure) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            status: BlocStatus.failure,
+            errorMessage: failure.message,
+          ),
+        );
+      },
+      (audit) {
+        if (isClosed) return;
+        emit(state.copyWith(status: BlocStatus.success, audit: audit));
+      },
     );
   }
 
@@ -53,6 +59,7 @@ class DonationAuditCubit extends Cubit<DonationAuditState> {
 
     return result.fold(
       (failure) {
+        if (isClosed) return false;
         emit(
           state.copyWith(
             isSubmittingRating: false,
@@ -62,6 +69,7 @@ class DonationAuditCubit extends Cubit<DonationAuditState> {
         return false;
       },
       (rating) {
+        if (isClosed) return false;
         emit(
           state.copyWith(
             isSubmittingRating: false,

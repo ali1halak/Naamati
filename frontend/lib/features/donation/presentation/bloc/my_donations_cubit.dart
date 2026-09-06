@@ -38,20 +38,26 @@ class MyDonationsCubit extends Cubit<MyDonationsState> {
     );
 
     result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: BlocStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-      (page) => emit(
-        state.copyWith(
-          status: BlocStatus.success,
-          donations: page.items,
-          currentPage: page.currentPage,
-          lastPage: page.lastPage,
-        ),
-      ),
+      (failure) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            status: BlocStatus.failure,
+            errorMessage: failure.message,
+          ),
+        );
+      },
+      (page) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            status: BlocStatus.success,
+            donations: page.items,
+            currentPage: page.currentPage,
+            lastPage: page.lastPage,
+          ),
+        );
+      },
     );
   }
 
@@ -72,14 +78,18 @@ class MyDonationsCubit extends Cubit<MyDonationsState> {
     result.fold(
       // Keep the already-loaded list on screen; surface the error via
       // [errorMessage] without knocking the user back to the error screen.
-      (failure) => emit(
-        state.copyWith(isLoadingMore: false, errorMessage: failure.message),
-      ),
+      (failure) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(isLoadingMore: false, errorMessage: failure.message),
+        );
+      },
       (page) {
         final existing = state.donations;
         final fresh = page.items
             .where((item) => !existing.any((e) => e.id == item.id))
             .toList();
+        if (isClosed) return;
         emit(
           state.copyWith(
             status: BlocStatus.success,
@@ -107,9 +117,12 @@ class MyDonationsCubit extends Cubit<MyDonationsState> {
 
     bool ok = false;
     result.fold(
-      (failure) => emit(
-        state.copyWith(cancellingId: null, errorMessage: failure.message),
-      ),
+      (failure) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(cancellingId: null, errorMessage: failure.message),
+        );
+      },
       (_) => ok = true,
     );
 
