@@ -37,7 +37,8 @@ class CreateDonationState extends Equatable {
     this.createdDonation,
   });
 
-  FoodCategory? get selectedCategory => categories.where((c) => c.id == selectedCategoryId).firstOrNull;
+  FoodCategory? get selectedCategory =>
+      categories.where((c) => c.id == selectedCategoryId).firstOrNull;
 
   /// Sentinel that lets [copyWith] distinguish "not provided" from "null".
   static const Object _unset = Object();
@@ -63,7 +64,9 @@ class CreateDonationState extends Equatable {
           : selectedCategoryId as int?,
       needsCooking: needsCooking ?? this.needsCooking,
       status: status ?? this.status,
-      errorMessage: identical(errorMessage, _unset) ? this.errorMessage : errorMessage as String?,
+      errorMessage: identical(errorMessage, _unset)
+          ? this.errorMessage
+          : errorMessage as String?,
       createdDonation: identical(createdDonation, _unset)
           ? this.createdDonation
           : createdDonation as DonationRequest?,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 
 import '../constants/app_constants.dart';
 
@@ -64,6 +65,14 @@ class CustomTextField extends StatefulWidget {
   /// Called when the field itself is tapped (picker fields).
   final VoidCallback? onTap;
 
+  /// Optional input formatters (e.g. [FilteringTextInputFormatter.digitsOnly]
+  /// for numeric-only fields).
+  final List<TextInputFormatter>? inputFormatters;
+
+  /// When `true`, a red asterisk (*) is appended after the label to indicate
+  /// the field is required.
+  final bool isRequired;
+
   const CustomTextField({
     super.key,
     this.label,
@@ -84,6 +93,8 @@ class CustomTextField extends StatefulWidget {
     this.readOnly = false,
     this.showCursor,
     this.onTap,
+    this.inputFormatters,
+    this.isRequired = false,
   });
 
   @override
@@ -106,11 +117,23 @@ class _CustomTextFieldState extends State<CustomTextField> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.label != null) ...[
-          Text(
-            widget.label!,
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+          RichText(
+            text: TextSpan(
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              children: [
+                TextSpan(text: widget.label!),
+                if (widget.isRequired)
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+              ],
+            ),
           ),
           SizedBox(height: AppConstants.paddingXS.h),
         ],
@@ -129,9 +152,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
           readOnly: widget.readOnly,
           showCursor: widget.showCursor,
           onTap: widget.onTap,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+          inputFormatters: widget.inputFormatters,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
           decoration: InputDecoration(
             hintText: widget.hint,
             prefixIcon: widget.prefixIcon != null
@@ -140,10 +164,13 @@ class _CustomTextFieldState extends State<CustomTextField> {
             suffixIcon: widget.obscureText
                 ? IconButton(
                     icon: Icon(
-                      _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      _obscureText
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       size: AppConstants.iconSizeMD.h,
                     ),
-                    onPressed: () => setState(() => _obscureText = !_obscureText),
+                    onPressed: () =>
+                        setState(() => _obscureText = !_obscureText),
                   )
                 : widget.suffixIcon,
           ),

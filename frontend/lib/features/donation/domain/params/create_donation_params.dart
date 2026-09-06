@@ -10,6 +10,10 @@ class CreateDonationParams extends Equatable {
   final String quantityDesc;
   final String? description;
 
+  /// Free-text food name required when the category is "غير ذلك" (other),
+  /// so the request never sits under a meaningless generic title.
+  final String? customCategory;
+
   /// Food is edible until this moment (must be in the future).
   final DateTime validUntil;
 
@@ -29,6 +33,7 @@ class CreateDonationParams extends Equatable {
     required this.needsCooking,
     required this.quantityDesc,
     this.description,
+    this.customCategory,
     required this.validUntil,
     required this.pickupUntil,
     required this.pickupAddress,
@@ -43,6 +48,7 @@ class CreateDonationParams extends Equatable {
     needsCooking,
     quantityDesc,
     description,
+    customCategory,
     validUntil,
     pickupUntil,
     pickupAddress,

@@ -7,12 +7,12 @@ import '../../../../core/base/base_state.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/route_names.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_textfield.dart';
+import '../../../../core/widgets/quantity_stepper.dart';
 import '../../domain/params/create_donation_params.dart';
 import '../bloc/create_donation_cubit.dart';
 import '../bloc/create_donation_state.dart';
@@ -42,6 +42,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _customCategoryController = TextEditingController();
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _pickupUntilController = TextEditingController();
@@ -54,6 +55,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
   void dispose() {
     _quantityController.dispose();
     _descriptionController.dispose();
+    _customCategoryController.dispose();
     _addressController.dispose();
     _phoneController.dispose();
     _pickupUntilController.dispose();
@@ -71,8 +73,12 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
     final now = DateTime.now();
     final effectiveFirst = first ?? now;
     DateTime effectiveInitial = initial ?? effectiveFirst;
-    if (effectiveInitial.isBefore(effectiveFirst)) effectiveInitial = effectiveFirst;
-    if (last != null && effectiveInitial.isAfter(last)) effectiveInitial = last;
+    if (effectiveInitial.isBefore(effectiveFirst)) {
+      effectiveInitial = effectiveFirst;
+    }
+    if (last != null && effectiveInitial.isAfter(last)) {
+      effectiveInitial = last;
+    }
 
     final date = await showDatePicker(
       context: context,
@@ -85,18 +91,27 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-      builder: (context, child) => Directionality(textDirection: TextDirection.rtl, child: child!),
+      builder: (context, child) =>
+          Directionality(textDirection: TextDirection.rtl, child: child!),
     );
     if (time == null) return null;
 
-    final result = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final result = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
 
     // Guard against past times (e.g. today with an hour earlier than now) —
     // the backend rejects them with 422, so catch it before submission.
     if (!result.isAfter(DateTime.now())) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('لا يمكن اختيار وقت في الماضي — اختر وقتاً قادماً')),
+          const SnackBar(
+            content: Text('لا يمكن اختيار وقت في الماضي — اختر وقتاً قادماً'),
+          ),
         );
       }
       return null;
@@ -142,9 +157,22 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
     final cubit = context.read<CreateDonationCubit>();
     final selectedCategoryId = cubit.state.selectedCategoryId;
     if (selectedCategoryId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('يرجى اختيار نوع الطعام أولاً')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يرجى اختيار نوع الطعام أولاً')),
+      );
+      return;
+    }
+
+    // "غير ذلك" must name the food — never store a meaningless "other".
+    final requiresCustomName =
+        cubit.state.selectedCategory?.requiresCustomName ?? false;
+    final customCategory = _customCategoryController.text.trim();
+    if (requiresCustomName && customCategory.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى توضيح نوع الطعام عند اختيار "غير ذلك"'),
+        ),
+      );
       return;
     }
 
@@ -156,6 +184,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
+        customCategory: customCategory.isEmpty ? null : customCategory,
         validUntil: _validUntil!,
         pickupUntil: _pickupUntil!,
         pickupAddress: _addressController.text.trim(),
@@ -191,12 +220,13 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.brandBeige,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: AppColors.surfaceLight,
+          backgroundColor: colorScheme.surface,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
@@ -204,31 +234,41 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
           title: Text(
             'طلب تبرع جديد',
             style: AppTextStyles.titleLarge.copyWith(
-              color: AppColors.brandGreen,
+              color: colorScheme.primary,
               fontWeight: FontWeight.w800,
               fontSize: 18.sp,
             ),
           ),
           leading: IconButton(
-            icon: const Icon(Icons.close_rounded, color: AppColors.textPrimaryLight),
+            icon: Icon(
+              Icons.close_rounded,
+              color: colorScheme.onSurface,
+            ),
             onPressed: () => context.pop(),
           ),
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(1.h),
-            child: Container(height: 1.h, color: AppColors.divider.withValues(alpha: 0.6)),
+            child: Container(
+              height: 1.h,
+              color: colorScheme.outline.withValues(alpha: 0.3),
+            ),
           ),
         ),
         body: BlocListener<CreateDonationCubit, CreateDonationState>(
-          listenWhen:
-              (previous, current) =>
-                  previous.status != current.status && current.status != BlocStatus.loading,
+          listenWhen: (previous, current) =>
+              previous.status != current.status &&
+              current.status != BlocStatus.loading,
           listener: (context, state) {
-            if (state.status == BlocStatus.success && state.createdDonation != null) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('تم نشر طلب التبرع بنجاح')));
-              context.pushReplacement(RouteNames.donationDetailsPath(state.createdDonation!.id));
-            } else if (state.status == BlocStatus.failure && state.errorMessage != null) {
+            if (state.status == BlocStatus.success &&
+                state.createdDonation != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('تم نشر طلب التبرع بنجاح')),
+              );
+              context.pushReplacement(
+                RouteNames.donationDetailsPath(state.createdDonation!.id),
+              );
+            } else if (state.status == BlocStatus.failure &&
+                state.errorMessage != null) {
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
@@ -236,6 +276,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
           },
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: ListView(
               physics: const BouncingScrollPhysics(),
               padding: EdgeInsets.symmetric(
@@ -245,13 +286,34 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
               children: [
                 const _SectionHeader('تفاصيل الطعام'),
                 const _CategoryDropdown(),
+                // Appears only under "غير ذلك" — the donor must name the food.
+                BlocBuilder<CreateDonationCubit, CreateDonationState>(
+                  buildWhen: (prev, curr) =>
+                      prev.selectedCategoryId != curr.selectedCategoryId,
+                  builder: (context, state) {
+                    if (!(state.selectedCategory?.requiresCustomName ?? false)) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: EdgeInsets.only(top: AppConstants.paddingMD.h),
+                      child: CustomTextField(
+                        label: 'ما هو الصنف؟',
+                        hint: 'اكتب نوع الطعام بدقة، مثال: مربى منزلي',
+                        controller: _customCategoryController,
+                        isRequired: true,
+                        validator: requiredFieldValidator(
+                          fieldName: 'نوع الطعام',
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 SizedBox(height: AppConstants.paddingMD.h),
-                CustomTextField(
-                  label: 'الكمية',
-                  hint: 'مثال: وجبات تكفي 10 أشخاص',
+                QuantityStepper(
+                  label: 'الكمية (عدد الأشخاص)',
                   controller: _quantityController,
-                  keyboardType: TextInputType.text,
-                  validator: requiredFieldValidator(fieldName: 'الكمية'),
+                  isRequired: true,
+                  validator: positiveIntegerValidator(),
                 ),
                 SizedBox(height: AppConstants.paddingMD.h),
                 CustomTextField(
@@ -272,6 +334,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
                   hint: 'متى يجب أن تستلم الجمعية التبرع؟',
                   icon: Icons.schedule_rounded,
                   controller: _pickupUntilController,
+                  isRequired: true,
                   validator: _validatePickupUntil,
                   onTap: _pickPickupUntil,
                 ),
@@ -281,6 +344,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
                   hint: 'حتى متى يبقى الطعام صالحاً للاستهلاك؟',
                   icon: Icons.event_available_rounded,
                   controller: _validUntilController,
+                  isRequired: true,
                   validator: _validateValidUntil,
                   onTap: _pickValidUntil,
                 ),
@@ -292,7 +356,10 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
                   hint: 'الحي، الشارع، أقرب معلم',
                   controller: _addressController,
                   maxLines: 2,
-                  validator: requiredFieldValidator(fieldName: 'عنوان الاستلام'),
+                  isRequired: true,
+                  validator: requiredFieldValidator(
+                    fieldName: 'عنوان الاستلام',
+                  ),
                 ),
                 SizedBox(height: AppConstants.paddingXL.h),
 
@@ -303,12 +370,14 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.done,
+                  isRequired: true,
                   validator: phoneValidator,
                 ),
                 SizedBox(height: AppConstants.paddingXXL.h),
 
                 BlocBuilder<CreateDonationCubit, CreateDonationState>(
-                  buildWhen: (previous, current) => previous.status != current.status,
+                  buildWhen: (previous, current) =>
+                      previous.status != current.status,
                   builder: (context, state) => CustomButton(
                     label: 'تأكيد الطلب',
                     onPressed: _submit,
@@ -344,7 +413,7 @@ class _SectionHeader extends StatelessWidget {
             width: 4.r,
             height: 18.r,
             decoration: BoxDecoration(
-              color: AppColors.brandGreen,
+              color: Theme.of(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(AppConstants.radiusXS.r),
             ),
           ),
@@ -371,43 +440,63 @@ class _CategoryDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<CreateDonationCubit, CreateDonationState>(
-      buildWhen:
-          (previous, current) =>
-              previous.selectedCategoryId != current.selectedCategoryId ||
-              previous.categoriesStatus != current.categoriesStatus ||
-              previous.categories.length != current.categories.length,
+      buildWhen: (previous, current) =>
+          previous.selectedCategoryId != current.selectedCategoryId ||
+          previous.categoriesStatus != current.categoriesStatus ||
+          previous.categories.length != current.categories.length,
       builder: (context, state) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                children: [
+                  const TextSpan(text: 'نوع الطعام'),
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: AppConstants.paddingXS.h),
             DropdownButtonFormField<int>(
               initialValue: state.selectedCategoryId,
               decoration: const InputDecoration(
-                labelText: 'نوع الطعام',
                 prefixIcon: Icon(Icons.fastfood_outlined),
               ),
-              items:
-                  state.categories.map((category) {
-                    return DropdownMenuItem(
-                      value: category.id,
-                      child: Text(category.nameAr),
-                    );
-                  }).toList(),
-              onChanged:
-                  state.categoriesStatus == BlocStatus.success
-                      ? (id) {
-                        final category = state.categories.firstWhere((c) => c.id == id);
-                        context.read<CreateDonationCubit>().selectCategory(category);
-                      }
-                      : null,
-              validator: (_) => state.selectedCategoryId == null ? 'يرجى اختيار نوع الطعام' : null,
+              items: state.categories.map((category) {
+                return DropdownMenuItem(
+                  value: category.id,
+                  child: Text(category.nameAr),
+                );
+              }).toList(),
+              onChanged: state.categoriesStatus == BlocStatus.success
+                  ? (id) {
+                      final category = state.categories.firstWhere(
+                        (c) => c.id == id,
+                      );
+                      context.read<CreateDonationCubit>().selectCategory(
+                        category,
+                      );
+                    }
+                  : null,
+              validator: (value) => value == null
+                  ? 'يرجى اختيار نوع الطعام'
+                  : null,
             ),
             if (state.categoriesStatus == BlocStatus.loading) ...[
               SizedBox(height: AppConstants.paddingSM.h),
               Text(
                 'جارٍ تحميل أنواع الطعام...',
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondaryLight,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 11.sp,
                 ),
               ),
@@ -420,13 +509,14 @@ class _CategoryDropdown extends StatelessWidget {
                     child: Text(
                       state.categoriesErrorMessage ?? 'تعذر تحميل أنواع الطعام',
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.error,
+                        color: Theme.of(context).colorScheme.error,
                         fontSize: 11.sp,
                       ),
                     ),
                   ),
                   TextButton(
-                    onPressed: () => context.read<CreateDonationCubit>().loadCategories(),
+                    onPressed: () =>
+                        context.read<CreateDonationCubit>().loadCategories(),
                     child: const Text('إعادة المحاولة'),
                   ),
                 ],
@@ -446,8 +536,14 @@ class _FoodStateSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<CreateDonationCubit, CreateDonationState>(
-      buildWhen: (previous, current) => previous.needsCooking != current.needsCooking,
+      buildWhen: (previous, current) =>
+          previous.needsCooking != current.needsCooking ||
+          previous.selectedCategoryId != current.selectedCategoryId,
       builder: (context, state) {
+        // Only "غير ذلك" lets the donor pick — every real category decides
+        // from its default, so raw meat can never be posted as "ready to eat".
+        final canEdit = state.selectedCategory?.requiresCustomName ?? false;
+
         return Column(
           children: [
             Row(
@@ -457,7 +553,11 @@ class _FoodStateSelector extends StatelessWidget {
                     label: 'جاهز للأكل',
                     icon: Icons.restaurant_rounded,
                     selected: !state.needsCooking,
-                    onTap: () => context.read<CreateDonationCubit>().setNeedsCooking(false),
+                    onTap: canEdit
+                        ? () => context
+                              .read<CreateDonationCubit>()
+                              .setNeedsCooking(false)
+                        : null,
                   ),
                 ),
                 SizedBox(width: AppConstants.paddingMD.w),
@@ -466,16 +566,22 @@ class _FoodStateSelector extends StatelessWidget {
                     label: 'يحتاج طهي',
                     icon: Icons.local_fire_department_rounded,
                     selected: state.needsCooking,
-                    onTap: () => context.read<CreateDonationCubit>().setNeedsCooking(true),
+                    onTap: canEdit
+                        ? () => context
+                              .read<CreateDonationCubit>()
+                              .setNeedsCooking(true)
+                        : null,
                   ),
                 ),
               ],
             ),
             SizedBox(height: AppConstants.paddingSM.h),
             Text(
-              'يُحدد تلقائياً حسب نوع الطعام ويمكنك تعديله',
+              canEdit
+                  ? 'الصنف "غير ذلك" — اختر الحالة المناسبة'
+                  : 'تُحدد تلقائياً حسب نوع الطعام',
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondaryLight,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 11.sp,
               ),
             ),
@@ -490,7 +596,9 @@ class _FoodStateChip extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool selected;
-  final VoidCallback onTap;
+
+  /// Null renders the chip locked (auto-set by the category).
+  final VoidCallback? onTap;
 
   const _FoodStateChip({
     required this.label,
@@ -501,37 +609,53 @@ class _FoodStateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 14.h),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.brandGreen : AppColors.surfaceLight,
-          borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
-          border: Border.all(
-            color: selected ? AppColors.brandGreen : AppColors.outlineLight,
-            width: 1,
+    final colorScheme = Theme.of(context).colorScheme;
+    final locked = onTap == null;
+    final fg = selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant;
+
+    return Opacity(
+      // Locked chips dim slightly so the donor reads them as automatic.
+      opacity: locked && !selected ? 0.55 : 1.0,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 14.h),
+          decoration: BoxDecoration(
+            color: selected ? colorScheme.primary : colorScheme.surface,
+            borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+            border: Border.all(
+              color: selected ? colorScheme.primary : colorScheme.outline,
+              width: 1,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 20.r,
-              color: selected ? Colors.white : AppColors.textSecondaryLight,
-            ),
-            SizedBox(width: 8.w),
-            Text(
-              label,
-              style: AppTextStyles.titleSmall.copyWith(
-                color: selected ? Colors.white : AppColors.textSecondaryLight,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (locked && selected) ...[
+                Icon(
+                  Icons.lock_rounded,
+                  size: 13.r,
+                  color: fg,
+                ),
+                SizedBox(width: 5.w),
+              ],
+              Icon(
+                icon,
+                size: 20.r,
+                color: fg,
               ),
-            ),
-          ],
+              SizedBox(width: 8.w),
+              Text(
+                label,
+                style: AppTextStyles.titleSmall.copyWith(
+                  color: fg,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -548,6 +672,7 @@ class _DateTimeField extends StatelessWidget {
   final TextEditingController controller;
   final String? Function(String?) validator;
   final Future<void> Function() onTap;
+  final bool isRequired;
 
   const _DateTimeField({
     required this.label,
@@ -556,6 +681,7 @@ class _DateTimeField extends StatelessWidget {
     required this.controller,
     required this.validator,
     required this.onTap,
+    this.isRequired = false,
   });
 
   @override
@@ -568,6 +694,7 @@ class _DateTimeField extends StatelessWidget {
       readOnly: true,
       showCursor: false,
       onTap: onTap,
+      isRequired: isRequired,
       validator: validator,
     );
   }

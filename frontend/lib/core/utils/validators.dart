@@ -13,7 +13,9 @@ String? emailValidator(String? value) {
   if (value == null || value.trim().isEmpty) {
     return 'البريد الإلكتروني مطلوب.';
   }
-  final emailRegex = RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
+  final emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
+  );
   if (!emailRegex.hasMatch(value.trim())) {
     return 'يرجى إدخال بريد إلكتروني صحيح.';
   }
@@ -69,10 +71,40 @@ String? phoneValidator(String? value) {
 /// Returns an error message if [value] is null or blank.
 ///
 /// Optionally pass a custom [fieldName] for a more descriptive message.
-String? Function(String?) requiredFieldValidator({String fieldName = 'هذا الحقل'}) {
+String? Function(String?) requiredFieldValidator({
+  String fieldName = 'هذا الحقل',
+}) {
   return (String? value) {
     if (value == null || value.trim().isEmpty) {
       return '$fieldName مطلوب.';
+    }
+    return null;
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Positive integer (quantities)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Validates a positive whole number (1–99999) — used for the donation
+/// quantity so free text like "تكفي -5 أشخاص" can never reach the API.
+String? Function(String?) positiveIntegerValidator({
+  String fieldName = 'الكمية',
+}) {
+  return (String? value) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) {
+      return '$fieldName مطلوب.';
+    }
+    final n = int.tryParse(v);
+    if (n == null) {
+      return 'يجب أن يكون $fieldName رقماً صحيحاً.';
+    }
+    if (n < 1) {
+      return 'يجب أن يكون $fieldName أكبر من صفر.';
+    }
+    if (n > 99999) {
+      return '$fieldName كبير جداً — الحد الأعلى 99999.';
     }
     return null;
   };
@@ -87,7 +119,9 @@ String? Function(String?) requiredFieldValidator({String fieldName = 'هذا ا�
 ///
 /// Use this as the validator for a "Confirm Password" field, passing the
 /// current password value getter of the original field.
-String? Function(String?) confirmPasswordValidator(String? Function() originalPassword) {
+String? Function(String?) confirmPasswordValidator(
+  String? Function() originalPassword,
+) {
   return (String? value) {
     if (value == null || value.isEmpty) {
       return 'يرجى تأكيد كلمة المرور.';
