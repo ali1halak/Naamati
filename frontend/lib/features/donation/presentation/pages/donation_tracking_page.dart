@@ -18,7 +18,6 @@ import '../../domain/entities/donation_status.dart';
 import '../bloc/donation_details_cubit.dart';
 import '../bloc/donation_details_state.dart';
 import '../widgets/charity_rating_sheet.dart';
-import '../widgets/confirm_pickup_sheet.dart';
 import '../widgets/donation_summary_card.dart';
 
 /// Donation tracking screen — combines Screen 3 (waiting for acceptance),
@@ -66,6 +65,46 @@ class _TrackingViewState extends State<_TrackingView> {
 
     if (result != null && mounted) {
       await _cubit.cancelDonation(reason: result.isEmpty ? null : result);
+    }
+  }
+
+  /// Two-sided handover: the donor confirms, then the charity does the same
+  /// from its own app. No code entry — the pairing is the request itself.
+  Future<void> _confirmHandoverDialog(DonationRequest donation) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: Theme.of(dialogContext).colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusLG.r),
+          ),
+          title: Text('تم التسليم؟', style: AppTextStyles.titleMedium),
+          content: Text(
+            'هل سلّمت الطعام إلى ممثل الجمعية؟ سيصبح التسليم مؤكداً بعد أن '
+            'تؤكد الجمعية أيضاً من تطبيقها.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+              height: 1.6,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('تراجع'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('نعم، أكّد التسليم'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await _cubit.confirmPickup();
     }
   }
 
@@ -170,8 +209,7 @@ class _TrackingViewState extends State<_TrackingView> {
       case DonationStatus.accepted:
         return _AcceptedView(
           donation: donation,
-          onConfirmPickup: () =>
-              ConfirmPickupSheet.show(context, cubit: _cubit),
+          onConfirmPickup: () => _confirmHandoverDialog(donation),
           onCancel: _showCancelDialog,
         );
       default:
@@ -415,10 +453,42 @@ class _AcceptedView extends StatelessWidget {
         SizedBox(height: AppConstants.paddingSM.h),
         DonationSummaryCard(donation: donation),
         SizedBox(height: AppConstants.paddingXL.h),
-        CustomButton(
-          label: 'تم التسليم',
-          leadingIcon: const Icon(Icons.check_circle_outline_rounded),
-          onPressed: onConfirmPickup,
+        // Two-sided handover: once the donor pressed, we show what we are
+        // waiting for instead of the button.
+        if (donation.awaitingCharityConfirmation) ...[
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(AppConstants.paddingMD.w),
+            decoration: BoxDecoration(
+              color: colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(AppConstants.radiusLG.r),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.hourglass_top_rounded,
+                  size: 22.r,
+                  color: colorScheme.onSecondaryContainer,
+                ),
+                SizedBox(width: AppConstants.paddingMD.w),
+                Expanded(
+                  child: Text(
+                    'أكّدت التسليم — بانتظار أن تؤكد الجمعية من تطبيقها ليكتمل التسليم',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: colorScheme.onSecondaryContainer,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: AppConstants.paddingXL.h),
+        ] else
+          CustomButton(
+            label: 'تم التسليم',
+            leadingIcon: const Icon(Icons.check_circle_outline_rounded),
+            onPressed: onConfirmPickup,
         ),
         SizedBox(height: AppConstants.paddingSM.h),
         Center(

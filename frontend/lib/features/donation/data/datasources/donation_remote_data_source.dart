@@ -78,10 +78,7 @@ abstract class DonationRemoteDataSource {
   });
 
   @POST('/donor/requests/{id}/confirm')
-  Future<DonationResponseModel> confirmPickup(
-    @Path() int id, {
-    @Field('qr_token') required String qrToken,
-  });
+  Future<DonationResponseModel> confirmPickup(@Path() int id);
 
   @POST('/donor/requests/{id}/rate')
   Future<RatingResponseModel> rateDonation(

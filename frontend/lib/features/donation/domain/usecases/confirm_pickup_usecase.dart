@@ -16,18 +16,15 @@ class ConfirmPickupUseCase
 
   @override
   Future<Either<Failure, DonationRequest>> call(ConfirmPickupParams params) {
-    return repository.confirmPickup(params.id, qrToken: params.qrToken);
+    return repository.confirmPickup(params.id);
   }
 }
 
 class ConfirmPickupParams extends Equatable {
   final int id;
 
-  /// 64-character one-time token shown by the charity (QR payload).
-  final String qrToken;
-
-  const ConfirmPickupParams({required this.id, required this.qrToken});
+  const ConfirmPickupParams({required this.id});
 
   @override
-  List<Object?> get props => [id, qrToken];
+  List<Object?> get props => [id];
 }

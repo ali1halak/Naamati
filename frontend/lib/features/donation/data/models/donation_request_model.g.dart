@@ -40,6 +40,12 @@ DonationRequestModel _$DonationRequestModelFromJson(
   pickedUpAt: json['picked_up_at'] == null
       ? null
       : DateTime.parse(json['picked_up_at'] as String),
+  donorConfirmedAt: json['donor_confirmed_at'] == null
+      ? null
+      : DateTime.parse(json['donor_confirmed_at'] as String),
+  charityConfirmedAt: json['charity_confirmed_at'] == null
+      ? null
+      : DateTime.parse(json['charity_confirmed_at'] as String),
   cancelReason: json['cancel_reason'] as String?,
   cancelledBy: json['cancelled_by'] as String?,
   createdAt: json['created_at'] == null
@@ -72,6 +78,8 @@ Map<String, dynamic> _$DonationRequestModelToJson(
   'eta_minutes': instance.etaMinutes,
   'accepted_at': instance.acceptedAt?.toIso8601String(),
   'picked_up_at': instance.pickedUpAt?.toIso8601String(),
+  'donor_confirmed_at': instance.donorConfirmedAt?.toIso8601String(),
+  'charity_confirmed_at': instance.charityConfirmedAt?.toIso8601String(),
   'cancel_reason': instance.cancelReason,
   'cancelled_by': instance.cancelledBy,
   'created_at': instance.createdAt?.toIso8601String(),

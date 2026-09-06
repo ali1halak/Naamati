@@ -47,10 +47,7 @@ abstract class DonationRepository {
 
   /// Confirm the handover using the QR token the charity presents
   /// (`POST /donor/requests/{id}/confirm`, `accepted` → `picked_up`).
-  Future<Either<Failure, DonationRequest>> confirmPickup(
-    int id, {
-    required String qrToken,
-  });
+  Future<Either<Failure, DonationRequest>> confirmPickup(int id);
 
   /// Rate the charity after pickup (`POST /donor/requests/{id}/rate`, 201).
   Future<Either<Failure, Rating>> rateDonation(

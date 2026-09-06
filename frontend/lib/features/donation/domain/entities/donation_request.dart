@@ -51,6 +51,11 @@ class DonationRequest extends Equatable {
   final DateTime? acceptedAt;
   final DateTime? pickedUpAt;
 
+  /// The two-sided handover receipts: the request only reaches `picked_up`
+  /// once both are non-null. Null until the request is `accepted`.
+  final DateTime? donorConfirmedAt;
+  final DateTime? charityConfirmedAt;
+
   /// Reason entered when the request was cancelled.
   final String? cancelReason;
 
@@ -88,6 +93,8 @@ class DonationRequest extends Equatable {
     this.etaMinutes,
     this.acceptedAt,
     this.pickedUpAt,
+    this.donorConfirmedAt,
+    this.charityConfirmedAt,
     this.cancelReason,
     this.cancelledBy,
     this.createdAt,
@@ -102,7 +109,15 @@ class DonationRequest extends Equatable {
 
   bool get canCancel => status.canCancel;
 
-  bool get canConfirmPickup => status.canConfirmPickup;
+  /// The donor's confirm button is live only before they pressed it.
+  bool get canConfirmPickup => status.canConfirmPickup && donorConfirmedAt == null;
+
+  /// The donor confirmed but the charity has not yet — the request is
+  /// deliberately still `accepted` on the wire.
+  bool get awaitingCharityConfirmation =>
+      status == DonationStatus.accepted &&
+      donorConfirmedAt != null &&
+      charityConfirmedAt == null;
 
   /// Rating is allowed once the food was picked up and not yet rated.
   bool get canRate => status.canRate && rating == null;
@@ -128,6 +143,8 @@ class DonationRequest extends Equatable {
     etaMinutes,
     acceptedAt,
     pickedUpAt,
+    donorConfirmedAt,
+    charityConfirmedAt,
     cancelReason,
     cancelledBy,
     createdAt,

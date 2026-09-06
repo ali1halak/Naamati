@@ -121,7 +121,7 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     );
   }
 
-  Future<void> confirmPickup({required String qrToken}) async {
+  Future<void> confirmPickup() async {
     final donation = state.donation;
     if (donation == null) return;
 
@@ -132,7 +132,7 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
       ),
     );
     final result = await _confirmPickupUseCase(
-      ConfirmPickupParams(id: donation.id, qrToken: qrToken.trim()),
+      ConfirmPickupParams(id: donation.id),
     );
 
     result.fold(
@@ -146,7 +146,10 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
         state.copyWith(
           actionInProgress: null,
           donation: updated,
-          successMessage: 'تم تأكيد التسليم بنجاح',
+          // The request only becomes picked_up once the charity confirms too.
+          successMessage: updated.awaitingCharityConfirmation
+              ? 'تم تسجيل تأكيدك — بانتظار تأكيد الجمعية'
+              : 'تم تأكيد التسليم بنجاح',
         ),
       ),
     );

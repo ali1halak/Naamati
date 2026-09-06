@@ -281,14 +281,11 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
   }
 
   @override
-  Future<DonationResponseModel> confirmPickup(
-    int id, {
-    required String qrToken,
-  }) async {
+  Future<DonationResponseModel> confirmPickup(int id) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
-    final _data = {'qr_token': qrToken};
+    const Map<String, dynamic>? _data = null;
     final _options = _setStreamType<DonationResponseModel>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(

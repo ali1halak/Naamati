@@ -216,16 +216,10 @@ class DonationRepositoryImpl implements DonationRepository {
   }
 
   @override
-  Future<Either<Failure, DonationRequest>> confirmPickup(
-    int id, {
-    required String qrToken,
-  }) async {
+  Future<Either<Failure, DonationRequest>> confirmPickup(int id) async {
     if (await networkInfo.isConnected) {
       try {
-        final response = await remoteDataSource.confirmPickup(
-          id,
-          qrToken: qrToken,
-        );
+        final response = await remoteDataSource.confirmPickup(id);
         if (response.success) {
           return Right(response.data);
         }

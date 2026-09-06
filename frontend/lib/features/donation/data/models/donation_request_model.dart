@@ -48,6 +48,8 @@ class DonationRequestModel extends DonationRequest {
     @JsonKey(name: 'eta_minutes') super.etaMinutes,
     @JsonKey(name: 'accepted_at') super.acceptedAt,
     @JsonKey(name: 'picked_up_at') super.pickedUpAt,
+    @JsonKey(name: 'donor_confirmed_at') super.donorConfirmedAt,
+    @JsonKey(name: 'charity_confirmed_at') super.charityConfirmedAt,
     @JsonKey(name: 'cancel_reason') super.cancelReason,
     @JsonKey(name: 'cancelled_by') super.cancelledBy,
     @JsonKey(name: 'created_at') super.createdAt,
