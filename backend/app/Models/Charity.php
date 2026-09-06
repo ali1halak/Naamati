@@ -47,8 +47,8 @@ class Charity extends Authenticatable
         return $this->hasMany(DonationRequest::class);
     }
 
-    public function strikes()
+    public function violations()
     {
-        return $this->hasMany(Strike::class);
+        return $this->hasMany(Violation::class);
     }
 }

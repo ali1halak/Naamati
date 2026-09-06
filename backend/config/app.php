@@ -78,8 +78,12 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    // The app is Arabic, so the API answers in Arabic by default — set here
+    // rather than only in .env, so a fresh clone behaves the same way.
+    'locale' => env('APP_LOCALE', 'ar'),
 
+    // Kept English on purpose: a rule with no Arabic translation falls back to
+    // Laravel's built-in wording instead of showing a raw translation key.
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),

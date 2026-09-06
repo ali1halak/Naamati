@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Charity\CharityRequestController;
+use App\Http\Controllers\Api\Charity\CharityViolationController;
 use App\Http\Controllers\Api\Donor\DonationRequestController;
 use App\Http\Controllers\Api\FoodCategoryController;
 use App\Http\Controllers\Api\NotificationController;
@@ -53,8 +54,20 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
             Route::get('/requests/available', [CharityRequestController::class, 'available']);
             Route::get('/requests', [CharityRequestController::class, 'index']);
             Route::get('/requests/{id}', [CharityRequestController::class, 'show']);
+            Route::get('/requests/{id}/details', [CharityRequestController::class, 'details']);
+
+            // سجل المخالفات — read-only; only an admin can file one.
+            Route::get('/violations', [CharityViolationController::class, 'index']);
             Route::post('/requests/{id}/accept', [CharityRequestController::class, 'accept']);
-            Route::post('/requests/{id}/distribute', [CharityRequestController::class, 'distribute']);
+
+            // Handover needs both sides: this is the charity's half, the donor
+            // presses its own /donor/requests/{id}/confirm.
+            Route::post('/requests/{id}/pickup', [CharityRequestController::class, 'pickup']);
+
+            // Confirming the distribution closes the request; the beneficiary
+            // numbers are a separate call so they can be filed later.
+            Route::post('/requests/{id}/complete', [CharityRequestController::class, 'complete']);
+            Route::post('/requests/{id}/impact', [CharityRequestController::class, 'impact']);
         });
     });
 
@@ -64,6 +77,8 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
         Route::post('/charities/{charity}/approve', [AdminController::class, 'approve']);
         Route::post('/charities/{charity}/suspend', [AdminController::class, 'suspend']);
         Route::post('/requests/{id}/cancel', [AdminController::class, 'cancelDonation']);
+        Route::get('/charities/{charity}/violations', [AdminController::class, 'charityViolations']);
+        Route::post('/charities/{charity}/violations', [AdminController::class, 'storeViolation']);
         Route::get('/notifications', [AdminController::class, 'notifications']);
         Route::post('/notifications/{id}/read', [AdminController::class, 'markNotificationRead']);
     });

@@ -36,6 +36,16 @@ class ArabicDate
         return $date?->format('h:i A');
     }
 
+    /** e.g. "05:00 مساءً" — same clock, Arabic half-day, for Arabic-only screens. */
+    public static function timeArabic(?DateTimeInterface $date): ?string
+    {
+        if (! $date) {
+            return null;
+        }
+
+        return $date->format('h:i') . ' ' . ($date->format('A') === 'AM' ? 'صباحاً' : 'مساءً');
+    }
+
     /** e.g. "12 أكتوبر 2026، 02:00 PM" — day and time together. */
     public static function dayTime(?DateTimeInterface $date): ?string
     {

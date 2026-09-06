@@ -27,8 +27,8 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.unique' => 'This email is already registered.',
-            'type.in'      => 'Donor type must be one of: individual, restaurant, hotel, company.',
+            'email.unique' => 'هذا البريد الإلكتروني مسجّل مسبقاً.',
+            'type.in'      => 'نوع المتبرع يجب أن يكون: فرد أو مطعم أو فندق أو شركة.',
         ];
     }
 }

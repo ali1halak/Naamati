@@ -19,7 +19,7 @@ class AdminToken
             return response()->json([
                 'success' => false,
                 'data'    => null,
-                'message' => 'Invalid admin token',
+                'message' => 'رمز المشرف غير صحيح',
                 'errors'  => null,
             ], 401);
         }

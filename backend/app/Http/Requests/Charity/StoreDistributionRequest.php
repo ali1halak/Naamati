@@ -31,9 +31,9 @@ class StoreDistributionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'families_count.min'         => 'At least one family must have received food.',
-            'individuals_count.min'      => 'At least one person must have received food.',
-            'distributed_at.before_or_equal' => 'The distribution date cannot be in the future.',
+            'families_count.min'             => 'يجب أن تكون عائلة واحدة على الأقل قد استلمت الطعام.',
+            'individuals_count.min'          => 'يجب أن يكون شخص واحد على الأقل قد استلم الطعام.',
+            'distributed_at.before_or_equal' => 'لا يمكن أن يكون تاريخ التوزيع في المستقبل.',
         ];
     }
 }

@@ -11,8 +11,9 @@ class DonationRequest extends Model
     protected $fillable = [
         'donor_id', 'charity_id', 'food_category_id', 'needs_cooking', 'quantity_desc',
         'description', 'custom_category', 'valid_until', 'pickup_until', 'pickup_address',
-        'latitude', 'longitude', 'contact_phone', 'status', 'accepted_at', 'eta_minutes',
-        'picked_up_at', 'confirmed_at', 'cancel_reason', 'cancelled_by',
+        'pickup_notes', 'latitude', 'longitude', 'contact_phone', 'status', 'accepted_at',
+        'eta_minutes', 'picked_up_at', 'donor_confirmed_at', 'charity_confirmed_at',
+        'completed_at', 'cancel_reason', 'cancelled_by',
     ];
 
 
@@ -27,10 +28,18 @@ class DonationRequest extends Model
             'latitude'      => 'decimal:7',
             'longitude'     => 'decimal:7',
             'eta_minutes'   => 'integer',
-            'accepted_at'   => 'datetime',
-            'picked_up_at'  => 'datetime',
-            'confirmed_at'  => 'datetime',
+            'accepted_at'          => 'datetime',
+            'picked_up_at'         => 'datetime',
+            'donor_confirmed_at'   => 'datetime',
+            'charity_confirmed_at' => 'datetime',
+            'completed_at'         => 'datetime',
         ];
+    }
+
+    /** True once both sides have pressed their own confirm button. */
+    public function handoverFullyConfirmed(): bool
+    {
+        return $this->donor_confirmed_at !== null && $this->charity_confirmed_at !== null;
     }
 
     public function donor()
@@ -48,6 +57,11 @@ class DonationRequest extends Model
         return $this->belongsTo(FoodCategory::class);
     }
 
+    public function images()
+    {
+        return $this->hasMany(DonationRequestImage::class)->orderBy('sort_order');
+    }
+
     public function distribution()
     {
         return $this->hasOne(Distribution::class);
@@ -58,9 +72,9 @@ class DonationRequest extends Model
         return $this->hasOne(Rating::class);
     }
 
-    public function strikes()
+    public function violations()
     {
-        return $this->hasMany(Strike::class);
+        return $this->hasMany(Violation::class);
     }
 
     public function statusLogs()

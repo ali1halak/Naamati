@@ -15,20 +15,20 @@ class CharityService
     {
         return Charity::query()
             ->when($status, fn ($q) => $q->where('status', $status))
-            ->withCount('strikes')
+            ->withCount('violations')
             ->latest()
             ->paginate(15);
     }
 
     /**
      * Approve a charity so it can start using charity features.
-     * Also used to reinstate a suspended charity, which clears its strikes so
-     * it does not get re-suspended by the next single no-show.
+     * Also used to reinstate a suspended charity, which clears its violations
+     * so the same record cannot suspend it a second time.
      */
     public function approve(Charity $charity): Charity
     {
         if ($charity->status === CharityStatus::Suspended) {
-            $charity->strikes()->delete();
+            $charity->violations()->delete();
         }
 
         $charity->update(['status' => CharityStatus::Active]);

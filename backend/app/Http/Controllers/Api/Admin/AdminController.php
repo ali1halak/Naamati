@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Enums\NotificationType;
 use App\Enums\RecipientType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreViolationRequest;
 use App\Http\Requests\Donor\CancelDonationRequest;
 use App\Http\Resources\DonationRequestResource;
 use App\Http\Resources\NotificationResource;
+use App\Http\Resources\ViolationResource;
 use App\Models\Charity;
 use App\Models\Notification;
 use App\Services\CharityService;
 use App\Services\DonationRequestService;
+use App\Services\ViolationService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -23,6 +26,7 @@ class AdminController extends Controller
     public function __construct(
         private readonly CharityService $charityService,
         private readonly DonationRequestService $requests,
+        private readonly ViolationService $violations,
     ) {}
 
     /**
@@ -43,6 +47,32 @@ class AdminController extends Controller
         );
     }
 
+    /**
+     * File a compliance notice. The charity reads admin_note verbatim, and
+     * enough weight on file suspends the account automatically.
+     */
+    public function storeViolation(StoreViolationRequest $request, Charity $charity)
+    {
+        $violation = $this->violations->record($charity, $request->validated());
+
+        return $this->ok(new ViolationResource($violation), 'تم تسجيل المخالفة', 201);
+    }
+
+    /** Everything on file against one charity. */
+    public function charityViolations(Charity $charity)
+    {
+        $paginated = $charity->violations()->latest()->paginate(15);
+
+        $payload = ViolationResource::collection($paginated)->response()->getData(true);
+        $payload['compliance'] = [
+            'total_weight'         => $this->violations->weightFor($charity),
+            'suspension_threshold' => ViolationService::SUSPENSION_THRESHOLD,
+            'account_status'       => $charity->status->value,
+        ];
+
+        return $this->ok($payload);
+    }
+
     public function charities(Request $request)
     {
         $validated = $request->validate([
@@ -56,7 +86,7 @@ class AdminController extends Controller
     {
         return $this->ok(
             $this->charityService->approve($charity),
-            'Charity approved'
+            'تم اعتماد الجمعية'
         );
     }
 
@@ -64,7 +94,7 @@ class AdminController extends Controller
     {
         return $this->ok(
             $this->charityService->suspend($charity),
-            'Charity suspended'
+            'تم تعليق الجمعية'
         );
     }
 
@@ -101,6 +131,6 @@ class AdminController extends Controller
 
         $notification->update(['is_read' => true]);
 
-        return $this->ok(new NotificationResource($notification), 'Notification marked as read');
+        return $this->ok(new NotificationResource($notification), 'تم تعليم الإشعار كمقروء');
     }
 }

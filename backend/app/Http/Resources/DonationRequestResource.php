@@ -42,6 +42,7 @@ class DonationRequestResource extends JsonResource
             'pickup_until' => $this->pickup_until,
 
             'pickup_address' => $this->pickup_address,
+            'pickup_notes'   => $this->pickup_notes,
             // Optional map pin — null when the donor only typed an address.
             'latitude'       => $this->latitude,
             'longitude'      => $this->longitude,
@@ -51,8 +52,18 @@ class DonationRequestResource extends JsonResource
             'charity'     => new CharityCardResource($this->whenLoaded('charity')),
             'eta_minutes' => $this->eta_minutes,
 
-            'accepted_at'   => $this->accepted_at,
-            'picked_up_at'  => $this->picked_up_at,
+            // Photos of the food, ordered as the donor uploaded them.
+            'images'    => $this->whenLoaded('images', fn () => $this->images->pluck('url')),
+            'image_url' => $this->whenLoaded('images', fn () => $this->images->first()?->url),
+
+            'accepted_at' => $this->accepted_at,
+
+            // Both halves of the handover, so each app can show whether it is
+            // still waiting on the other side.
+            'donor_confirmed_at'   => $this->donor_confirmed_at,
+            'charity_confirmed_at' => $this->charity_confirmed_at,
+            'picked_up_at'         => $this->picked_up_at,
+            'completed_at'         => $this->completed_at,
             'cancel_reason' => $this->cancel_reason,
             'cancelled_by'  => $this->cancelled_by?->value,
             'created_at'    => $this->created_at,

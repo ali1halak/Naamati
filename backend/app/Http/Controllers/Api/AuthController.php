@@ -37,7 +37,7 @@ class AuthController extends Controller
             'type'  => 'donor',
             'user'  => $donor,
             'token' => $token,
-        ], 'Registered successfully', 201);
+        ], 'تم إنشاء الحساب بنجاح', 201);
     }
 
     public function registerCharity(CharityRegisterRequest $request)
@@ -70,7 +70,7 @@ class AuthController extends Controller
             'type'  => 'charity',
             'user'  => $charity,
             'token' => $token,
-        ], 'Registered successfully', 201);
+        ], 'تم إنشاء الحساب بنجاح', 201);
     }
 
     public function login(LoginRequest $request)
@@ -78,7 +78,7 @@ class AuthController extends Controller
         $result = $this->authService->attemptLogin($request->email, $request->password);
 
         if (! $result) {
-            return $this->fail('Invalid credentials', 401);
+            return $this->fail('البريد الإلكتروني أو كلمة المرور غير صحيحة', 401);
         }
 
         $token = $result['user']->createToken($result['type'] . '-auth')->plainTextToken;
@@ -94,7 +94,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return $this->ok(null, 'Logged out');
+        return $this->ok(null, 'تم تسجيل الخروج');
     }
 
     public function me(Request $request)

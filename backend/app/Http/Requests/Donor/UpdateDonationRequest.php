@@ -41,6 +41,8 @@ class UpdateDonationRequest extends FormRequest
             'pickup_until' => ['required', 'date', 'after:now', 'before_or_equal:valid_until'],
 
             'pickup_address' => ['required', 'string', 'max:255'],
+
+            'pickup_notes' => ['nullable', 'string', 'max:255'],
             'latitude'       => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
             'longitude'      => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
 

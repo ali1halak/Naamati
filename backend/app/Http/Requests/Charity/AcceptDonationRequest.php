@@ -23,7 +23,7 @@ class AcceptDonationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'eta_minutes.between' => 'Estimated arrival must be between 5 and 480 minutes.',
+            'eta_minutes.between' => 'مدة الوصول يجب أن تكون بين 5 و 480 دقيقة.',
         ];
     }
 }

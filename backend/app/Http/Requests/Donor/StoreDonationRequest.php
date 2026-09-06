@@ -30,8 +30,6 @@ class StoreDonationRequest extends FormRequest
             // so the request is never stored as a meaningless "Other".
             'custom_category' => ['nullable', 'string', 'max:150'],
 
-            // Food must still be edible in the future, and the donor cannot
-            // offer a pickup window that outlives the food itself.
             // Food must still be edible in the future — within a month,
             // so nothing sits on the board for years — and the donor cannot
             // offer a pickup window that outlives the food itself.
@@ -40,20 +38,27 @@ class StoreDonationRequest extends FormRequest
 
             // Written location is always required; the map pin is a bonus.
             'pickup_address' => ['required', 'string', 'max:255'],
+
+            // How to actually find the donor: "call before arriving".
+            'pickup_notes' => ['nullable', 'string', 'max:255'],
             'latitude'       => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
             'longitude'      => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
 
             'contact_phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s]{7,15}$/'],
+
+            // Photos of the food. Optional, but they are what a charity looks
+            // at first when deciding whether to drive out for a request.
+            // Sent as multipart: images[0], images[1], ...
+            'images'   => ['sometimes', 'array', 'max:4'],
+            'images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ];
     }
 
     /**
-     * One live request per donor.
+     * Daily posting cap.
      *
-     * The home screen shows a single "current request" card, and a charity
-     * browsing the list should not have to guess which of a donor's duplicate
-     * posts is the real one. The id is returned so the app can jump straight
-     * to the request already in flight.
+     * Five posts per calendar day (any status counts — cancel-and-repost does
+     * not dodge the cap). This replaces the old one-request-at-a-time lock.
      */
     public function after(): array
     {
@@ -72,9 +77,6 @@ class StoreDonationRequest extends FormRequest
                     );
                 }
 
-                // Five posts per calendar day (any status counts — cancel-and-
-                // repost does not dodge the cap). This replaces the old
-                // one-request-at-a-time lock.
                 $todaysCount = DonationRequest::query()
                     ->where('donor_id', $this->user()->id)
                     ->whereDate('created_at', today())
@@ -93,15 +95,19 @@ class StoreDonationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'quantity_desc.integer' => 'The quantity must be a whole number (estimated people count).',
-            'quantity_desc.min'     => 'The quantity must be at least 1.',
-            'quantity_desc.max'     => 'The quantity is unrealistically large.',
-            'contact_phone.regex'   => 'The contact phone must be a valid phone number.',
-            'valid_until.before_or_equal'      => 'The food expiry must be within 30 days from now.',
-            'valid_until.after'                => 'The food expiry time must be in the future.',
-            'pickup_until.before_or_equal'     => 'Pickup time cannot be later than the food expiry time.',
-            'latitude.required_with'           => 'Latitude is required when longitude is provided.',
-            'longitude.required_with'          => 'Longitude is required when latitude is provided.',
+            'quantity_desc.integer' => 'يجب أن تكون الكمية رقماً صحيحاً (عدد الأشخاص التقديري).',
+            'quantity_desc.min'     => 'يجب أن تكون الكمية 1 على الأقل.',
+            'quantity_desc.max'     => 'الكمية كبيرة بشكل غير واقعي.',
+            'contact_phone.regex'   => 'رقم التواصل غير صحيح.',
+            'valid_until.before_or_equal'      => 'يجب ألا يتجاوز وقت انتهاء الصلاحية 30 يوماً من الآن.',
+            'valid_until.after'            => 'يجب أن يكون وقت انتهاء صلاحية الطعام في المستقبل.',
+            'pickup_until.before_or_equal' => 'لا يمكن أن يكون موعد الاستلام بعد انتهاء صلاحية الطعام.',
+            'latitude.required_with'       => 'خط العرض مطلوب عند إرسال خط الطول.',
+            'longitude.required_with'      => 'خط الطول مطلوب عند إرسال خط العرض.',
+            'images.max'                   => 'لا يمكن إرفاق أكثر من 4 صور.',
+            'images.*.image'               => 'الملف المرفق يجب أن يكون صورة.',
+            'images.*.mimes'               => 'الصورة يجب أن تكون بصيغة jpg أو png أو webp.',
+            'images.*.max'                 => 'حجم الصورة يجب ألا يزيد عن 3 ميغابايت.',
         ];
     }
 }
