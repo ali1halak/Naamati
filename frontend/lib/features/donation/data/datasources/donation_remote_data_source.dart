@@ -24,7 +24,15 @@ abstract class DonationRemoteDataSource {
   // ── Donation requests ───────────────────────────────────────────────────────
 
   @GET('/donor/requests')
-  Future<DonationListResponseModel> getDonations({@Query('status') String? status});
+  Future<DonationListResponseModel> getDonations({
+    @Query('search') String? search,
+    @Query('status') String? status,
+    @Query('category') int? categoryId,
+    @Query('needs_cooking') bool? needsCooking,
+    @Query('from') String? from,
+    @Query('to') String? to,
+    @Query('page') int? page,
+  });
 
   @POST('/donor/requests')
   Future<DonationResponseModel> createDonation({
@@ -32,6 +40,23 @@ abstract class DonationRemoteDataSource {
     @Field('needs_cooking') required bool needsCooking,
     @Field('quantity_desc') required String quantityDesc,
     @Field('description') String? description,
+    @Field('custom_category') String? customCategory,
+    @Field('valid_until') required String validUntil,
+    @Field('pickup_until') required String pickupUntil,
+    @Field('pickup_address') required String pickupAddress,
+    @Field('latitude') double? latitude,
+    @Field('longitude') double? longitude,
+    @Field('contact_phone') required String contactPhone,
+  });
+
+  @PUT('/donor/requests/{id}')
+  Future<DonationResponseModel> updateDonation(
+    @Path('id') int id, {
+    @Field('food_category_id') required int foodCategoryId,
+    @Field('needs_cooking') required bool needsCooking,
+    @Field('quantity_desc') required String quantityDesc,
+    @Field('description') String? description,
+    @Field('custom_category') String? customCategory,
     @Field('valid_until') required String validUntil,
     @Field('pickup_until') required String pickupUntil,
     @Field('pickup_address') required String pickupAddress,
@@ -42,6 +67,9 @@ abstract class DonationRemoteDataSource {
 
   @GET('/donor/requests/{id}')
   Future<DonationResponseModel> getDonation(@Path() int id);
+
+  @GET('/donor/requests/{id}/audit')
+  Future<DonationAuditResponseModel> getDonationAudit(@Path() int id);
 
   @POST('/donor/requests/{id}/cancel')
   Future<DonationResponseModel> cancelDonation(

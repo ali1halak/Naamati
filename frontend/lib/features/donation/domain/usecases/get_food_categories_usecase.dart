@@ -7,7 +7,8 @@ import '../entities/food_category.dart';
 import '../repositories/donation_repository.dart';
 
 @lazySingleton
-class GetFoodCategoriesUseCase implements UseCase<List<FoodCategory>, NoParams> {
+class GetFoodCategoriesUseCase
+    implements UseCase<List<FoodCategory>, NoParams> {
   final DonationRepository repository;
 
   GetFoodCategoriesUseCase(this.repository);

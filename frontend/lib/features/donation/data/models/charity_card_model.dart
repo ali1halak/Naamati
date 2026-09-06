@@ -16,7 +16,8 @@ class CharityCardModel extends CharityProfile {
     @JsonKey(name: 'logo_url') super.logoUrl,
     @JsonKey(name: 'rating_avg') super.ratingAvg,
     @JsonKey(name: 'ratings_count') required super.ratingsCount,
-    @JsonKey(name: 'completed_donations_count') required super.completedDonationsCount,
+    @JsonKey(name: 'completed_donations_count')
+    required super.completedDonationsCount,
   });
 
   factory CharityCardModel.fromJson(Map<String, dynamic> json) =>

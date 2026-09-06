@@ -4,27 +4,36 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../entities/donation_request.dart';
-import '../entities/donation_status.dart';
+import '../entities/my_donations_filter.dart';
+import '../entities/paginated_donations.dart';
 import '../repositories/donation_repository.dart';
 
 @lazySingleton
-class GetMyDonationsUseCase implements UseCase<List<DonationRequest>, GetMyDonationsParams> {
+class GetMyDonationsUseCase
+    implements UseCase<PaginatedDonations, GetMyDonationsParams> {
   final DonationRepository repository;
 
   GetMyDonationsUseCase(this.repository);
 
   @override
-  Future<Either<Failure, List<DonationRequest>>> call(GetMyDonationsParams params) {
-    return repository.getMyDonations(status: params.status);
+  Future<Either<Failure, PaginatedDonations>> call(
+    GetMyDonationsParams params,
+  ) {
+    return repository.getMyDonations(params.filter, page: params.page);
   }
 }
 
 class GetMyDonationsParams extends Equatable {
-  final DonationStatus? status;
+  final MyDonationsFilter filter;
 
-  const GetMyDonationsParams({this.status});
+  /// 1-based page to fetch.
+  final int page;
+
+  const GetMyDonationsParams({
+    this.filter = MyDonationsFilter.empty,
+    this.page = 1,
+  });
 
   @override
-  List<Object?> get props => [status];
+  List<Object?> get props => [filter, page];
 }

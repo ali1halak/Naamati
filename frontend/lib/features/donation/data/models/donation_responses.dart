@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
+import 'donation_audit_model.dart';
 import 'donation_request_model.dart';
 import 'food_category_model.dart';
 import 'rating_model.dart';
@@ -18,12 +19,35 @@ class DonationResponseModel {
   final DonationRequestModel data;
   final String? message;
 
-  const DonationResponseModel({required this.success, required this.data, this.message});
+  const DonationResponseModel({
+    required this.success,
+    required this.data,
+    this.message,
+  });
 
   factory DonationResponseModel.fromJson(Map<String, dynamic> json) =>
       _$DonationResponseModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$DonationResponseModelToJson(this);
+}
+
+/// Envelope for donation audit endpoint (`GET /donor/requests/{id}/audit`).
+@JsonSerializable()
+class DonationAuditResponseModel {
+  final bool success;
+  final DonationAuditModel data;
+  final String? message;
+
+  const DonationAuditResponseModel({
+    required this.success,
+    required this.data,
+    this.message,
+  });
+
+  factory DonationAuditResponseModel.fromJson(Map<String, dynamic> json) =>
+      _$DonationAuditResponseModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$DonationAuditResponseModelToJson(this);
 }
 
 /// Envelope for `GET /donor/requests` — Laravel paginated collection.
@@ -33,7 +57,11 @@ class DonationListResponseModel {
   final DonationListDataModel data;
   final String? message;
 
-  const DonationListResponseModel({required this.success, required this.data, this.message});
+  const DonationListResponseModel({
+    required this.success,
+    required this.data,
+    this.message,
+  });
 
   factory DonationListResponseModel.fromJson(Map<String, dynamic> json) =>
       _$DonationListResponseModelFromJson(json);
@@ -103,7 +131,11 @@ class FoodCategoryListResponseModel {
   final List<FoodCategoryModel> data;
   final String? message;
 
-  const FoodCategoryListResponseModel({required this.success, required this.data, this.message});
+  const FoodCategoryListResponseModel({
+    required this.success,
+    required this.data,
+    this.message,
+  });
 
   factory FoodCategoryListResponseModel.fromJson(Map<String, dynamic> json) =>
       _$FoodCategoryListResponseModelFromJson(json);

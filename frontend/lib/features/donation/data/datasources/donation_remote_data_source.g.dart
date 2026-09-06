@@ -47,9 +47,25 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
   }
 
   @override
-  Future<DonationListResponseModel> getDonations({String? status}) async {
+  Future<DonationListResponseModel> getDonations({
+    String? search,
+    String? status,
+    int? categoryId,
+    bool? needsCooking,
+    String? from,
+    String? to,
+    int? page,
+  }) async {
     final _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{r'status': status};
+    final queryParameters = <String, dynamic>{
+      r'search': search,
+      r'status': status,
+      r'category': categoryId,
+      r'needs_cooking': needsCooking,
+      r'from': from,
+      r'to': to,
+      r'page': page,
+    };
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
@@ -80,6 +96,7 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
     required bool needsCooking,
     required String quantityDesc,
     String? description,
+    String? customCategory,
     required String validUntil,
     required String pickupUntil,
     required String pickupAddress,
@@ -96,6 +113,7 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
       'needs_cooking': needsCooking,
       'quantity_desc': quantityDesc,
       'description': description,
+      'custom_category': customCategory,
       'valid_until': validUntil,
       'pickup_until': pickupUntil,
       'pickup_address': pickupAddress,
@@ -109,6 +127,60 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
           .compose(
             _dio.options,
             '/donor/requests',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late DonationResponseModel _value;
+    try {
+      _value = DonationResponseModel.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<DonationResponseModel> updateDonation(
+    int id, {
+    required int foodCategoryId,
+    required bool needsCooking,
+    required String quantityDesc,
+    String? description,
+    String? customCategory,
+    required String validUntil,
+    required String pickupUntil,
+    required String pickupAddress,
+    double? latitude,
+    double? longitude,
+    required String contactPhone,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    queryParameters.removeWhere((k, v) => v == null);
+    final _headers = <String, dynamic>{};
+    final _data = {
+      'food_category_id': foodCategoryId,
+      'needs_cooking': needsCooking,
+      'quantity_desc': quantityDesc,
+      'description': description,
+      'custom_category': customCategory,
+      'valid_until': validUntil,
+      'pickup_until': pickupUntil,
+      'pickup_address': pickupAddress,
+      'latitude': latitude,
+      'longitude': longitude,
+      'contact_phone': contactPhone,
+    };
+    _data.removeWhere((k, v) => v == null);
+    final _options = _setStreamType<DonationResponseModel>(
+      Options(method: 'PUT', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/donor/requests/${id}',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -145,6 +217,33 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
     late DonationResponseModel _value;
     try {
       _value = DonationResponseModel.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<DonationAuditResponseModel> getDonationAudit(int id) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<DonationAuditResponseModel>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/donor/requests/${id}/audit',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late DonationAuditResponseModel _value;
+    try {
+      _value = DonationAuditResponseModel.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

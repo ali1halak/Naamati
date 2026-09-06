@@ -8,7 +8,8 @@ import '../entities/donation_request.dart';
 import '../repositories/donation_repository.dart';
 
 @lazySingleton
-class ConfirmPickupUseCase implements UseCase<DonationRequest, ConfirmPickupParams> {
+class ConfirmPickupUseCase
+    implements UseCase<DonationRequest, ConfirmPickupParams> {
   final DonationRepository repository;
 
   ConfirmPickupUseCase(this.repository);

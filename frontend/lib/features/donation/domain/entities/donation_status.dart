@@ -42,7 +42,10 @@ enum DonationStatus {
 
   /// Terminal statuses can never transition again.
   bool get isTerminal =>
-      this == completed || this == expired || this == cancelled || this == noShow;
+      this == completed ||
+      this == expired ||
+      this == cancelled ||
+      this == noShow;
 
   /// Active statuses may still change (accept, pickup, expire…).
   bool get isActive => !isTerminal;

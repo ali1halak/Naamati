@@ -11,6 +11,7 @@ FoodCategoryModel _$FoodCategoryModelFromJson(Map<String, dynamic> json) =>
       id: (json['id'] as num).toInt(),
       nameAr: json['name_ar'] as String,
       nameEn: json['name_en'] as String,
+      icon: json['icon'] as String? ?? 'other',
       defaultNeedsCooking: json['default_needs_cooking'] as bool,
     );
 
@@ -19,5 +20,6 @@ Map<String, dynamic> _$FoodCategoryModelToJson(FoodCategoryModel instance) =>
       'id': instance.id,
       'name_ar': instance.nameAr,
       'name_en': instance.nameEn,
+      'icon': instance.icon,
       'default_needs_cooking': instance.defaultNeedsCooking,
     };

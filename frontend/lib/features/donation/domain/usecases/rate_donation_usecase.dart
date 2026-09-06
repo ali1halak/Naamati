@@ -15,7 +15,11 @@ class RateDonationUseCase implements UseCase<Rating, RateDonationParams> {
 
   @override
   Future<Either<Failure, Rating>> call(RateDonationParams params) {
-    return repository.rateDonation(params.id, stars: params.stars, comment: params.comment);
+    return repository.rateDonation(
+      params.id,
+      stars: params.stars,
+      comment: params.comment,
+    );
   }
 }
 
@@ -27,7 +31,11 @@ class RateDonationParams extends Equatable {
 
   final String? comment;
 
-  const RateDonationParams({required this.id, required this.stars, this.comment});
+  const RateDonationParams({
+    required this.id,
+    required this.stars,
+    this.comment,
+  });
 
   @override
   List<Object?> get props => [id, stars, comment];

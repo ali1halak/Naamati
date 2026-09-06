@@ -12,7 +12,12 @@ class Rating extends Equatable {
 
   final DateTime? createdAt;
 
-  const Rating({required this.id, required this.stars, this.comment, this.createdAt});
+  const Rating({
+    required this.id,
+    required this.stars,
+    this.comment,
+    this.createdAt,
+  });
 
   @override
   List<Object?> get props => [id, stars, comment, createdAt];

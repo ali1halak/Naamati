@@ -10,6 +10,7 @@ class FoodCategoryModel extends FoodCategory {
     required super.id,
     @JsonKey(name: 'name_ar') required super.nameAr,
     @JsonKey(name: 'name_en') required super.nameEn,
+    @JsonKey(defaultValue: 'other') super.icon,
     @JsonKey(name: 'default_needs_cooking') required super.defaultNeedsCooking,
   });
 

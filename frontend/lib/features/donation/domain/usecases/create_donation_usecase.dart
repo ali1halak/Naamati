@@ -8,7 +8,8 @@ import '../params/create_donation_params.dart';
 import '../repositories/donation_repository.dart';
 
 @lazySingleton
-class CreateDonationUseCase implements UseCase<DonationRequest, CreateDonationParams> {
+class CreateDonationUseCase
+    implements UseCase<DonationRequest, CreateDonationParams> {
   final DonationRepository repository;
 
   CreateDonationUseCase(this.repository);

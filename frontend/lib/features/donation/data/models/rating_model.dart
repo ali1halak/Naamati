@@ -13,7 +13,8 @@ class RatingModel extends Rating {
     @JsonKey(name: 'created_at') super.createdAt,
   });
 
-  factory RatingModel.fromJson(Map<String, dynamic> json) => _$RatingModelFromJson(json);
+  factory RatingModel.fromJson(Map<String, dynamic> json) =>
+      _$RatingModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$RatingModelToJson(this);
 }

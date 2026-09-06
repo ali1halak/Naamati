@@ -22,6 +22,10 @@ class DonationRequest extends Equatable {
   /// Optional extra description.
   final String? description;
 
+  /// Free-text food name set when the donor filed under "غير ذلك" (other) —
+  /// also the source of the [title] display field in that case.
+  final String? customCategory;
+
   /// Food is valid until this moment.
   final DateTime? validUntil;
 
@@ -47,10 +51,21 @@ class DonationRequest extends Equatable {
   final DateTime? acceptedAt;
   final DateTime? pickedUpAt;
 
-  /// Reason entered when the donor cancelled.
+  /// Reason entered when the request was cancelled.
   final String? cancelReason;
 
+  /// Who cancelled it — `"donor"` (voluntary) or `"admin"` (moderation).
+  /// Only present on cancelled requests; the Arabic wording already arrives
+  /// via [statusLabel], so this is for branching, not display.
+  final String? cancelledBy;
+
   final DateTime? createdAt;
+
+  /// Ready-to-render display fields from backend DonationRequestResource:
+  final String? statusLabel;
+  final String? title;
+  final String? categoryIconKey;
+  final String? createdAtLabel;
 
   /// The donor's rating of this donation, once submitted.
   final Rating? rating;
@@ -62,6 +77,7 @@ class DonationRequest extends Equatable {
     required this.needsCooking,
     required this.quantityDesc,
     this.description,
+    this.customCategory,
     this.validUntil,
     this.pickupUntil,
     required this.pickupAddress,
@@ -73,7 +89,12 @@ class DonationRequest extends Equatable {
     this.acceptedAt,
     this.pickedUpAt,
     this.cancelReason,
+    this.cancelledBy,
     this.createdAt,
+    this.statusLabel,
+    this.title,
+    this.categoryIconKey,
+    this.createdAtLabel,
     this.rating,
   });
 
@@ -96,6 +117,7 @@ class DonationRequest extends Equatable {
     needsCooking,
     quantityDesc,
     description,
+    customCategory,
     validUntil,
     pickupUntil,
     pickupAddress,
@@ -107,7 +129,12 @@ class DonationRequest extends Equatable {
     acceptedAt,
     pickedUpAt,
     cancelReason,
+    cancelledBy,
     createdAt,
+    statusLabel,
+    title,
+    categoryIconKey,
+    createdAtLabel,
     rating,
   ];
 }

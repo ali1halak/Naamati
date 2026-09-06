@@ -8,13 +8,16 @@ import '../entities/donation_request.dart';
 import '../repositories/donation_repository.dart';
 
 @lazySingleton
-class GetDonationDetailsUseCase implements UseCase<DonationRequest, GetDonationDetailsParams> {
+class GetDonationDetailsUseCase
+    implements UseCase<DonationRequest, GetDonationDetailsParams> {
   final DonationRepository repository;
 
   GetDonationDetailsUseCase(this.repository);
 
   @override
-  Future<Either<Failure, DonationRequest>> call(GetDonationDetailsParams params) {
+  Future<Either<Failure, DonationRequest>> call(
+    GetDonationDetailsParams params,
+  ) {
     return repository.getDonationDetails(params.id);
   }
 }

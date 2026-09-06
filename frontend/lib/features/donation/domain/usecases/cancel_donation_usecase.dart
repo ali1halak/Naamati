@@ -8,7 +8,8 @@ import '../entities/donation_request.dart';
 import '../repositories/donation_repository.dart';
 
 @lazySingleton
-class CancelDonationUseCase implements UseCase<DonationRequest, CancelDonationParams> {
+class CancelDonationUseCase
+    implements UseCase<DonationRequest, CancelDonationParams> {
   final DonationRepository repository;
 
   CancelDonationUseCase(this.repository);

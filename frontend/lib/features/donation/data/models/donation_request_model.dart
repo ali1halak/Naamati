@@ -37,6 +37,7 @@ class DonationRequestModel extends DonationRequest {
     @JsonKey(name: 'needs_cooking') required super.needsCooking,
     @JsonKey(name: 'quantity_desc') required super.quantityDesc,
     super.description,
+    @JsonKey(name: 'custom_category') super.customCategory,
     @JsonKey(name: 'valid_until') super.validUntil,
     @JsonKey(name: 'pickup_until') super.pickupUntil,
     @JsonKey(name: 'pickup_address') required super.pickupAddress,
@@ -48,7 +49,12 @@ class DonationRequestModel extends DonationRequest {
     @JsonKey(name: 'accepted_at') super.acceptedAt,
     @JsonKey(name: 'picked_up_at') super.pickedUpAt,
     @JsonKey(name: 'cancel_reason') super.cancelReason,
+    @JsonKey(name: 'cancelled_by') super.cancelledBy,
     @JsonKey(name: 'created_at') super.createdAt,
+    @JsonKey(name: 'status_label') super.statusLabel,
+    super.title,
+    @JsonKey(name: 'category_icon') super.categoryIconKey,
+    @JsonKey(name: 'created_at_label') super.createdAtLabel,
     this.rating,
   }) : super(foodCategory: foodCategory, charity: charity, rating: rating);
 

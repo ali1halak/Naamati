@@ -19,6 +19,7 @@ DonationRequestModel _$DonationRequestModelFromJson(
   needsCooking: json['needs_cooking'] as bool,
   quantityDesc: json['quantity_desc'] as String,
   description: json['description'] as String?,
+  customCategory: json['custom_category'] as String?,
   validUntil: json['valid_until'] == null
       ? null
       : DateTime.parse(json['valid_until'] as String),
@@ -40,9 +41,14 @@ DonationRequestModel _$DonationRequestModelFromJson(
       ? null
       : DateTime.parse(json['picked_up_at'] as String),
   cancelReason: json['cancel_reason'] as String?,
+  cancelledBy: json['cancelled_by'] as String?,
   createdAt: json['created_at'] == null
       ? null
       : DateTime.parse(json['created_at'] as String),
+  statusLabel: json['status_label'] as String?,
+  title: json['title'] as String?,
+  categoryIconKey: json['category_icon'] as String?,
+  createdAtLabel: json['created_at_label'] as String?,
   rating: json['rating'] == null
       ? null
       : RatingModel.fromJson(json['rating'] as Map<String, dynamic>),
@@ -56,6 +62,7 @@ Map<String, dynamic> _$DonationRequestModelToJson(
   'needs_cooking': instance.needsCooking,
   'quantity_desc': instance.quantityDesc,
   'description': instance.description,
+  'custom_category': instance.customCategory,
   'valid_until': instance.validUntil?.toIso8601String(),
   'pickup_until': instance.pickupUntil?.toIso8601String(),
   'pickup_address': instance.pickupAddress,
@@ -66,7 +73,12 @@ Map<String, dynamic> _$DonationRequestModelToJson(
   'accepted_at': instance.acceptedAt?.toIso8601String(),
   'picked_up_at': instance.pickedUpAt?.toIso8601String(),
   'cancel_reason': instance.cancelReason,
+  'cancelled_by': instance.cancelledBy,
   'created_at': instance.createdAt?.toIso8601String(),
+  'status_label': instance.statusLabel,
+  'title': instance.title,
+  'category_icon': instance.categoryIconKey,
+  'created_at_label': instance.createdAtLabel,
   'food_category': instance.foodCategory,
   'charity': instance.charity,
   'rating': instance.rating,

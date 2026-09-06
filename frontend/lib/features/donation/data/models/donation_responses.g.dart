@@ -22,6 +22,22 @@ Map<String, dynamic> _$DonationResponseModelToJson(
   'message': instance.message,
 };
 
+DonationAuditResponseModel _$DonationAuditResponseModelFromJson(
+  Map<String, dynamic> json,
+) => DonationAuditResponseModel(
+  success: json['success'] as bool,
+  data: DonationAuditModel.fromJson(json['data'] as Map<String, dynamic>),
+  message: json['message'] as String?,
+);
+
+Map<String, dynamic> _$DonationAuditResponseModelToJson(
+  DonationAuditResponseModel instance,
+) => <String, dynamic>{
+  'success': instance.success,
+  'data': instance.data,
+  'message': instance.message,
+};
+
 DonationListResponseModel _$DonationListResponseModelFromJson(
   Map<String, dynamic> json,
 ) => DonationListResponseModel(
