@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CancelledBy;
 use App\Enums\RequestStatus;
 use Illuminate\Database\Eloquent\Model;
 
@@ -9,9 +10,9 @@ class DonationRequest extends Model
 {
     protected $fillable = [
         'donor_id', 'charity_id', 'food_category_id', 'needs_cooking', 'quantity_desc',
-        'description', 'valid_until', 'pickup_until', 'pickup_address', 'latitude',
-        'longitude', 'contact_phone', 'status', 'accepted_at', 'eta_minutes',
-        'picked_up_at', 'confirmed_at', 'cancel_reason',
+        'description', 'custom_category', 'valid_until', 'pickup_until', 'pickup_address',
+        'latitude', 'longitude', 'contact_phone', 'status', 'accepted_at', 'eta_minutes',
+        'picked_up_at', 'confirmed_at', 'cancel_reason', 'cancelled_by',
     ];
 
 
@@ -20,6 +21,7 @@ class DonationRequest extends Model
         return [
             'needs_cooking' => 'boolean',
             'status'        => RequestStatus::class,
+            'cancelled_by'  => CancelledBy::class,
             'valid_until'   => 'datetime',
             'pickup_until'  => 'datetime',
             'latitude'      => 'decimal:7',

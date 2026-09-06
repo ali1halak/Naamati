@@ -9,4 +9,7 @@ enum NotificationType: string
 
     /** The donor confirmed the food changed hands. */
     case HandoverConfirmed = 'handover_confirmed';
+
+    /** A request was cancelled — payload says by whom (donor or admin). */
+    case RequestCancelled = 'request_cancelled';
 }
