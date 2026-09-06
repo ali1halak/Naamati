@@ -89,7 +89,20 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
     );
     if (time == null) return null;
 
-    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final result = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+
+    // Guard against past times (e.g. today with an hour earlier than now) —
+    // the backend rejects them with 422, so catch it before submission.
+    if (!result.isAfter(DateTime.now())) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('لا يمكن اختيار وقت في الماضي — اختر وقتاً قادماً')),
+        );
+      }
+      return null;
+    }
+
+    return result;
   }
 
   Future<void> _pickPickupUntil() async {
@@ -157,12 +170,17 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
 
   String? _validatePickupUntil(String? _) {
     if (_pickupUntil == null) return 'يرجى تحديد آخر وقت للاستلام';
-    if (!_pickupUntil!.isAfter(DateTime.now())) return 'يجب أن يكون الوقت بعد الوقت الحالي';
+    if (!_pickupUntil!.isAfter(DateTime.now())) {
+      return 'لا يمكن أن يكون آخر وقت للاستلام في الماضي';
+    }
     return null;
   }
 
   String? _validateValidUntil(String? _) {
     if (_validUntil == null) return 'يرجى تحديد وقت انتهاء الصلاحية';
+    if (!_validUntil!.isAfter(DateTime.now())) {
+      return 'لا يمكن أن يكون تاريخ الانتهاء في الماضي';
+    }
     if (_pickupUntil != null && _validUntil!.isBefore(_pickupUntil!)) {
       return 'يجب أن يكون بعد آخر وقت للاستلام أو مساوياً له';
     }
