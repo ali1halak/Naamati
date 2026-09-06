@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'core/di/injection_container.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/splash/presentation/splash_lottie.dart';
 
 /// Application entry point.
 ///
@@ -29,6 +30,10 @@ void main() async {
   // Register all core (and later, feature) dependencies.
   configureDependencies();
 
+  // Pre-decode the splash lottie so it renders on the splash's first frame
+  // instead of appearing after a visible delay.
+  await SplashLottie.preload();
+
   runApp(const NaamatiApp());
 }
 
@@ -44,7 +49,7 @@ class NaamatiApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp.router(
-          title: 'Naamati',
+          title: 'نِعْمَتِي',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
