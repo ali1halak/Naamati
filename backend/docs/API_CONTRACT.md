@@ -166,6 +166,11 @@ Sets status to `suspended`. Success `200`, message `"Charity suspended"`.
 
 Both return `404` if the charity id does not exist.
 
+### `POST /api/admin/requests/{id}/cancel`
+Moderation cancel for fake/invalid requests stuck in `pending` or `accepted` — `404` if the id does not exist, `422` for terminal states. Optional body `{ "reason": "…" }` (max 255).
+
+Success `200` returns the cancelled request; the row carries `"cancelled_by": "admin"` and its Arabic label reads **"ألغته الإدارة"** (vs **"ألغاه المتبرع"** for the donor's own cancel — see `cancelled_by` below). Also writes a `request_cancelled` notification to the donor.
+
 ---
 
 ---
@@ -182,8 +187,8 @@ app can code against these values today.
 | `picked_up` | Handover confirmed — **reserved, not used yet** | later phase (QR) |
 | `completed` | Delivered and closed. The rating prompt fires here. | donor |
 | `expired` | Nobody accepted it before `valid_until` | system |
-| `cancelled` | Donor pulled it back before a charity accepted | donor |
-| `no_show` | Charity accepted then never showed up | system / admin |
+| `cancelled` | Pulled back before the food changed hands | donor (voluntary) or admin (moderation) |
+| `no_show` | Charity accepted then never showed up | system |
 
 Terminal states — `completed`, `expired`, `cancelled`, `no_show` — never change
 again. `picked_up` is returned by the API only once the QR handover ships; treat
@@ -227,9 +232,15 @@ pending ──charity accepts──> accepted ──donor scans QR──> picked
 | POST | `/requests/{id}/confirm` | Empty body. `accepted` → `picked_up`. |
 | POST | `/requests/{id}/rate` | From `picked_up` onward. Once only. |
 
-**Create validation:** `food_category_id` exists · `quantity_desc` required, max 150 · `needs_cooking` optional (falls back to the category default) · `valid_until` after now · `pickup_until` after now and `before_or_equal:valid_until` · `pickup_address` required · `latitude`/`longitude` optional but required together · `contact_phone` required.
+**Create validation:** `food_category_id` exists · `quantity_desc` required — a positive whole number (estimated people count, 1–99999), not free text · `custom_category` required when the category's icon is `other` (max 150 — the request must never sit under a meaningless "غير ذلك") · `needs_cooking` optional (falls back to the category default) · `valid_until` after now and at most 30 days out · `pickup_until` after now and `before_or_equal:valid_until` · `pickup_address` required · `latitude`/`longitude` optional but required together · `contact_phone` required.
 
-**One request at a time.** A donor may only hold one request in `pending` or `accepted`. A second create returns `422` with `errors.active_request_id`, whose message carries the id already in flight so the app can route straight to it. Confirming the handover releases the lock — the donor is free again even though the charity has yet to file its distribution numbers.
+**Daily cap: 5 posts per calendar day.** Every create counts (cancelled ones included — cancel-and-repost does not dodge the cap). The 6th create of a day returns `422` with `errors.daily_limit` and an Arabic message telling the donor to come back tomorrow. There is no other concurrency lock.
+
+### `PUT /donor/requests/{id}`
+
+The donor rewrites the details of a request nobody has claimed yet. Same body as the create call (all authored fields, validated identically) and the same rules apply: `custom_category` becomes required when the new category is `other`.
+
+Editable only while `pending` — once a charity accepted, people may already be on the way, so the honest exits are confirm or cancel (`422 "Only pending requests can be edited"` otherwise). `404` if the id is not the caller's. Status, charity and audit data are never editable here.
 
 ## Notifications — `/api/v1/notifications` (Bearer token, donor **or** charity)
 
@@ -278,7 +289,8 @@ The API ships the wording so the list screen needs no mapping table:
 | Field | Purpose |
 |---|---|
 | `status` | Machine value — branch on this |
-| `status_label` | Arabic badge text, e.g. `"مكتمل"` — print this |
+| `status_label` | Arabic badge text, e.g. `"مكتمل"` — print this. For `cancelled` it names the canceller: `"ألغاه المتبرع"` / `"ألغته الإدارة"` |
+| `cancelled_by` | `"donor"` / `"admin"` — only present on `cancelled` rows |
 | `title` | The food category name |
 | `category_icon` | Stable key the app maps to its own asset |
 | `created_at` | ISO 8601 — sort on this |
@@ -286,7 +298,18 @@ The API ships the wording so the list screen needs no mapping table:
 
 `category_icon` values: `cooked_ready` · `fruits_vegetables` · `bakery_sweets` · `canned_dry` · `raw_meat` · `raw_grains` · `other`. Keys, never URLs — renaming one is a breaking change.
 
-`GET /donor/requests` also takes `per_page` (1–50, default 15).
+`GET /donor/requests` also takes `per_page` (1–50, default 15) and these
+filters — every one is optional, unknown values fail with `422`:
+
+| Param | Meaning |
+|---|---|
+| `search` | Free text matched against description, quantity and category name |
+| `status` | One `RequestStatus` value, e.g. `completed` |
+| `category` | `food_categories.id` |
+| `needs_cooking` | `true` / `false` (also accepts `1` / `0`) |
+| `from` / `to` | `Y-m-d` dates, inclusive bounds on `created_at` |
+
+Example: `GET /donor/requests?search=خبز&status=completed&category=2&needs_cooking=false&from=2026-08-01&to=2026-09-05&page=2`
 
 ### `GET /donor/requests/{id}/audit`
 

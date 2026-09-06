@@ -41,6 +41,16 @@ php artisan boost:install
 
 Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
 
+## Scheduled jobs
+
+Time-driven donation transitions run through the Laravel scheduler:
+
+```
+* * * * * cd /path-to-backend && php artisan schedule:run
+```
+
+- `donations:expire-stale` (every minute): `pending` requests past `valid_until` become `expired`, and `accepted` requests past `pickup_until` become `no_show` — the charity takes a strike. It is idempotent and can also be run manually via `php artisan donations:expire-stale`.
+
 ## Contributing
 
 Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
