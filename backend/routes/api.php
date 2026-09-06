@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Charity\CharityRequestController;
+use App\Http\Controllers\Api\Charity\CharityViolationController;
 use App\Http\Controllers\Api\Donor\DonationRequestController;
 use App\Http\Controllers\Api\FoodCategoryController;
 use App\Http\Controllers\Api\NotificationController;
@@ -45,6 +46,10 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
             Route::get('/requests/available', [CharityRequestController::class, 'available']);
             Route::get('/requests', [CharityRequestController::class, 'index']);
             Route::get('/requests/{id}', [CharityRequestController::class, 'show']);
+            Route::get('/requests/{id}/details', [CharityRequestController::class, 'details']);
+
+            // سجل المخالفات — read-only; only an admin can file one.
+            Route::get('/violations', [CharityViolationController::class, 'index']);
             Route::post('/requests/{id}/accept', [CharityRequestController::class, 'accept']);
 
             // Handover needs both sides: this is the charity's half, the donor
@@ -63,6 +68,8 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
         Route::get('/charities', [AdminController::class, 'charities']);
         Route::post('/charities/{charity}/approve', [AdminController::class, 'approve']);
         Route::post('/charities/{charity}/suspend', [AdminController::class, 'suspend']);
+        Route::get('/charities/{charity}/violations', [AdminController::class, 'charityViolations']);
+        Route::post('/charities/{charity}/violations', [AdminController::class, 'storeViolation']);
         Route::get('/notifications', [AdminController::class, 'notifications']);
         Route::post('/notifications/{id}/read', [AdminController::class, 'markNotificationRead']);
     });

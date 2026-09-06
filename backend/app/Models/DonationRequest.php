@@ -9,7 +9,7 @@ class DonationRequest extends Model
 {
     protected $fillable = [
         'donor_id', 'charity_id', 'food_category_id', 'needs_cooking', 'quantity_desc',
-        'description', 'valid_until', 'pickup_until', 'pickup_address', 'latitude',
+        'description', 'valid_until', 'pickup_until', 'pickup_address', 'pickup_notes', 'latitude',
         'longitude', 'contact_phone', 'status', 'accepted_at', 'eta_minutes',
         'picked_up_at', 'donor_confirmed_at', 'charity_confirmed_at', 'completed_at',
         'cancel_reason',
@@ -70,9 +70,9 @@ class DonationRequest extends Model
         return $this->hasOne(Rating::class);
     }
 
-    public function strikes()
+    public function violations()
     {
-        return $this->hasMany(Strike::class);
+        return $this->hasMany(Violation::class);
     }
 
     public function statusLogs()

@@ -32,6 +32,7 @@ class DonationRequestResource extends JsonResource
             'pickup_until' => $this->pickup_until,
 
             'pickup_address' => $this->pickup_address,
+            'pickup_notes'   => $this->pickup_notes,
             // Optional map pin — null when the donor only typed an address.
             'latitude'       => $this->latitude,
             'longitude'      => $this->longitude,

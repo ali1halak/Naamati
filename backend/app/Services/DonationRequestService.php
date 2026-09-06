@@ -61,6 +61,7 @@ class DonationRequestService
                 'valid_until'      => $data['valid_until'],
                 'pickup_until'     => $data['pickup_until'],
                 'pickup_address'   => $data['pickup_address'],
+                'pickup_notes'     => $data['pickup_notes'] ?? null,
                 'latitude'         => $data['latitude'] ?? null,
                 'longitude'        => $data['longitude'] ?? null,
                 'contact_phone'    => $data['contact_phone'],
@@ -291,9 +292,9 @@ class DonationRequestService
             ->where('valid_until', '>', now())
             ->when(! $charity->has_kitchen, fn ($q) => $q->where('needs_cooking', false))
             ->whereNotIn('id', function ($sub) use ($charity) {
-                // A charity that no-showed never sees that same request again.
+                // A charity with a violation on a request never sees it again.
                 $sub->select('donation_request_id')
-                    ->from('strikes')
+                    ->from('violations')
                     ->where('charity_id', $charity->id)
                     ->whereNotNull('donation_request_id');
             })

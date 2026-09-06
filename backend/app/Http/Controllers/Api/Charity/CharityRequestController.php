@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api\Charity;
 
+use App\Enums\RequestStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Charity\AcceptDonationRequest;
 use App\Http\Requests\Charity\StoreDistributionRequest;
+use App\Http\Resources\CharityOrderAuditResource;
 use App\Http\Resources\CharityOrderResource;
 use App\Http\Resources\DonationRequestResource;
 use App\Models\DonationRequest;
@@ -35,12 +37,40 @@ class CharityRequestController extends Controller
      */
     public function index(Request $request)
     {
-        $paginated = DonationRequest::where('charity_id', $request->user()->id)
+        $query = DonationRequest::where('charity_id', $request->user()->id)
             ->with(['foodCategory', 'donor', 'distribution', 'images'])
-            ->latest()
-            ->paginate(15);
+            ->latest();
 
-        return $this->ok(DonationRequestResource::collection($paginated)->response()->getData(true));
+        // ?status=all is what the History tab sends for its first chip, so it
+        // is treated as no filter rather than an invalid value.
+        $status = $request->query('status');
+
+        if ($status !== null && $status !== 'all') {
+            if (! in_array($status, array_column(RequestStatus::cases(), 'value'), true)) {
+                return $this->fail('فشل التحقق من البيانات', 422, [
+                    'status' => ['الحالة المحددة غير صحيحة.'],
+                ]);
+            }
+
+            $query->where('status', $status);
+        }
+
+        $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
+
+        return $this->ok(DonationRequestResource::collection($query->paginate($perPage))->response()->getData(true));
+    }
+
+    /**
+     * The audit view of one order this charity handled.
+     */
+    public function details(Request $request, int $id)
+    {
+        $donationRequest = DonationRequest::where('id', $id)
+            ->where('charity_id', $request->user()->id)
+            ->with(['foodCategory', 'donor', 'distribution', 'images'])
+            ->firstOrFail();
+
+        return $this->ok(new CharityOrderAuditResource($donationRequest));
     }
 
     public function show(Request $request, int $id)

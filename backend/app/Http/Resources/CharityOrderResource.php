@@ -44,6 +44,7 @@ class CharityOrderResource extends JsonResource
             'pickup_until_iso' => $this->pickup_until,
 
             'location_zone' => $this->pickup_address,
+            'pickup_notes'  => $this->pickup_notes,
             'latitude'      => $this->latitude,
             'longitude'     => $this->longitude,
 

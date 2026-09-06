@@ -32,6 +32,9 @@ class StoreDonationRequest extends FormRequest
 
             // Written location is always required; the map pin is a bonus.
             'pickup_address' => ['required', 'string', 'max:255'],
+
+            // How to actually find the donor: "call before arriving".
+            'pickup_notes' => ['nullable', 'string', 'max:255'],
             'latitude'       => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
             'longitude'      => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
 
