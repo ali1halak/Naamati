@@ -27,6 +27,7 @@ DonationRequestModel _$DonationRequestModelFromJson(
       ? null
       : DateTime.parse(json['pickup_until'] as String),
   pickupAddress: json['pickup_address'] as String,
+  pickupNotes: json['pickup_notes'] as String?,
   latitude: (json['latitude'] as num?)?.toDouble(),
   longitude: (json['longitude'] as num?)?.toDouble(),
   contactPhone: json['contact_phone'] as String,
@@ -72,6 +73,7 @@ Map<String, dynamic> _$DonationRequestModelToJson(
   'valid_until': instance.validUntil?.toIso8601String(),
   'pickup_until': instance.pickupUntil?.toIso8601String(),
   'pickup_address': instance.pickupAddress,
+  'pickup_notes': instance.pickupNotes,
   'latitude': instance.latitude,
   'longitude': instance.longitude,
   'contact_phone': instance.contactPhone,

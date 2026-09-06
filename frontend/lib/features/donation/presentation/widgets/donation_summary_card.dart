@@ -73,6 +73,13 @@ class DonationSummaryCard extends StatelessWidget {
             label: 'عنوان الاستلام',
             value: donation.pickupAddress,
           ),
+          if (donation.pickupNotes != null &&
+              donation.pickupNotes!.trim().isNotEmpty)
+            _SummaryRow(
+              icon: Icons.directions_rounded,
+              label: 'ملاحظات الوصول',
+              value: donation.pickupNotes!,
+            ),
           _SummaryRow(
             icon: Icons.phone_outlined,
             label: 'رقم التواصل',

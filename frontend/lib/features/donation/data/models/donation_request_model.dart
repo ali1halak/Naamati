@@ -41,6 +41,7 @@ class DonationRequestModel extends DonationRequest {
     @JsonKey(name: 'valid_until') super.validUntil,
     @JsonKey(name: 'pickup_until') super.pickupUntil,
     @JsonKey(name: 'pickup_address') required super.pickupAddress,
+    @JsonKey(name: 'pickup_notes') super.pickupNotes,
     super.latitude,
     super.longitude,
     @JsonKey(name: 'contact_phone') required super.contactPhone,

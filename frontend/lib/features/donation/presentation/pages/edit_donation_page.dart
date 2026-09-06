@@ -50,6 +50,7 @@ class _EditDonationViewState extends State<_EditDonationView> {
   late final TextEditingController _descriptionController;
   late final TextEditingController _customCategoryController;
   late final TextEditingController _addressController;
+  late final TextEditingController _pickupNotesController;
   late final TextEditingController _phoneController;
   late final TextEditingController _pickupUntilController;
   late final TextEditingController _validUntilController;
@@ -66,6 +67,7 @@ class _EditDonationViewState extends State<_EditDonationView> {
     _descriptionController = TextEditingController(text: d.description ?? '');
     _customCategoryController = TextEditingController();
     _addressController = TextEditingController(text: d.pickupAddress);
+    _pickupNotesController = TextEditingController(text: d.pickupNotes ?? '');
     _phoneController = TextEditingController(text: d.contactPhone);
     _pickupUntil = d.pickupUntil;
     _validUntil = d.validUntil;
@@ -81,6 +83,7 @@ class _EditDonationViewState extends State<_EditDonationView> {
     _descriptionController.dispose();
     _customCategoryController.dispose();
     _addressController.dispose();
+    _pickupNotesController.dispose();
     _phoneController.dispose();
     _pickupUntilController.dispose();
     _validUntilController.dispose();
@@ -150,6 +153,9 @@ class _EditDonationViewState extends State<_EditDonationView> {
         validUntil: _validUntil!,
         pickupUntil: _pickupUntil!,
         pickupAddress: _addressController.text.trim(),
+        pickupNotes: _pickupNotesController.text.trim().isEmpty
+            ? null
+            : _pickupNotesController.text.trim(),
         contactPhone: _phoneController.text.trim(),
       ),
     );
@@ -290,6 +296,13 @@ class _EditDonationViewState extends State<_EditDonationView> {
                     validator: requiredFieldValidator(
                       fieldName: 'عنوان الاستلام',
                     ),
+                  ),
+                  SizedBox(height: AppConstants.paddingMD.h),
+                  CustomTextField(
+                    label: 'ملاحظات الوصول (اختياري)',
+                    hint: 'مثال: اتصل قبل الوصول بـ 15 دقيقة',
+                    controller: _pickupNotesController,
+                    maxLines: 2,
                   ),
                   SizedBox(height: AppConstants.paddingXL.h),
 

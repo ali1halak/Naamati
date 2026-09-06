@@ -35,6 +35,9 @@ class DonationRequest extends Equatable {
   /// Free-text pickup address.
   final String pickupAddress;
 
+  /// How the charity actually finds the donor ("call 15 minutes before").
+  final String? pickupNotes;
+
   /// Optional map pin (null when the donor only typed an address).
   final double? latitude;
   final double? longitude;
@@ -86,6 +89,7 @@ class DonationRequest extends Equatable {
     this.validUntil,
     this.pickupUntil,
     required this.pickupAddress,
+    this.pickupNotes,
     this.latitude,
     this.longitude,
     required this.contactPhone,
@@ -136,6 +140,7 @@ class DonationRequest extends Equatable {
     validUntil,
     pickupUntil,
     pickupAddress,
+    pickupNotes,
     latitude,
     longitude,
     contactPhone,

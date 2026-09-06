@@ -22,6 +22,9 @@ class CreateDonationParams extends Equatable {
 
   final String pickupAddress;
 
+  /// Optional guidance for the charity driver ("call before arriving").
+  final String? pickupNotes;
+
   /// Optional map pin — either both coordinates or neither.
   final double? latitude;
   final double? longitude;
@@ -37,6 +40,7 @@ class CreateDonationParams extends Equatable {
     required this.validUntil,
     required this.pickupUntil,
     required this.pickupAddress,
+    this.pickupNotes,
     this.latitude,
     this.longitude,
     required this.contactPhone,
@@ -52,6 +56,7 @@ class CreateDonationParams extends Equatable {
     validUntil,
     pickupUntil,
     pickupAddress,
+    pickupNotes,
     latitude,
     longitude,
     contactPhone,

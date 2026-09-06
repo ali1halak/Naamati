@@ -44,6 +44,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
   final _descriptionController = TextEditingController();
   final _customCategoryController = TextEditingController();
   final _addressController = TextEditingController();
+  final _pickupNotesController = TextEditingController();
   final _phoneController = TextEditingController();
   final _pickupUntilController = TextEditingController();
   final _validUntilController = TextEditingController();
@@ -57,6 +58,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
     _descriptionController.dispose();
     _customCategoryController.dispose();
     _addressController.dispose();
+    _pickupNotesController.dispose();
     _phoneController.dispose();
     _pickupUntilController.dispose();
     _validUntilController.dispose();
@@ -188,6 +190,9 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
         validUntil: _validUntil!,
         pickupUntil: _pickupUntil!,
         pickupAddress: _addressController.text.trim(),
+        pickupNotes: _pickupNotesController.text.trim().isEmpty
+            ? null
+            : _pickupNotesController.text.trim(),
         contactPhone: _phoneController.text.trim(),
       ),
     );
@@ -360,6 +365,13 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
                   validator: requiredFieldValidator(
                     fieldName: 'عنوان الاستلام',
                   ),
+                ),
+                SizedBox(height: AppConstants.paddingMD.h),
+                CustomTextField(
+                  label: 'ملاحظات الوصول (اختياري)',
+                  hint: 'مثال: اتصل قبل الوصول بـ 15 دقيقة',
+                  controller: _pickupNotesController,
+                  maxLines: 2,
                 ),
                 SizedBox(height: AppConstants.paddingXL.h),
 
