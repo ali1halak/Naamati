@@ -23,6 +23,16 @@ abstract class RouteNames {
   /// Convenience builder for [donationDetails] deep links.
   static String donationDetailsPath(int id) => '/donation/$id';
 
+  /// Donation audit details (Screen 2: تفاصيل التبرع).
+  static const String donationAudit = '/donation/:id/audit';
+
+  /// Edit form for a still-pending donation. The donation object travels
+  /// via GoRouter `extra`.
+  static const String donationEdit = '/donation/:id/edit';
+
+  /// Convenience builder for [donationAudit] deep links.
+  static String donationAuditPath(int id) => '/donation/$id/audit';
+
   // ── Charity (الجمعية) ─────────────────────────────────────────────────────────
   static const String charityHome = '/charity/home';
 

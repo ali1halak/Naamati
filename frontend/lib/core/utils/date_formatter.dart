@@ -22,6 +22,31 @@ abstract class DateFormatter {
     return '${_two(local.day)}/${_two(local.month)}/${local.year}';
   }
 
+  /// `12 أكتوبر 2023`
+  static String formatArabicDate(DateTime? dt) {
+    if (dt == null) return '—';
+    final local = dt.toLocal();
+    const months = [
+      '',
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
+    ];
+    final monthName = (local.month >= 1 && local.month <= 12)
+        ? months[local.month]
+        : '';
+    return '${_two(local.day)} $monthName ${local.year}';
+  }
+
   /// ETA in minutes → `45 دقيقة` / `ساعتان ونصف` style short text.
   static String formatEta(int? minutes) {
     if (minutes == null) return '—';

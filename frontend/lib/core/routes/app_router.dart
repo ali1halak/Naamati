@@ -8,23 +8,27 @@ import '../../features/auth/presentation/pages/charity_account_status_page.dart'
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
+import '../../features/donation/domain/entities/donation_request.dart';
 import '../../features/donation/presentation/pages/create_donation_page.dart';
+import '../../features/donation/presentation/pages/edit_donation_page.dart';
+import '../../features/donation/presentation/pages/donation_audit_page.dart';
 import '../../features/donation/presentation/pages/donation_tracking_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/splash/presentation/pages/splash_page.dart';
 import 'route_names.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Placeholder screens (will be replaced by feature screens)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _SplashPage extends StatefulWidget {
-  const _SplashPage();
+class _PlaceholderPage extends StatefulWidget {
+  const _PlaceholderPage();
 
   @override
-  State<_SplashPage> createState() => _SplashPageState();
+  State<_PlaceholderPage> createState() => _PlaceholderPageState();
 }
 
-class _SplashPageState extends State<_SplashPage> {
+class _PlaceholderPageState extends State<_PlaceholderPage> {
   @override
   void initState() {
     super.initState();
@@ -120,7 +124,7 @@ class AppRouter {
     GoRoute(
       path: RouteNames.splash,
       name: 'splash',
-      builder: (context, state) => const _SplashPage(),
+      builder: (context, state) => const SplashPage(),
     ),
     GoRoute(
       path: RouteNames.welcome,
@@ -129,7 +133,11 @@ class AppRouter {
     ),
 
     // ── Auth routes (placeholder) ─────────────────────────────────────────────
-    GoRoute(path: RouteNames.login, name: 'login', builder: (context, state) => const LoginPage()),
+    GoRoute(
+      path: RouteNames.login,
+      name: 'login',
+      builder: (context, state) => const LoginPage(),
+    ),
     GoRoute(
       path: RouteNames.register,
       name: 'register',
@@ -147,7 +155,8 @@ class AppRouter {
       name: 'charity-pending',
       builder: (context, state) => const CharityAccountStatusPage(
         title: 'حسابك قيد المراجعة',
-        message: 'تم استلام طلب تسجيل الجمعية. سيقوم الأدمن بمراجعته يدويًا قبل تفعيل الحساب.',
+        message:
+            'تم استلام طلب تسجيل الجمعية. سيقوم الأدمن بمراجعته يدويًا قبل تفعيل الحساب.',
         icon: Icons.hourglass_top_rounded,
       ),
     ),
@@ -156,7 +165,8 @@ class AppRouter {
       name: 'charity-suspended',
       builder: (context, state) => const CharityAccountStatusPage(
         title: 'الحساب موقوف',
-        message: 'تم إيقاف حساب الجمعية. يرجى التواصل مع الأدمن لإعادة التفعيل.',
+        message:
+            'تم إيقاف حساب الجمعية. يرجى التواصل مع الأدمن لإعادة التفعيل.',
         icon: Icons.block_rounded,
       ),
     ),
@@ -165,7 +175,8 @@ class AppRouter {
     GoRoute(
       path: RouteNames.onboarding,
       name: 'onboarding',
-      builder: (context, state) => const _SplashPage(), // replace with OnboardingPage
+      builder: (context, state) =>
+          const _PlaceholderPage(), // replace with OnboardingPage
     ),
 
     // ── Donor routes (المتبرع) — حصرية للمتبرع بعد تسجيل الدخول ───────────
@@ -176,17 +187,30 @@ class AppRouter {
     ),
 
     // ── Donation flow (طلب التبرع) ─────────────────────────────────────────────
-    // NOTE: '/donation/new' must be registered before '/donation/:id'.
+    // NOTE: '/donation/new' and '/donation/:id/audit' must be registered before '/donation/:id'.
     GoRoute(
       path: RouteNames.createDonation,
       name: 'create-donation',
       builder: (context, state) => const CreateDonationPage(),
     ),
     GoRoute(
+      path: RouteNames.donationEdit,
+      name: 'donation-edit',
+      builder: (context, state) =>
+          EditDonationPage(donation: state.extra as DonationRequest),
+    ),
+    GoRoute(
+      path: RouteNames.donationAudit,
+      name: 'donation-audit',
+      builder: (context, state) =>
+          DonationAuditPage(donationId: int.parse(state.pathParameters['id']!)),
+    ),
+    GoRoute(
       path: RouteNames.donationDetails,
       name: 'donation-details',
-      builder: (context, state) =>
-          DonationTrackingPage(donationId: int.parse(state.pathParameters['id']!)),
+      builder: (context, state) => DonationTrackingPage(
+        donationId: int.parse(state.pathParameters['id']!),
+      ),
     ),
 
     // ── Charity routes (الجمعية) ────────────────────────────────────────────
@@ -198,13 +222,14 @@ class AppRouter {
     GoRoute(
       path: RouteNames.profile,
       name: 'profile',
-      builder: (context, state) => const _SplashPage(), // replace with ProfilePage
+      builder: (context, state) =>
+          const _PlaceholderPage(), // replace with ProfilePage
     ),
     GoRoute(
       path: RouteNames.settings,
       name: 'settings',
-      builder: (context, state) => const _SplashPage(), // replace with SettingsPage
+      builder: (context, state) =>
+          const _PlaceholderPage(), // replace with SettingsPage
     ),
   ];
-
 }
