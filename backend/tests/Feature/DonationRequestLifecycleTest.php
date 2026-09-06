@@ -321,7 +321,7 @@ class DonationRequestLifecycleTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath(
                 'errors.valid_until.0',
-                'The food expiry must be within 30 days from now.',
+                'يجب ألا يتجاوز وقت انتهاء الصلاحية 30 يوماً من الآن.',
             );
 
         // 29 days out is fine.
@@ -388,7 +388,7 @@ class DonationRequestLifecycleTest extends TestCase
             'id' => $staleAccepted->id,
             'status' => 'no_show',
         ]);
-        $this->assertDatabaseHas('strikes', [
+        $this->assertDatabaseHas('violations', [
             'donation_request_id' => $staleAccepted->id,
             'reason' => 'no_show',
         ]);

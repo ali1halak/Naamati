@@ -21,6 +21,18 @@ return new class extends Migration
     {
         Schema::rename('strikes', 'violations');
 
+        // SQLite (the test database) has no MODIFY/ENUM — its reason column is
+        // plain text and accepts the new values as-is.
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('violations', function (Blueprint $table) {
+                $table->enum('severity', ['low', 'medium', 'high'])->default('medium')->after('reason');
+                $table->text('admin_note')->nullable()->after('severity');
+                $table->dropColumn('note');
+            });
+
+            return;
+        }
+
         // MySQL needs the enum widened before rows can use the new values.
         DB::statement("ALTER TABLE violations MODIFY reason
             ENUM('no_show','late_pickup','quantity_mismatch','impact_mismatch','other')
@@ -41,10 +53,14 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('violations', function (Blueprint $table) {
-            $table->string('note', 255)->nullable();
-            $table->dropColumn(['severity', 'admin_note']);
-        });
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('violations', function (Blueprint $table) {
+                $table->string('note', 255)->nullable();
+                $table->dropColumn(['severity', 'admin_note']);
+            });
+
+            return;
+        }
 
         DB::statement("ALTER TABLE violations MODIFY reason ENUM('no_show') NOT NULL DEFAULT 'no_show'");
 

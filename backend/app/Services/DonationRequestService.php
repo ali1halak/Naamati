@@ -4,12 +4,13 @@ namespace App\Services;
 
 use App\Enums\CancelledBy;
 use App\Enums\RequestStatus;
-use App\Enums\StrikeReason;
+use App\Enums\ViolationType;
 use App\Models\Charity;
 use App\Models\DonationRequest;
 use App\Models\FoodCategory;
 use App\Models\RequestStatusLog;
-use App\Models\Strike;
+use App\Enums\ViolationSeverity;
+use App\Models\Violation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -482,11 +483,12 @@ class DonationRequestService
                 $this->log($r, $from, RequestStatus::NoShow, 'لم تحضر الجمعية في الموعد المحدد');
 
                 if ($r->charity_id !== null) {
-                    Strike::create([
+                    Violation::create([
                         'charity_id'          => $r->charity_id,
                         'donation_request_id' => $r->id,
-                        'reason'              => StrikeReason::NoShow,
-                        'note'                => 'أوتوماتيكياً: تخطّت آخر وقت للاستلام دون تأكيد تسليم',
+                        'reason'              => ViolationType::NoShow,
+                        'severity'            => ViolationSeverity::Medium,
+                        'admin_note'          => 'أوتوماتيكياً: تخطّت آخر وقت للاستلام دون تأكيد تسليم',
                     ]);
                 }
 
