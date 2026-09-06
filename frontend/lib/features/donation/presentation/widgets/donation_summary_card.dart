@@ -85,6 +85,31 @@ class DonationSummaryCard extends StatelessWidget {
             label: 'رقم التواصل',
             value: donation.contactPhone,
           ),
+          if (donation.images.isNotEmpty) ...[
+            SizedBox(height: AppConstants.paddingSM.h),
+            SizedBox(
+              height: 96.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: donation.images.length,
+                separatorBuilder: (_, _) => SizedBox(width: 8.w),
+                itemBuilder: (context, index) => ClipRRect(
+                  borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+                  child: Image.network(
+                    donation.images[index],
+                    width: 96.r,
+                    height: 96.h,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, _, _) => Container(
+                      width: 96.r,
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

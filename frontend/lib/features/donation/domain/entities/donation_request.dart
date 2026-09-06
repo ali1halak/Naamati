@@ -54,6 +54,9 @@ class DonationRequest extends Equatable {
   final DateTime? acceptedAt;
   final DateTime? pickedUpAt;
 
+  /// Food photo URLs (loaded with list/detail responses; empty otherwise).
+  final List<String> images;
+
   /// The two-sided handover receipts: the request only reaches `picked_up`
   /// once both are non-null. Null until the request is `accepted`.
   final DateTime? donorConfirmedAt;
@@ -99,6 +102,7 @@ class DonationRequest extends Equatable {
     this.pickedUpAt,
     this.donorConfirmedAt,
     this.charityConfirmedAt,
+    this.images = const [],
     this.cancelReason,
     this.cancelledBy,
     this.createdAt,
@@ -150,6 +154,7 @@ class DonationRequest extends Equatable {
     pickedUpAt,
     donorConfirmedAt,
     charityConfirmedAt,
+    images,
     cancelReason,
     cancelledBy,
     createdAt,

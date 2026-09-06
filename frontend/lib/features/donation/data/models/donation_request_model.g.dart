@@ -47,11 +47,14 @@ DonationRequestModel _$DonationRequestModelFromJson(
   charityConfirmedAt: json['charity_confirmed_at'] == null
       ? null
       : DateTime.parse(json['charity_confirmed_at'] as String),
-  cancelReason: json['cancel_reason'] as String?,
-  cancelledBy: json['cancelled_by'] as String?,
+  images:
+      (json['images'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      [],
   createdAt: json['created_at'] == null
       ? null
       : DateTime.parse(json['created_at'] as String),
+  cancelReason: json['cancel_reason'] as String?,
+  cancelledBy: json['cancelled_by'] as String?,
   statusLabel: json['status_label'] as String?,
   title: json['title'] as String?,
   categoryIconKey: json['category_icon'] as String?,
@@ -92,6 +95,7 @@ Map<String, dynamic> _$DonationRequestModelToJson(
   'food_category': instance.foodCategory,
   'charity': instance.charity,
   'rating': instance.rating,
+  'images': instance.images,
 };
 
 const _$DonationStatusEnumMap = {

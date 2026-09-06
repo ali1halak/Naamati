@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:equatable/equatable.dart';
 
 /// Input for publishing a new donation request.
@@ -25,6 +27,9 @@ class CreateDonationParams extends Equatable {
   /// Optional guidance for the charity driver ("call before arriving").
   final String? pickupNotes;
 
+  /// Up to 4 food photos, sent as multipart parts.
+  final List<File> images;
+
   /// Optional map pin — either both coordinates or neither.
   final double? latitude;
   final double? longitude;
@@ -41,6 +46,7 @@ class CreateDonationParams extends Equatable {
     required this.pickupUntil,
     required this.pickupAddress,
     this.pickupNotes,
+    this.images = const [],
     this.latitude,
     this.longitude,
     required this.contactPhone,
@@ -57,6 +63,7 @@ class CreateDonationParams extends Equatable {
     pickupUntil,
     pickupAddress,
     pickupNotes,
+    images,
     latitude,
     longitude,
     contactPhone,

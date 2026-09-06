@@ -1,3 +1,4 @@
+
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
@@ -62,6 +63,7 @@ class DonationRepositoryImpl implements DonationRepository {
           latitude: params.latitude,
           longitude: params.longitude,
           contactPhone: params.contactPhone,
+          images: params.images.isEmpty ? null : params.images,
         );
         if (response.success) {
           return Right(response.data);

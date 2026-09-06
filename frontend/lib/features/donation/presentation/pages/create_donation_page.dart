@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/base/base_state.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -45,6 +48,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
   final _customCategoryController = TextEditingController();
   final _addressController = TextEditingController();
   final _pickupNotesController = TextEditingController();
+  final List<File> _images = [];
   final _phoneController = TextEditingController();
   final _pickupUntilController = TextEditingController();
   final _validUntilController = TextEditingController();
@@ -63,6 +67,20 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
     _pickupUntilController.dispose();
     _validUntilController.dispose();
     super.dispose();
+  }
+
+  static const _maxImages = 4;
+
+  Future<void> _pickImages() async {
+    final remaining = _maxImages - _images.length;
+    if (remaining <= 0) return;
+
+    final picked = await ImagePicker().pickMultiImage(imageQuality: 80);
+    if (picked.isEmpty || !mounted) return;
+
+    setState(() {
+      _images.addAll(picked.take(remaining).map((x) => File(x.path)));
+    });
   }
 
   // ── Pickers ─────────────────────────────────────────────────────────────────
@@ -193,6 +211,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
         pickupNotes: _pickupNotesController.text.trim().isEmpty
             ? null
             : _pickupNotesController.text.trim(),
+        images: List<File>.from(_images),
         contactPhone: _phoneController.text.trim(),
       ),
     );
@@ -331,6 +350,15 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
 
                 const _SectionHeader('حالة الطعام'),
                 const _FoodStateSelector(),
+                SizedBox(height: AppConstants.paddingXL.h),
+
+                const _SectionHeader('صور الطعام (حتى 4 صور)'),
+                SizedBox(height: AppConstants.paddingMD.h),
+                _ImagesPicker(
+                  images: _images,
+                  onAdd: _images.length < _maxImages ? _pickImages : null,
+                  onRemove: (index) => setState(() => _images.removeAt(index)),
+                ),
                 SizedBox(height: AppConstants.paddingXL.h),
 
                 const _SectionHeader('التوقيت'),
@@ -708,6 +736,109 @@ class _DateTimeField extends StatelessWidget {
       onTap: onTap,
       isRequired: isRequired,
       validator: validator,
+    );
+  }
+}
+
+/// Horizontal strip: selected photo thumbnails with remove badges, plus an
+/// add tile. Kept simple — up to four photos, no cropping.
+class _ImagesPicker extends StatelessWidget {
+  final List<File> images;
+  final VoidCallback? onAdd;
+  final ValueChanged<int> onRemove;
+
+  const _ImagesPicker({
+    required this.images,
+    this.onAdd,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      height: 92.h,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        children: [
+          for (var i = 0; i < images.length; i++)
+            Padding(
+              padding: EdgeInsetsDirectional.only(end: 8.w),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusMD.r,
+                    ),
+                    child: Image.file(
+                      images[i],
+                      width: 92.r,
+                      height: 92.r,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  PositionedDirectional(
+                    end: 0,
+                    top: 0,
+                    child: Material(
+                      color: colorScheme.error,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => onRemove(i),
+                        child: Padding(
+                          padding: EdgeInsets.all(3.r),
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 14.r,
+                            color: colorScheme.onError,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (onAdd != null)
+            InkWell(
+              onTap: onAdd,
+              borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+              child: Container(
+                width: 92.r,
+                height: 92.r,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+                  border: Border.all(
+                    color: colorScheme.outline,
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add_a_photo_rounded,
+                      size: 24.r,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'إضافة',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

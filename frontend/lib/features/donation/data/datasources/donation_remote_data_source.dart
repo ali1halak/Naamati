@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
@@ -34,20 +36,23 @@ abstract class DonationRemoteDataSource {
     @Query('page') int? page,
   });
 
+  // Multipart: the request may carry up to 4 food photos.
+  @MultiPart()
   @POST('/donor/requests')
   Future<DonationResponseModel> createDonation({
-    @Field('food_category_id') required int foodCategoryId,
-    @Field('needs_cooking') required bool needsCooking,
-    @Field('quantity_desc') required String quantityDesc,
-    @Field('description') String? description,
-    @Field('custom_category') String? customCategory,
-    @Field('valid_until') required String validUntil,
-    @Field('pickup_until') required String pickupUntil,
-    @Field('pickup_address') required String pickupAddress,
-    @Field('pickup_notes') String? pickupNotes,
-    @Field('latitude') double? latitude,
-    @Field('longitude') double? longitude,
-    @Field('contact_phone') required String contactPhone,
+    @Part(name: 'food_category_id') required int foodCategoryId,
+    @Part(name: 'needs_cooking') required bool needsCooking,
+    @Part(name: 'quantity_desc') required String quantityDesc,
+    @Part(name: 'description') String? description,
+    @Part(name: 'custom_category') String? customCategory,
+    @Part(name: 'valid_until') required String validUntil,
+    @Part(name: 'pickup_until') required String pickupUntil,
+    @Part(name: 'pickup_address') required String pickupAddress,
+    @Part(name: 'pickup_notes') String? pickupNotes,
+    @Part(name: 'latitude') double? latitude,
+    @Part(name: 'longitude') double? longitude,
+    @Part(name: 'contact_phone') required String contactPhone,
+    @Part(name: 'images') List<File>? images,
   });
 
   @PUT('/donor/requests/{id}')

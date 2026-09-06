@@ -77,7 +77,7 @@ class DonationCard extends StatelessWidget {
               Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Circular food icon container ──────────────────────────────
+              // ── Circular food icon container (photo when available) ───────
               Container(
                 width: 48.r,
                 height: 48.r,
@@ -85,14 +85,31 @@ class DonationCard extends StatelessWidget {
                   color: colorScheme.primaryContainer,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  _getCategoryIcon(
-                    donation.categoryIconKey,
-                    donation.title ?? donation.foodCategory?.nameAr,
-                  ),
-                  size: 24.r,
-                  color: colorScheme.primary,
-                ),
+                clipBehavior: Clip.antiAlias,
+                alignment: Alignment.center,
+                child: (donation.images.isNotEmpty)
+                    ? Image.network(
+                        donation.images.first,
+                        width: 48.r,
+                        height: 48.r,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, _, _) => Icon(
+                          _getCategoryIcon(
+                            donation.categoryIconKey,
+                            donation.title ?? donation.foodCategory?.nameAr,
+                          ),
+                          size: 24.r,
+                          color: colorScheme.primary,
+                        ),
+                      )
+                    : Icon(
+                        _getCategoryIcon(
+                          donation.categoryIconKey,
+                          donation.title ?? donation.foodCategory?.nameAr,
+                        ),
+                        size: 24.r,
+                        color: colorScheme.primary,
+                      ),
               ),
               SizedBox(width: 12.w),
 
