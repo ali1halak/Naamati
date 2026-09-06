@@ -48,8 +48,12 @@ class DonationDetailsState extends Equatable {
   }) {
     return DonationDetailsState(
       status: status ?? this.status,
-      errorMessage: identical(errorMessage, _unset) ? this.errorMessage : errorMessage as String?,
-      donation: identical(donation, _unset) ? this.donation : donation as DonationRequest?,
+      errorMessage: identical(errorMessage, _unset)
+          ? this.errorMessage
+          : errorMessage as String?,
+      donation: identical(donation, _unset)
+          ? this.donation
+          : donation as DonationRequest?,
       actionInProgress: identical(actionInProgress, _unset)
           ? this.actionInProgress
           : actionInProgress as DonationAction?,

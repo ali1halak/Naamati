@@ -38,11 +38,19 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
   Future<void> load(int id) async {
     emit(state.copyWith(status: BlocStatus.loading, errorMessage: null));
 
-    final result = await _getDonationDetailsUseCase(GetDonationDetailsParams(id: id));
+    final result = await _getDonationDetailsUseCase(
+      GetDonationDetailsParams(id: id),
+    );
 
     result.fold(
-      (failure) => emit(state.copyWith(status: BlocStatus.failure, errorMessage: failure.message)),
-      (donation) => emit(state.copyWith(status: BlocStatus.success, donation: donation)),
+      (failure) => emit(
+        state.copyWith(
+          status: BlocStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (donation) =>
+          emit(state.copyWith(status: BlocStatus.success, donation: donation)),
     );
   }
 
@@ -52,7 +60,9 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     if (donation == null || _refreshing) return;
     _refreshing = true;
     try {
-      final result = await _getDonationDetailsUseCase(GetDonationDetailsParams(id: donation.id));
+      final result = await _getDonationDetailsUseCase(
+        GetDonationDetailsParams(id: donation.id),
+      );
       result.fold(
         // Silent failures keep the last known donation (e.g. flaky network).
         (_) {},
@@ -84,14 +94,22 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     final donation = state.donation;
     if (donation == null) return;
 
-    emit(state.copyWith(actionInProgress: DonationAction.cancel, actionErrorMessage: null));
+    emit(
+      state.copyWith(
+        actionInProgress: DonationAction.cancel,
+        actionErrorMessage: null,
+      ),
+    );
     final result = await _cancelDonationUseCase(
       CancelDonationParams(id: donation.id, reason: reason),
     );
 
     result.fold(
       (failure) => emit(
-        state.copyWith(actionInProgress: null, actionErrorMessage: failure.message),
+        state.copyWith(
+          actionInProgress: null,
+          actionErrorMessage: failure.message,
+        ),
       ),
       (updated) => emit(
         state.copyWith(
@@ -107,14 +125,22 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     final donation = state.donation;
     if (donation == null) return;
 
-    emit(state.copyWith(actionInProgress: DonationAction.confirmPickup, actionErrorMessage: null));
+    emit(
+      state.copyWith(
+        actionInProgress: DonationAction.confirmPickup,
+        actionErrorMessage: null,
+      ),
+    );
     final result = await _confirmPickupUseCase(
       ConfirmPickupParams(id: donation.id, qrToken: qrToken.trim()),
     );
 
     result.fold(
       (failure) => emit(
-        state.copyWith(actionInProgress: null, actionErrorMessage: failure.message),
+        state.copyWith(
+          actionInProgress: null,
+          actionErrorMessage: failure.message,
+        ),
       ),
       (updated) => emit(
         state.copyWith(
@@ -130,14 +156,22 @@ class DonationDetailsCubit extends Cubit<DonationDetailsState> {
     final donation = state.donation;
     if (donation == null) return;
 
-    emit(state.copyWith(actionInProgress: DonationAction.rate, actionErrorMessage: null));
+    emit(
+      state.copyWith(
+        actionInProgress: DonationAction.rate,
+        actionErrorMessage: null,
+      ),
+    );
     final result = await _rateDonationUseCase(
       RateDonationParams(id: donation.id, stars: stars, comment: comment),
     );
 
     result.fold(
       (failure) => emit(
-        state.copyWith(actionInProgress: null, actionErrorMessage: failure.message),
+        state.copyWith(
+          actionInProgress: null,
+          actionErrorMessage: failure.message,
+        ),
       ),
       (_) async {
         emit(
