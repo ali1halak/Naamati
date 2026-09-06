@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/app_constants.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../domain/entities/donation_request.dart';
 
-/// White rounded card listing the donation's key details — reused on the
-/// pending screen, the accepted/details screen and terminal states.
+/// Surface-colored rounded card listing the donation's key details — reused
+/// on the pending screen, the accepted/details screen and terminal states.
 class DonationSummaryCard extends StatelessWidget {
   final DonationRequest donation;
 
@@ -16,6 +15,8 @@ class DonationSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -23,11 +24,11 @@ class DonationSummaryCard extends StatelessWidget {
         vertical: AppConstants.paddingMD.h,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppConstants.radiusLG.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 12.r,
             offset: Offset(0, 4.h),
           ),
@@ -43,10 +44,14 @@ class DonationSummaryCard extends StatelessWidget {
           _SummaryRow(
             icon: Icons.local_dining_rounded,
             label: 'الكمية',
-            value: donation.quantityDesc,
+            value: int.tryParse(donation.quantityDesc) != null
+                ? '${donation.quantityDesc} شخص'
+                : donation.quantityDesc,
           ),
           _SummaryRow(
-            icon: donation.needsCooking ? Icons.soup_kitchen_rounded : Icons.restaurant_rounded,
+            icon: donation.needsCooking
+                ? Icons.soup_kitchen_rounded
+                : Icons.restaurant_rounded,
             label: 'حالة الطعام',
             value: donation.foodStateLabelAr,
           ),
@@ -56,7 +61,8 @@ class DonationSummaryCard extends StatelessWidget {
             value: DateFormatter.formatDateTime(donation.pickupUntil),
             highlight: true,
           ),
-          if (donation.description != null && donation.description!.trim().isNotEmpty)
+          if (donation.description != null &&
+              donation.description!.trim().isNotEmpty)
             _SummaryRow(
               icon: Icons.notes_rounded,
               label: 'وصف إضافي',
@@ -93,6 +99,8 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: AppConstants.paddingSM.h),
       child: Row(
@@ -102,13 +110,17 @@ class _SummaryRow extends StatelessWidget {
             width: 34.r,
             height: 34.r,
             decoration: BoxDecoration(
-              color: highlight ? AppColors.primaryContainer : AppColors.surfaceVariantLight,
+              color: highlight
+                  ? colorScheme.primaryContainer
+                  : colorScheme.surfaceContainerHighest,
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
               size: 17.r,
-              color: highlight ? AppColors.brandGreen : AppColors.textSecondaryLight,
+              color: highlight
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.onSurfaceVariant,
             ),
           ),
           SizedBox(width: AppConstants.paddingMD.w),
@@ -119,7 +131,7 @@ class _SummaryRow extends StatelessWidget {
                 Text(
                   label,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondaryLight,
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 11.sp,
                   ),
                 ),
@@ -127,7 +139,7 @@ class _SummaryRow extends StatelessWidget {
                 Text(
                   value,
                   style: AppTextStyles.titleSmall.copyWith(
-                    color: AppColors.textPrimaryLight,
+                    color: colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
                     fontSize: 13.sp,
                     height: 1.4,

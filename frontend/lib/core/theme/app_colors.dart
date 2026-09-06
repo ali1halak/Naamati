@@ -49,10 +49,12 @@ abstract class AppColors {
   static const Color textHintLight = Color(0xFF9CA3AF);
 
   // ── Neutral / Dark Theme (green-tinted to stay on-brand) ─────────────────────
-  static const Color backgroundDark = Color(0xFF0F1613);
-  static const Color surfaceDark = Color(0xFF17211C);
-  static const Color surfaceVariantDark = Color(0xFF232F29);
-  static const Color outlineDark = Color(0xFF35453C);
+  // Kept lighter than pitch-black so large surfaces read as soft dark-green
+  // charcoal rather than black.
+  static const Color backgroundDark = Color(0xFF141B17);
+  static const Color surfaceDark = Color(0xFF1D2721);
+  static const Color surfaceVariantDark = Color(0xFF29362E);
+  static const Color outlineDark = Color(0xFF3D4F45);
 
   static const Color textPrimaryDark = Color(0xFFEDF3EF);
   static const Color textSecondaryDark = Color(0xFFA4B6AC);
@@ -61,7 +63,7 @@ abstract class AppColors {
 
   // ── Misc ─────────────────────────────────────────────────────────────────────
   static const Color divider = Color(0xFFE5E7EB);
-  static const Color dividerDark = Color(0xFF27342D);
+  static const Color dividerDark = Color(0xFF2C3931);
   static const Color shadow = Color(0x14000000);
   static const Color overlay = Color(0x4D000000);
 }

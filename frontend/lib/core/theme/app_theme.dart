@@ -24,7 +24,10 @@ abstract class AppTheme {
     textButtonTheme: _textButtonTheme,
     inputDecorationTheme: _inputDecorationTheme(isLight: true),
     cardTheme: _cardTheme(isLight: true),
-    dividerTheme: const DividerThemeData(color: AppColors.divider, thickness: 1),
+    dividerTheme: const DividerThemeData(
+      color: AppColors.divider,
+      thickness: 1,
+    ),
     scaffoldBackgroundColor: AppColors.backgroundLight,
     splashFactory: InkRipple.splashFactory,
   );
@@ -45,7 +48,10 @@ abstract class AppTheme {
     textButtonTheme: _textButtonTheme,
     inputDecorationTheme: _inputDecorationTheme(isLight: false),
     cardTheme: _cardTheme(isLight: false),
-    dividerTheme: const DividerThemeData(color: AppColors.dividerDark, thickness: 1),
+    dividerTheme: const DividerThemeData(
+      color: AppColors.dividerDark,
+      thickness: 1,
+    ),
     scaffoldBackgroundColor: AppColors.backgroundDark,
     splashFactory: InkRipple.splashFactory,
   );
@@ -103,8 +109,12 @@ abstract class AppTheme {
   // ─────────────────────────────────────────────────────────────────────────────
 
   static TextTheme _textTheme({required bool isLight}) {
-    final primary = isLight ? AppColors.textPrimaryLight : AppColors.textPrimaryDark;
-    final secondary = isLight ? AppColors.textSecondaryLight : AppColors.textSecondaryDark;
+    final primary = isLight
+        ? AppColors.textPrimaryLight
+        : AppColors.textPrimaryDark;
+    final secondary = isLight
+        ? AppColors.textSecondaryLight
+        : AppColors.textSecondaryDark;
 
     return TextTheme(
       displayLarge: AppTextStyles.displayLarge.copyWith(color: primary),
@@ -133,7 +143,9 @@ abstract class AppTheme {
     scrolledUnderElevation: 1,
     centerTitle: true,
     backgroundColor: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
-    foregroundColor: isLight ? AppColors.textPrimaryLight : AppColors.textPrimaryDark,
+    foregroundColor: isLight
+        ? AppColors.textPrimaryLight
+        : AppColors.textPrimaryDark,
     titleTextStyle: AppTextStyles.titleLarge.copyWith(
       color: isLight ? AppColors.textPrimaryLight : AppColors.textPrimaryDark,
     ),
@@ -147,27 +159,35 @@ abstract class AppTheme {
   // Button Themes
   // ─────────────────────────────────────────────────────────────────────────────
 
-  static ElevatedButtonThemeData get _elevatedButtonTheme => ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.primary,
-      foregroundColor: Colors.white,
-      disabledBackgroundColor: AppColors.primaryLight.withValues(alpha: 0.4),
-      minimumSize: const Size(double.infinity, 52),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      textStyle: AppTextStyles.labelLarge,
-      elevation: 0,
-    ),
-  );
+  static ElevatedButtonThemeData get _elevatedButtonTheme =>
+      ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.primaryLight.withValues(
+            alpha: 0.4,
+          ),
+          minimumSize: const Size(double.infinity, 52),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: AppTextStyles.labelLarge,
+          elevation: 0,
+        ),
+      );
 
-  static OutlinedButtonThemeData get _outlinedButtonTheme => OutlinedButtonThemeData(
-    style: OutlinedButton.styleFrom(
-      foregroundColor: AppColors.primary,
-      side: const BorderSide(color: AppColors.primary, width: 1.5),
-      minimumSize: const Size(double.infinity, 52),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      textStyle: AppTextStyles.labelLarge,
-    ),
-  );
+  static OutlinedButtonThemeData get _outlinedButtonTheme =>
+      OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          side: const BorderSide(color: AppColors.primary, width: 1.5),
+          minimumSize: const Size(double.infinity, 52),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: AppTextStyles.labelLarge,
+        ),
+      );
 
   static TextButtonThemeData get _textButtonTheme => TextButtonThemeData(
     style: TextButton.styleFrom(
@@ -183,8 +203,13 @@ abstract class AppTheme {
   static InputDecorationTheme _inputDecorationTheme({required bool isLight}) =>
       InputDecorationTheme(
         filled: true,
-        fillColor: isLight ? AppColors.surfaceVariantLight : AppColors.surfaceVariantDark,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        fillColor: isLight
+            ? AppColors.surfaceVariantLight
+            : AppColors.surfaceVariantDark,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -213,7 +238,9 @@ abstract class AppTheme {
         ),
         errorStyle: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
         labelStyle: AppTextStyles.bodyMedium.copyWith(
-          color: isLight ? AppColors.textSecondaryLight : AppColors.textSecondaryDark,
+          color: isLight
+              ? AppColors.textSecondaryLight
+              : AppColors.textSecondaryDark,
         ),
       );
 
@@ -226,7 +253,10 @@ abstract class AppTheme {
     elevation: 0,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
-      side: BorderSide(color: isLight ? AppColors.outlineLight : AppColors.outlineDark, width: 1),
+      side: BorderSide(
+        color: isLight ? AppColors.outlineLight : AppColors.outlineDark,
+        width: 1,
+      ),
     ),
     margin: EdgeInsets.zero,
   );

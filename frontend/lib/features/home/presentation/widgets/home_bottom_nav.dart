@@ -2,43 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/app_constants.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
 /// Custom bottom navigation pill with two items.
 ///
-/// Selected item shows a pill background behind the icon ([AppColors.primaryContainer])
-/// and green text — matching the screenshot.
+/// Selected item shows a pill background behind the icon
+/// ([ColorScheme.primaryContainer]) and primary text — matching the screenshot.
 class HomeBottomNav extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onTap;
 
-  const HomeBottomNav({super.key, required this.selectedIndex, required this.onTap});
+  const HomeBottomNav({
+    super.key,
+    required this.selectedIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20.r),
           topRight: Radius.circular(20.r),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: colorScheme.shadow.withValues(alpha: 0.06),
             blurRadius: 20.r,
             offset: Offset(0, -4.h),
           ),
         ],
         border: Border(
-          top: BorderSide(color: AppColors.divider.withValues(alpha: 0.5), width: 1.w),
+          top: BorderSide(
+            color: colorScheme.outline.withValues(alpha: 0.3),
+            width: 1.w,
+          ),
         ),
       ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppConstants.paddingMD.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppConstants.paddingMD.w,
+            vertical: 8.h,
+          ),
           child: Row(
             children: [
               Expanded(
@@ -80,7 +91,10 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color textColor = selected ? AppColors.brandGreen : AppColors.textSecondaryLight;
+    final colorScheme = Theme.of(context).colorScheme;
+    final Color textColor = selected
+        ? colorScheme.primary
+        : colorScheme.onSurfaceVariant;
 
     return InkWell(
       onTap: onTap,
@@ -93,8 +107,12 @@ class _NavItem extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 5.h),
               decoration: BoxDecoration(
-                color: selected ? AppColors.primaryContainer : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppConstants.radiusCircular.r),
+                color: selected
+                    ? colorScheme.primaryContainer
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(
+                  AppConstants.radiusCircular.r,
+                ),
               ),
               child: Icon(icon, size: 22.r, color: textColor),
             ),

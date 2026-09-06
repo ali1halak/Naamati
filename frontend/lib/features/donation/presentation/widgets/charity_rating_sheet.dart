@@ -19,7 +19,11 @@ class CharityRatingSheet extends StatefulWidget {
   final DonationDetailsCubit cubit;
   final CharityProfile charity;
 
-  const CharityRatingSheet({super.key, required this.cubit, required this.charity});
+  const CharityRatingSheet({
+    super.key,
+    required this.cubit,
+    required this.charity,
+  });
 
   static Future<void> show(
     BuildContext context, {
@@ -53,26 +57,29 @@ class _CharityRatingSheetState extends State<CharityRatingSheet> {
     setState(() => _starsTouched = true);
     if (_stars < 1) return;
 
-    widget.cubit.rateDonation(stars: _stars, comment: _commentController.text.trim());
+    widget.cubit.rateDonation(
+      stars: _stars,
+      comment: _commentController.text.trim(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return BlocListener<DonationDetailsCubit, DonationDetailsState>(
       bloc: widget.cubit,
-      listenWhen:
-          (previous, current) =>
-              previous.actionInProgress == DonationAction.rate &&
-              current.actionInProgress == null &&
-              current.actionErrorMessage == null,
+      listenWhen: (previous, current) =>
+          previous.actionInProgress == DonationAction.rate &&
+          current.actionInProgress == null &&
+          current.actionErrorMessage == null,
       listener: (context, state) => Navigator.of(context).pop(),
       child: Padding(
         padding: EdgeInsets.only(bottom: bottomInset),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(AppConstants.radiusXL.r),
               topRight: Radius.circular(AppConstants.radiusXL.r),
@@ -94,8 +101,10 @@ class _CharityRatingSheetState extends State<CharityRatingSheet> {
                   width: 44.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: AppColors.outlineLight,
-                    borderRadius: BorderRadius.circular(AppConstants.radiusCircular.r),
+                    color: colorScheme.outline,
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusCircular.r,
+                    ),
                   ),
                 ),
               ),
@@ -120,7 +129,10 @@ class _CharityRatingSheetState extends State<CharityRatingSheet> {
                       padding: EdgeInsets.zero,
                       iconSize: 20.r,
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded, color: AppColors.textSecondaryLight),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ],
@@ -129,7 +141,9 @@ class _CharityRatingSheetState extends State<CharityRatingSheet> {
               Text(
                 'كيف كانت تجربتك مع ${widget.charity.name}؟',
                 textAlign: TextAlign.center,
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondaryLight),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
               SizedBox(height: AppConstants.paddingLG.h),
 
@@ -146,7 +160,9 @@ class _CharityRatingSheetState extends State<CharityRatingSheet> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 6.w),
                       child: Icon(
-                        filled ? Icons.star_rounded : Icons.star_outline_rounded,
+                        filled
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
                         size: 44.r,
                         color: AppColors.warning,
                       ),
@@ -160,7 +176,9 @@ class _CharityRatingSheetState extends State<CharityRatingSheet> {
                   child: Text(
                     'يرجى اختيار عدد النجوم',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: colorScheme.error,
+                    ),
                   ),
                 ),
               SizedBox(height: AppConstants.paddingLG.h),
@@ -168,7 +186,8 @@ class _CharityRatingSheetState extends State<CharityRatingSheet> {
               // Comment + inline action error.
               BlocBuilder<DonationDetailsCubit, DonationDetailsState>(
                 bloc: widget.cubit,
-                buildWhen: (prev, curr) => prev.actionErrorMessage != curr.actionErrorMessage,
+                buildWhen: (prev, curr) =>
+                    prev.actionErrorMessage != curr.actionErrorMessage,
                 builder: (context, state) => Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -185,7 +204,9 @@ class _CharityRatingSheetState extends State<CharityRatingSheet> {
                       SizedBox(height: AppConstants.paddingSM.h),
                       Text(
                         state.actionErrorMessage!,
-                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: colorScheme.error,
+                        ),
                       ),
                     ],
                   ],

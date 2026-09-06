@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../constants/app_constants.dart';
 import 'custom_button.dart';
@@ -33,6 +32,7 @@ class AppErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: EdgeInsets.all(AppConstants.paddingXL.r),
@@ -42,8 +42,11 @@ class AppErrorWidget extends StatelessWidget {
             Container(
               width: 72.r,
               height: 72.r,
-              decoration: BoxDecoration(color: AppColors.errorContainer, shape: BoxShape.circle),
-              child: Icon(icon, size: 36.r, color: AppColors.error),
+              decoration: BoxDecoration(
+                color: colorScheme.errorContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 36.r, color: colorScheme.error),
             ),
             SizedBox(height: AppConstants.paddingLG.h),
             Text(
@@ -52,7 +55,11 @@ class AppErrorWidget extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: AppConstants.paddingSM.h),
-            Text(message, style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
+            Text(
+              message,
+              style: AppTextStyles.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
             if (onRetry != null) ...[
               SizedBox(height: AppConstants.paddingXL.h),
               CustomButton(label: retryLabel, onPressed: onRetry, width: 160.w),

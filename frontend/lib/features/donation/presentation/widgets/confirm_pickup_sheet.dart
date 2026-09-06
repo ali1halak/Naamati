@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/app_constants.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../bloc/donation_details_cubit.dart';
@@ -19,7 +18,10 @@ class ConfirmPickupSheet extends StatefulWidget {
 
   const ConfirmPickupSheet({super.key, required this.cubit});
 
-  static Future<void> show(BuildContext context, {required DonationDetailsCubit cubit}) {
+  static Future<void> show(
+    BuildContext context, {
+    required DonationDetailsCubit cubit,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -50,21 +52,21 @@ class _ConfirmPickupSheetState extends State<ConfirmPickupSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return BlocListener<DonationDetailsCubit, DonationDetailsState>(
       bloc: widget.cubit,
-      listenWhen:
-          (previous, current) =>
-              previous.actionInProgress == DonationAction.confirmPickup &&
-              current.actionInProgress == null &&
-              current.actionErrorMessage == null,
+      listenWhen: (previous, current) =>
+          previous.actionInProgress == DonationAction.confirmPickup &&
+          current.actionInProgress == null &&
+          current.actionErrorMessage == null,
       listener: (context, state) => Navigator.of(context).pop(),
       child: Padding(
         padding: EdgeInsets.only(bottom: bottomInset),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(AppConstants.radiusXL.r),
               topRight: Radius.circular(AppConstants.radiusXL.r),
@@ -87,8 +89,10 @@ class _ConfirmPickupSheetState extends State<ConfirmPickupSheet> {
                     width: 44.w,
                     height: 4.h,
                     decoration: BoxDecoration(
-                      color: AppColors.outlineLight,
-                      borderRadius: BorderRadius.circular(AppConstants.radiusCircular.r),
+                      color: colorScheme.outline,
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusCircular.r,
+                      ),
                     ),
                   ),
                 ),
@@ -113,7 +117,10 @@ class _ConfirmPickupSheetState extends State<ConfirmPickupSheet> {
                         padding: EdgeInsets.zero,
                         iconSize: 20.r,
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close_rounded, color: AppColors.textSecondaryLight),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],
@@ -123,7 +130,7 @@ class _ConfirmPickupSheetState extends State<ConfirmPickupSheet> {
                   'اطلب من ممثل الجمعية عرض رمز التأكيد الخاص بالطلب ثم أدخله هنا لإتمام التسليم',
                   textAlign: TextAlign.center,
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondaryLight,
+                    color: colorScheme.onSurfaceVariant,
                     height: 1.6,
                   ),
                 ),
@@ -131,7 +138,8 @@ class _ConfirmPickupSheetState extends State<ConfirmPickupSheet> {
 
                 BlocBuilder<DonationDetailsCubit, DonationDetailsState>(
                   bloc: widget.cubit,
-                  buildWhen: (prev, curr) => prev.actionErrorMessage != curr.actionErrorMessage,
+                  buildWhen: (prev, curr) =>
+                      prev.actionErrorMessage != curr.actionErrorMessage,
                   builder: (context, state) => Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -150,7 +158,9 @@ class _ConfirmPickupSheetState extends State<ConfirmPickupSheet> {
                         decoration: InputDecoration(
                           hintText: 'رمز التأكيد',
                           prefixIcon: const Icon(Icons.qr_code_2_rounded),
-                          counterStyle: AppTextStyles.bodySmall.copyWith(fontSize: 10.sp),
+                          counterStyle: AppTextStyles.bodySmall.copyWith(
+                            fontSize: 10.sp,
+                          ),
                         ),
                         validator: (value) {
                           final token = value?.trim() ?? '';
@@ -165,7 +175,9 @@ class _ConfirmPickupSheetState extends State<ConfirmPickupSheet> {
                         SizedBox(height: AppConstants.paddingSM.h),
                         Text(
                           state.actionErrorMessage!,
-                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ],
                     ],
@@ -179,7 +191,8 @@ class _ConfirmPickupSheetState extends State<ConfirmPickupSheet> {
                     label: 'تأكيد الاستلام',
                     leadingIcon: const Icon(Icons.check_circle_outline_rounded),
                     onPressed: _submit,
-                    isLoading: state.actionInProgress == DonationAction.confirmPickup,
+                    isLoading:
+                        state.actionInProgress == DonationAction.confirmPickup,
                   ),
                 ),
                 SizedBox(height: AppConstants.paddingSM.h),

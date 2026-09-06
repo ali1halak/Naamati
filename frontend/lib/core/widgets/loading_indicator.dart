@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../theme/app_colors.dart';
 
 /// A centered loading indicator.
 ///
@@ -18,13 +17,23 @@ class LoadingIndicator extends StatelessWidget {
   /// use directly inside a [Column] or [ListView].
   final bool expandToFill;
 
-  const LoadingIndicator({super.key, this.color, this.size = 40.0, this.expandToFill = false});
+  const LoadingIndicator({
+    super.key,
+    this.color,
+    this.size = 40.0,
+    this.expandToFill = false,
+  });
 
   /// Full-screen centered loading widget (e.g. initial page load).
-  const LoadingIndicator.fullScreen({super.key}) : color = null, size = 48.0, expandToFill = true;
+  const LoadingIndicator.fullScreen({super.key})
+    : color = null,
+      size = 48.0,
+      expandToFill = true;
 
   /// Compact inline loading widget (e.g. inside a card or list item).
-  const LoadingIndicator.inline({super.key, this.color}) : size = 24.0, expandToFill = false;
+  const LoadingIndicator.inline({super.key, this.color})
+    : size = 24.0,
+      expandToFill = false;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +42,9 @@ class LoadingIndicator extends StatelessWidget {
       height: size.w,
       child: CircularProgressIndicator(
         strokeWidth: 2.5,
-        valueColor: AlwaysStoppedAnimation<Color>(color ?? AppColors.primary),
+        valueColor: AlwaysStoppedAnimation<Color>(
+          color ?? Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
 
