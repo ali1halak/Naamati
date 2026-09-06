@@ -34,7 +34,9 @@ class DonationTrackingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<DonationDetailsCubit>()..load(donationId)..startAutoRefresh(),
+      create: (_) => sl<DonationDetailsCubit>()
+        ..load(donationId)
+        ..startAutoRefresh(),
       child: _TrackingView(donationId: donationId),
     );
   }
@@ -57,64 +59,28 @@ class _TrackingViewState extends State<_TrackingView> {
   // ── Actions ─────────────────────────────────────────────────────────────────
 
   Future<void> _showCancelDialog() async {
-    final reasonController = TextEditingController();
-    final confirmed =
-        await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              backgroundColor: AppColors.surfaceLight,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppConstants.radiusLG.r),
-              ),
-              title: Text('إلغاء الطلب', style: AppTextStyles.titleMedium),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'هل أنت متأكد من إلغاء طلب التبرع؟',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondaryLight,
-                    ),
-                  ),
-                  SizedBox(height: AppConstants.paddingMD.h),
-                  TextField(
-                    controller: reasonController,
-                    maxLength: 255,
-                    decoration: const InputDecoration(hintText: 'السبب (اختياري)'),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('تراجع'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: Text('نعم، إلغاء', style: TextStyle(color: AppColors.error)),
-                ),
-              ],
-            ),
-          ),
-        ) ?? false;
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => const _CancelDialog(),
+    );
 
-    if (confirmed && mounted) {
-      final reason = reasonController.text.trim();
-      reasonController.dispose();
-      await _cubit.cancelDonation(reason: reason.isEmpty ? null : reason);
-    } else {
-      reasonController.dispose();
+    if (result != null && mounted) {
+      await _cubit.cancelDonation(reason: result.isEmpty ? null : result);
     }
   }
 
   void _maybeShowRatingSheet(DonationRequest donation) {
-    if (_ratingSheetShown || donation.charity == null || !donation.canRate) return;
+    if (_ratingSheetShown || donation.charity == null || !donation.canRate) {
+      return;
+    }
     _ratingSheetShown = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      CharityRatingSheet.show(context, cubit: _cubit, charity: donation.charity!);
+      CharityRatingSheet.show(
+        context,
+        cubit: _cubit,
+        charity: donation.charity!,
+      );
     });
   }
 
@@ -122,12 +88,13 @@ class _TrackingViewState extends State<_TrackingView> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.brandBeige,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: AppColors.surfaceLight,
+          backgroundColor: colorScheme.surface,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
@@ -135,14 +102,17 @@ class _TrackingViewState extends State<_TrackingView> {
           title: Text(
             'متابعة الطلب',
             style: AppTextStyles.titleLarge.copyWith(
-              color: AppColors.brandGreen,
+              color: colorScheme.primary,
               fontWeight: FontWeight.w800,
               fontSize: 18.sp,
             ),
           ),
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(1.h),
-            child: Container(height: 1.h, color: AppColors.divider.withValues(alpha: 0.6)),
+            child: Container(
+              height: 1.h,
+              color: colorScheme.outline.withValues(alpha: 0.3),
+            ),
           ),
         ),
         body: BlocConsumer<DonationDetailsCubit, DonationDetailsState>(
@@ -159,7 +129,8 @@ class _TrackingViewState extends State<_TrackingView> {
             // Cancel failures surface as a snackbar (the dialog is already
             // closed); rating/confirm errors are shown inline in their sheets.
             final donation = state.donation;
-            if (donation != null && donation.status == DonationStatus.pickedUp) {
+            if (donation != null &&
+                donation.status == DonationStatus.pickedUp) {
               _maybeShowRatingSheet(donation);
             }
           },
@@ -180,7 +151,7 @@ class _TrackingViewState extends State<_TrackingView> {
             }
 
             return RefreshIndicator(
-              color: AppColors.brandGreen,
+              color: colorScheme.primary,
               onRefresh: _cubit.refresh,
               child: _buildContent(donation),
             );
@@ -199,7 +170,8 @@ class _TrackingViewState extends State<_TrackingView> {
       case DonationStatus.accepted:
         return _AcceptedView(
           donation: donation,
-          onConfirmPickup: () => ConfirmPickupSheet.show(context, cubit: _cubit),
+          onConfirmPickup: () =>
+              ConfirmPickupSheet.show(context, cubit: _cubit),
           onCancel: _showCancelDialog,
         );
       default:
@@ -220,8 +192,11 @@ class _PendingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ListView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
       padding: EdgeInsets.symmetric(
         horizontal: AppConstants.paddingMD.w,
         vertical: AppConstants.paddingLG.h,
@@ -232,11 +207,14 @@ class _PendingView extends StatelessWidget {
           child: Container(
             width: 96.r,
             height: 96.r,
-            decoration: const BoxDecoration(color: AppColors.brandGreen, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
             child: Icon(
               Icons.volunteer_activism_rounded,
               size: 44.r,
-              color: Colors.white.withValues(alpha: 0.92),
+              color: colorScheme.onPrimary.withValues(alpha: 0.92),
             ),
           ),
         ),
@@ -254,43 +232,80 @@ class _PendingView extends StatelessWidget {
         Text(
           'سيتم تحديث الحالة تلقائياً فور قبول الطلب',
           textAlign: TextAlign.center,
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondaryLight),
+          style: AppTextStyles.bodySmall.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
         ),
         SizedBox(height: AppConstants.paddingXL.h),
         DonationSummaryCard(donation: donation),
         SizedBox(height: AppConstants.paddingXL.h),
-        BlocBuilder<DonationDetailsCubit, DonationDetailsState>(
-          buildWhen:
-              (previous, current) => previous.actionInProgress != current.actionInProgress,
-          builder: (context, state) => SizedBox(
-            height: AppConstants.buttonHeight.h,
-            child: OutlinedButton.icon(
-              onPressed:
-                  state.actionInProgress == DonationAction.cancel ? null : () => onCancel(),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+        // Pending requests stay editable right from the tracking screen.
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    context.push(RouteNames.donationEdit, extra: donation),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                  side: BorderSide(
+                    color: colorScheme.primary.withValues(alpha: 0.5),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+                  ),
+                ),
+                icon: const Icon(Icons.edit_rounded, size: 18),
+                label: Text(
+                  'تعديل',
+                  style: AppTextStyles.labelLarge.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              icon:
-                  state.actionInProgress == DonationAction.cancel
+            ),
+            SizedBox(width: AppConstants.paddingMD.w),
+            Expanded(
+              child: BlocBuilder<DonationDetailsCubit, DonationDetailsState>(
+                buildWhen: (previous, current) =>
+                    previous.actionInProgress != current.actionInProgress,
+                builder: (context, state) => OutlinedButton.icon(
+                  onPressed: state.actionInProgress == DonationAction.cancel
+                      ? null
+                      : () => onCancel(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colorScheme.error,
+                    side: BorderSide(
+                      color: colorScheme.error.withValues(alpha: 0.5),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+                    ),
+                  ),
+                  icon: state.actionInProgress == DonationAction.cancel
                       ? SizedBox(
-                        height: 20.h,
-                        width: 20.h,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.error),
-                        ),
-                      )
-                      : const Icon(Icons.close_rounded, size: 20),
-              label: Text(
-                state.actionInProgress == DonationAction.cancel ? 'جارٍ الإلغاء...' : 'إلغاء الطلب',
-                style: AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.w600),
+                          height: 18.h,
+                          width: 18.h,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: colorScheme.error,
+                          ),
+                        )
+                      : const Icon(Icons.close_rounded, size: 18),
+                  label: Text(
+                    state.actionInProgress == DonationAction.cancel
+                        ? 'جارٍ الإلغاء...'
+                        : 'إلغاء',
+                    style: AppTextStyles.labelLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
         SizedBox(height: AppConstants.paddingLG.h),
       ],
@@ -315,8 +330,12 @@ class _AcceptedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final onPrimary = colorScheme.onPrimary;
     return ListView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
       padding: EdgeInsets.symmetric(
         horizontal: AppConstants.paddingMD.w,
         vertical: AppConstants.paddingLG.h,
@@ -326,11 +345,11 @@ class _AcceptedView extends StatelessWidget {
           width: double.infinity,
           padding: EdgeInsets.all(AppConstants.paddingMD.w),
           decoration: BoxDecoration(
-            color: AppColors.brandGreen,
+            color: colorScheme.primary,
             borderRadius: BorderRadius.circular(AppConstants.radiusLG.r),
             boxShadow: [
               BoxShadow(
-                color: AppColors.brandGreen.withValues(alpha: 0.25),
+                color: colorScheme.primary.withValues(alpha: 0.25),
                 blurRadius: 16.r,
                 offset: Offset(0, 6.h),
               ),
@@ -342,10 +361,14 @@ class _AcceptedView extends StatelessWidget {
                 width: 44.r,
                 height: 44.r,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
+                  color: onPrimary.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.check_rounded, size: 26.r, color: Colors.white),
+                child: Icon(
+                  Icons.check_rounded,
+                  size: 26.r,
+                  color: onPrimary,
+                ),
               ),
               SizedBox(width: AppConstants.paddingMD.w),
               Expanded(
@@ -355,7 +378,7 @@ class _AcceptedView extends StatelessWidget {
                     Text(
                       'تم قبول طلبك',
                       style: AppTextStyles.titleSmall.copyWith(
-                        color: Colors.white,
+                        color: onPrimary,
                         fontWeight: FontWeight.w700,
                         fontSize: 15.sp,
                       ),
@@ -364,7 +387,7 @@ class _AcceptedView extends StatelessWidget {
                     Text(
                       'ستتواصل معك الجمعية لاستلام التبرع قريباً',
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: onPrimary.withValues(alpha: 0.8),
                         fontSize: 11.sp,
                       ),
                     ),
@@ -376,12 +399,18 @@ class _AcceptedView extends StatelessWidget {
         ),
         SizedBox(height: AppConstants.paddingMD.h),
         if (donation.charity != null) ...[
-          _CharityCard(charity: donation.charity!, etaMinutes: donation.etaMinutes),
+          _CharityCard(
+            charity: donation.charity!,
+            etaMinutes: donation.etaMinutes,
+          ),
           SizedBox(height: AppConstants.paddingMD.h),
         ],
         Text(
           'تفاصيل الطلب',
-          style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.w700, fontSize: 15.sp),
+          style: AppTextStyles.titleMedium.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 15.sp,
+          ),
         ),
         SizedBox(height: AppConstants.paddingSM.h),
         DonationSummaryCard(donation: donation),
@@ -397,7 +426,9 @@ class _AcceptedView extends StatelessWidget {
             onPressed: onCancel,
             child: Text(
               'إلغاء الطلب',
-              style: AppTextStyles.labelLarge.copyWith(color: AppColors.error),
+              style: AppTextStyles.labelLarge.copyWith(
+                color: colorScheme.error,
+              ),
             ),
           ),
         ),
@@ -418,46 +449,55 @@ class _FinishedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (icon, color, containerColor, title, subtitle) = switch (donation.status) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final (
+      icon,
+      color,
+      containerColor,
+      title,
+      subtitle,
+    ) = switch (donation.status) {
       DonationStatus.pickedUp => (
         Icons.check_circle_rounded,
-        AppColors.brandGreen,
-        AppColors.primaryContainer,
+        colorScheme.primary,
+        colorScheme.primaryContainer,
         'تم استلام التبرع بنجاح',
         'شكراً لمساهمتك في إطعام من يحتاج',
       ),
       DonationStatus.completed => (
         Icons.verified_rounded,
-        AppColors.brandGreen,
-        AppColors.primaryContainer,
+        colorScheme.primary,
+        colorScheme.primaryContainer,
         'تم إتمام التبرع',
         'شكراً لمساهمتك في إطعام من يحتاج',
       ),
       DonationStatus.cancelled => (
         Icons.cancel_rounded,
-        AppColors.error,
-        AppColors.errorContainer,
+        colorScheme.error,
+        colorScheme.errorContainer,
         'تم إلغاء الطلب',
         donation.cancelReason ?? 'يمكنك إنشاء طلب تبرع جديد في أي وقت',
       ),
       DonationStatus.expired => (
         Icons.timer_off_rounded,
-        AppColors.textSecondaryLight,
-        AppColors.surfaceVariantLight,
+        colorScheme.onSurfaceVariant,
+        colorScheme.surfaceContainerHighest,
         'انتهت صلاحية الطلب',
         'لم تُستلم التبرعات قبل انتهاء الوقت المحدد',
       ),
       _ => (
         Icons.event_busy_rounded,
-        AppColors.error,
-        AppColors.errorContainer,
+        colorScheme.error,
+        colorScheme.errorContainer,
         'لم يتم الحضور',
         'لم تحضر الجمعية لاستلام التبرع',
       ),
     };
 
     return ListView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
       padding: EdgeInsets.symmetric(
         horizontal: AppConstants.paddingMD.w,
         vertical: AppConstants.paddingLG.h,
@@ -468,7 +508,10 @@ class _FinishedView extends StatelessWidget {
           child: Container(
             width: 88.r,
             height: 88.r,
-            decoration: BoxDecoration(color: containerColor, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: containerColor,
+              shape: BoxShape.circle,
+            ),
             child: Icon(icon, size: 42.r, color: color),
           ),
         ),
@@ -476,14 +519,17 @@ class _FinishedView extends StatelessWidget {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.w700, fontSize: 17.sp),
+          style: AppTextStyles.titleMedium.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 17.sp,
+          ),
         ),
         SizedBox(height: AppConstants.paddingSM.h),
         Text(
           subtitle,
           textAlign: TextAlign.center,
           style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondaryLight,
+            color: colorScheme.onSurfaceVariant,
             height: 1.6,
           ),
         ),
@@ -501,7 +547,9 @@ class _FinishedView extends StatelessWidget {
             onPressed: () => context.go(RouteNames.home),
             child: Text(
               'العودة للرئيسية',
-              style: AppTextStyles.labelLarge.copyWith(color: AppColors.brandGreen),
+              style: AppTextStyles.labelLarge.copyWith(
+                color: colorScheme.primary,
+              ),
             ),
           ),
         ),
@@ -519,6 +567,7 @@ class _RatingSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final rating = donation.rating;
 
     if (rating != null) {
@@ -526,7 +575,7 @@ class _RatingSection extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(AppConstants.paddingMD.w),
         decoration: BoxDecoration(
-          color: AppColors.surfaceLight,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppConstants.radiusLG.r),
         ),
         child: Column(
@@ -535,7 +584,9 @@ class _RatingSection extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
                 return Icon(
-                  index < rating.stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                  index < rating.stars
+                      ? Icons.star_rounded
+                      : Icons.star_outline_rounded,
                   size: 28.r,
                   color: AppColors.warning,
                 );
@@ -547,7 +598,7 @@ class _RatingSection extends StatelessWidget {
                 rating.comment!,
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondaryLight,
+                  color: colorScheme.onSurfaceVariant,
                   height: 1.6,
                 ),
               ),
@@ -556,7 +607,7 @@ class _RatingSection extends StatelessWidget {
             Text(
               'تقييمك للجمعية',
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondaryLight,
+                color: colorScheme.onSurfaceVariant,
                 fontSize: 11.sp,
               ),
             ),
@@ -569,8 +620,8 @@ class _RatingSection extends StatelessWidget {
 
     return CustomButton(
       label: 'تقييم الجمعية',
-      backgroundColor: AppColors.surfaceLight,
-      foregroundColor: AppColors.brandGreen,
+      backgroundColor: colorScheme.surface,
+      foregroundColor: colorScheme.primary,
       leadingIcon: const Icon(Icons.star_rounded, color: AppColors.warning),
       onPressed: () => CharityRatingSheet.show(
         context,
@@ -594,7 +645,11 @@ class _CharityCard extends StatelessWidget {
   const _CharityCard({required this.charity, required this.etaMinutes});
 
   String get _initials {
-    final parts = charity.name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = charity.name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '؟';
     if (parts.length == 1) return parts.first.characters.first;
     return '${parts.first.characters.first}${parts.last.characters.first}';
@@ -602,15 +657,16 @@ class _CharityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(AppConstants.paddingMD.w),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppConstants.radiusLG.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 12.r,
             offset: Offset(0, 4.h),
           ),
@@ -622,14 +678,15 @@ class _CharityCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 26.r,
-                backgroundColor: AppColors.brandGreen,
-                foregroundImage:
-                    charity.logoUrl != null ? NetworkImage(charity.logoUrl!) : null,
+                backgroundColor: colorScheme.primary,
+                foregroundImage: charity.logoUrl != null
+                    ? NetworkImage(charity.logoUrl!)
+                    : null,
                 onForegroundImageError: (_, _) {},
                 child: Text(
                   _initials,
                   style: AppTextStyles.titleMedium.copyWith(
-                    color: Colors.white,
+                    color: colorScheme.onPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 15.sp,
                   ),
@@ -652,18 +709,22 @@ class _CharityCard extends StatelessWidget {
                     SizedBox(height: 4.h),
                     Row(
                       children: [
-                        Icon(Icons.star_rounded, size: 15.r, color: AppColors.warning),
+                        Icon(
+                          Icons.star_rounded,
+                          size: 15.r,
+                          color: AppColors.warning,
+                        ),
                         SizedBox(width: 4.w),
                         Expanded(
                           child: Text(
                             charity.ratingAvg != null
                                 ? '${charity.ratingAvg!.toStringAsFixed(1)} '
-                                    '(${charity.ratingsCount} تقييم)'
+                                      '(${charity.ratingsCount} تقييم)'
                                 : 'لا تقييمات بعد',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textSecondaryLight,
+                              color: colorScheme.onSurfaceVariant,
                               fontSize: 11.sp,
                             ),
                           ),
@@ -676,27 +737,38 @@ class _CharityCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppConstants.paddingSM.h),
-          Divider(color: AppColors.divider.withValues(alpha: 0.6), height: 1),
+          Divider(
+            color: colorScheme.outline.withValues(alpha: 0.3),
+            height: 1,
+          ),
           SizedBox(height: AppConstants.paddingSM.h),
           Row(
             children: [
-              Icon(Icons.verified_outlined, size: 16.r, color: AppColors.brandGreen),
+              Icon(
+                Icons.verified_outlined,
+                size: 16.r,
+                color: colorScheme.primary,
+              ),
               SizedBox(width: 6.w),
               Expanded(
                 child: Text(
                   'أتمّت ${charity.completedDonationsCount} تبرع',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondaryLight,
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 11.sp,
                   ),
                 ),
               ),
-              Icon(Icons.phone_outlined, size: 16.r, color: AppColors.textSecondaryLight),
+              Icon(
+                Icons.phone_outlined,
+                size: 16.r,
+                color: colorScheme.onSurfaceVariant,
+              ),
               SizedBox(width: 6.w),
               Text(
                 charity.phone,
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondaryLight,
+                  color: colorScheme.onSurfaceVariant,
                   fontSize: 11.sp,
                 ),
               ),
@@ -706,7 +778,11 @@ class _CharityCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.location_on_outlined, size: 16.r, color: AppColors.textSecondaryLight),
+              Icon(
+                Icons.location_on_outlined,
+                size: 16.r,
+                color: colorScheme.onSurfaceVariant,
+              ),
               SizedBox(width: 6.w),
               Expanded(
                 child: Text(
@@ -714,7 +790,7 @@ class _CharityCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondaryLight,
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 11.sp,
                   ),
                 ),
@@ -727,18 +803,22 @@ class _CharityCard extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
+                color: colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.directions_car_rounded, size: 18.r, color: AppColors.brandGreen),
+                  Icon(
+                    Icons.directions_car_rounded,
+                    size: 18.r,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
                   SizedBox(width: 8.w),
                   Text(
                     'الوصول المتوقع: ${DateFormatter.formatEta(etaMinutes)}',
                     style: AppTextStyles.titleSmall.copyWith(
-                      color: AppColors.brandGreen,
+                      color: colorScheme.onPrimaryContainer,
                       fontWeight: FontWeight.w700,
                       fontSize: 12.sp,
                     ),
@@ -747,6 +827,71 @@ class _CharityCard extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CancelDialog extends StatefulWidget {
+  const _CancelDialog();
+
+  @override
+  State<_CancelDialog> createState() => _CancelDialogState();
+}
+
+class _CancelDialogState extends State<_CancelDialog> {
+  final _reasonController = TextEditingController();
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusLG.r),
+        ),
+        title: Text('إلغاء الطلب', style: AppTextStyles.titleMedium),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'هل أنت متأكد من إلغاء طلب التبرع؟',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            SizedBox(height: AppConstants.paddingMD.h),
+            TextField(
+              controller: _reasonController,
+              maxLength: 255,
+              decoration: const InputDecoration(
+                hintText: 'السبب (اختياري)',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('تراجع'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(_reasonController.text.trim()),
+            child: Text(
+              'نعم، إلغاء',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+          ),
         ],
       ),
     );

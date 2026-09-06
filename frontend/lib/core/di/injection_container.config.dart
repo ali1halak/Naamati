@@ -41,6 +41,8 @@ import '../../features/donation/domain/usecases/confirm_pickup_usecase.dart'
     as _i728;
 import '../../features/donation/domain/usecases/create_donation_usecase.dart'
     as _i311;
+import '../../features/donation/domain/usecases/get_donation_audit_usecase.dart'
+    as _i178;
 import '../../features/donation/domain/usecases/get_donation_details_usecase.dart'
     as _i992;
 import '../../features/donation/domain/usecases/get_food_categories_usecase.dart'
@@ -49,8 +51,12 @@ import '../../features/donation/domain/usecases/get_my_donations_usecase.dart'
     as _i54;
 import '../../features/donation/domain/usecases/rate_donation_usecase.dart'
     as _i543;
+import '../../features/donation/domain/usecases/update_donation_usecase.dart'
+    as _i754;
 import '../../features/donation/presentation/bloc/create_donation_cubit.dart'
     as _i456;
+import '../../features/donation/presentation/bloc/donation_audit_cubit.dart'
+    as _i526;
 import '../../features/donation/presentation/bloc/donation_details_cubit.dart'
     as _i477;
 import '../../features/donation/presentation/bloc/my_donations_cubit.dart'
@@ -121,6 +127,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i311.CreateDonationUseCase>(
       () => _i311.CreateDonationUseCase(gh<_i664.DonationRepository>()),
     );
+    gh.lazySingleton<_i178.GetDonationAuditUseCase>(
+      () => _i178.GetDonationAuditUseCase(gh<_i664.DonationRepository>()),
+    );
     gh.lazySingleton<_i992.GetDonationDetailsUseCase>(
       () => _i992.GetDonationDetailsUseCase(gh<_i664.DonationRepository>()),
     );
@@ -133,6 +142,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i543.RateDonationUseCase>(
       () => _i543.RateDonationUseCase(gh<_i664.DonationRepository>()),
     );
+    gh.lazySingleton<_i754.UpdateDonationUseCase>(
+      () => _i754.UpdateDonationUseCase(gh<_i664.DonationRepository>()),
+    );
+    gh.factory<_i186.MyDonationsCubit>(
+      () => _i186.MyDonationsCubit(
+        gh<_i54.GetMyDonationsUseCase>(),
+        gh<_i850.CancelDonationUseCase>(),
+      ),
+    );
     gh.factory<_i477.DonationDetailsCubit>(
       () => _i477.DonationDetailsCubit(
         gh<_i992.GetDonationDetailsUseCase>(),
@@ -141,13 +159,17 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i543.RateDonationUseCase>(),
       ),
     );
-    gh.factory<_i186.MyDonationsCubit>(
-      () => _i186.MyDonationsCubit(gh<_i54.GetMyDonationsUseCase>()),
-    );
     gh.factory<_i456.CreateDonationCubit>(
       () => _i456.CreateDonationCubit(
         gh<_i902.GetFoodCategoriesUseCase>(),
         gh<_i311.CreateDonationUseCase>(),
+        gh<_i754.UpdateDonationUseCase>(),
+      ),
+    );
+    gh.factory<_i526.DonationAuditCubit>(
+      () => _i526.DonationAuditCubit(
+        gh<_i178.GetDonationAuditUseCase>(),
+        gh<_i543.RateDonationUseCase>(),
       ),
     );
     return this;
