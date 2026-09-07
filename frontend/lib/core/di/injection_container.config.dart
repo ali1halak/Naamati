@@ -89,6 +89,18 @@ import '../../features/donation/presentation/bloc/donation_details_cubit.dart'
     as _i477;
 import '../../features/donation/presentation/bloc/my_donations_cubit.dart'
     as _i186;
+import '../../features/notifications/data/datasources/notification_remote_data_source.dart'
+    as _i757;
+import '../../features/notifications/data/repositories/notification_repository_impl.dart'
+    as _i361;
+import '../../features/notifications/domain/repositories/notification_repository.dart'
+    as _i367;
+import '../../features/notifications/domain/usecases/get_notifications_usecase.dart'
+    as _i587;
+import '../../features/notifications/domain/usecases/mark_notification_read_usecase.dart'
+    as _i6;
+import '../../features/notifications/presentation/bloc/notifications_cubit.dart'
+    as _i66;
 import '../../features/profile/data/datasources/profile_remote_data_source.dart'
     as _i847;
 import '../../features/profile/data/repositories/profile_repository_impl.dart'
@@ -141,6 +153,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i847.ProfileRemoteDataSource>(
       () => coreModule.profileRemoteDataSource,
     );
+    gh.lazySingleton<_i757.NotificationRemoteDataSource>(
+      () => coreModule.notificationRemoteDataSource,
+    );
     gh.lazySingleton<_i163.FlutterLocalNotificationsPlugin>(
       () => coreModule.localNotifications,
     );
@@ -180,6 +195,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i1019.RegisterDonorUseCase>(
       () => _i1019.RegisterDonorUseCase(gh<_i787.AuthRepository>()),
+    );
+    gh.lazySingleton<_i367.NotificationRepository>(
+      () => _i361.NotificationRepositoryImpl(
+        remoteDataSource: gh<_i757.NotificationRemoteDataSource>(),
+        networkInfo: gh<_i932.NetworkInfo>(),
+      ),
     );
     gh.lazySingleton<_i664.DonationRepository>(
       () => _i493.DonationRepositoryImpl(
@@ -222,6 +243,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i360.DistributionFormCubit>(
       () => _i360.DistributionFormCubit(gh<_i55.RecordImpactUseCase>()),
+    );
+    gh.lazySingleton<_i587.GetNotificationsUseCase>(
+      () => _i587.GetNotificationsUseCase(gh<_i367.NotificationRepository>()),
+    );
+    gh.lazySingleton<_i6.MarkNotificationReadUseCase>(
+      () => _i6.MarkNotificationReadUseCase(gh<_i367.NotificationRepository>()),
     );
     gh.factory<_i1070.OrderTrackingCubit>(
       () => _i1070.OrderTrackingCubit(
@@ -309,6 +336,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1019.RegisterDonorUseCase>(),
         gh<_i408.RegisterCharityUseCase>(),
         gh<_i992.PushNotificationService>(),
+      ),
+    );
+    gh.factory<_i66.NotificationsCubit>(
+      () => _i66.NotificationsCubit(
+        gh<_i587.GetNotificationsUseCase>(),
+        gh<_i6.MarkNotificationReadUseCase>(),
       ),
     );
     gh.factory<_i526.DonationAuditCubit>(

@@ -123,6 +123,14 @@ class _AppDrawerState extends State<AppDrawer> {
                   context.push(RouteNames.settings);
                 },
               ),
+              _DrawerItem(
+                icon: Icons.notifications_none_rounded,
+                label: 'الإشعارات',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.push(RouteNames.notifications);
+                },
+              ),
               const Spacer(),
               Divider(
                 height: 1,

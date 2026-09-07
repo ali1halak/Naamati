@@ -17,6 +17,7 @@ import '../../features/donation/presentation/pages/edit_donation_page.dart';
 import '../../features/donation/presentation/pages/donation_audit_page.dart';
 import '../../features/donation/presentation/pages/donation_tracking_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profile/domain/entities/my_profile.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
@@ -241,6 +242,11 @@ class AppRouter {
       path: RouteNames.settings,
       name: 'settings',
       builder: (context, state) => const SettingsPage(),
+    ),
+    GoRoute(
+      path: RouteNames.notifications,
+      name: 'notifications',
+      builder: (context, state) => const NotificationsPage(),
     ),
   ];
 }

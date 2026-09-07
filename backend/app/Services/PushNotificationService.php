@@ -35,7 +35,8 @@ class PushNotificationService
         // FCM data payloads are string-only.
         $stringData = array_map(static fn ($value) => (string) $value, $data);
 
-        $message = CloudMessage::withTarget('token', $token)
+        $message = CloudMessage::new()
+            ->withToken($token)
             ->withNotification(FirebaseNotification::create($title, $body))
             ->withData($stringData);
 
@@ -45,7 +46,7 @@ class PushNotificationService
             // The token is no longer registered (app uninstalled / data
             // cleared) — drop it so we stop trying.
             $user->update(['fcm_token' => null]);
-        } catch (MessagingException $e) {
+        } catch (MessagingException|\Throwable $e) {
             Log::warning('FCM send failed', [
                 'user_type' => $user instanceof Donor ? 'donor' : 'charity',
                 'user_id'   => $user->id,

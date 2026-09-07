@@ -67,6 +67,10 @@ abstract class RouteNames {
   // ── Settings ─────────────────────────────────────────────────────────────────
   static const String settings = '/settings';
 
+  // ── Notifications ────────────────────────────────────────────────────────────
+  /// Shared feed for both roles — the backend scopes rows to the caller.
+  static const String notifications = '/notifications';
+
   // ── Error / Fallback ─────────────────────────────────────────────────────────
   static const String notFound = '/404';
 }

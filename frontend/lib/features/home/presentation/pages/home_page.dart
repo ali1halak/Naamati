@@ -131,6 +131,14 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
+        IconButton(
+          icon: Icon(
+            Icons.notifications_none_rounded,
+            size: 24.r,
+            color: colorScheme.onSurface,
+          ),
+          onPressed: () => context.push(RouteNames.notifications),
+        ),
         Padding(
           padding: EdgeInsets.only(left: 12.w, right: 4.w),
           child: GestureDetector(

@@ -47,6 +47,18 @@ abstract class DateFormatter {
     return '${_two(local.day)} $monthName ${local.year}';
   }
 
+  /// Short relative time for a feed-style list — `الآن`, `قبل 5 دقائق`,
+  /// `قبل 3 ساعات`, `قبل يومين`, falling back to [formatDate] beyond a week.
+  static String formatRelative(DateTime? dt) {
+    if (dt == null) return '—';
+    final diff = DateTime.now().difference(dt.toLocal());
+    if (diff.inMinutes < 1) return 'الآن';
+    if (diff.inMinutes < 60) return 'قبل ${diff.inMinutes} دقيقة';
+    if (diff.inHours < 24) return 'قبل ${diff.inHours} ساعة';
+    if (diff.inDays < 7) return 'قبل ${diff.inDays} يوم';
+    return formatDate(dt);
+  }
+
   /// ETA in minutes → `45 دقيقة` / `ساعتان ونصف` style short text.
   static String formatEta(int? minutes) {
     if (minutes == null) return '—';

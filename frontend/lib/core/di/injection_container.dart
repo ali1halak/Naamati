@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/charity/data/datasources/charity_remote_data_source.dart';
 import '../../features/donation/data/datasources/donation_remote_data_source.dart';
+import '../../features/notifications/data/datasources/notification_remote_data_source.dart';
 import '../../features/profile/data/datasources/profile_remote_data_source.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
@@ -53,6 +54,10 @@ abstract class CoreModule {
   @lazySingleton
   ProfileRemoteDataSource get profileRemoteDataSource =>
       ProfileRemoteDataSource(dio);
+
+  @lazySingleton
+  NotificationRemoteDataSource get notificationRemoteDataSource =>
+      NotificationRemoteDataSource(dio);
 
   @preResolve
   Future<SharedPreferences> get sharedPreferences =>
