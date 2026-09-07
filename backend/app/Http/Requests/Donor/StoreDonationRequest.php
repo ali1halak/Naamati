@@ -13,6 +13,20 @@ class StoreDonationRequest extends FormRequest
         return true; // route already guarded by auth:sanctum + type:donor
     }
 
+    /**
+     * Multipart clients send booleans as the strings "true"/"false", which
+     * the boolean rule rejects — normalise before validating.
+     */
+    protected function prepareForValidation(): void
+    {
+        $raw = $this->input('needs_cooking');
+        if (is_string($raw)) {
+            $this->merge([
+                'needs_cooking' => in_array(strtolower($raw), ['true', '1'], true),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
