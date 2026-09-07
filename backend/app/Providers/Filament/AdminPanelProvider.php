@@ -40,16 +40,18 @@ class AdminPanelProvider extends PanelProvider
             ->authGuard('admin')
             ->brandName('نعمتي')
             ->favicon(asset('images/logo.png'))
+            // Matched to the mobile app rather than the dashboard prototype:
+            // the deep forest green of its headers and primary buttons, on the
+            // same warm stone neutral. One identity across app and panel.
             ->colors([
-                // Food-preservation palette: deep green (freshness/sustainability)
-                // as the primary action color, warm harvest amber as the accent.
-                'primary' => Color::hex('#2F6B3C'),
+                'primary' => Color::hex('#1F4A34'),
                 'success' => Color::hex('#3E8E4F'),
                 'warning' => Color::hex('#D9822B'),
                 'danger' => Color::hex('#B3452C'),
-                'info' => Color::hex('#2F6B3C'),
+                'info' => Color::hex('#1F4A34'),
                 'gray' => Color::Stone,
             ])
+            ->font('Cairo')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
