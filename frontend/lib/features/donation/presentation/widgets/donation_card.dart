@@ -17,6 +17,9 @@ class DonationCard extends StatelessWidget {
   final DonationRequest donation;
   final VoidCallback? onTap;
 
+  /// Opens the tracking screen for this card; shown for active states.
+  final VoidCallback? onTrack;
+
   /// Opens the edit form for this card; null hides the button.
   final VoidCallback? onEdit;
 
@@ -30,6 +33,7 @@ class DonationCard extends StatelessWidget {
     super.key,
     required this.donation,
     this.onTap,
+    this.onTrack,
     this.onEdit,
     this.onCancel,
     this.isCancelling = false,
@@ -45,6 +49,8 @@ class DonationCard extends StatelessWidget {
     final showCancel = onCancel != null && donation.canCancel;
     // Editing is safe only before a charity claims the request.
     final showEdit = onEdit != null && donation.status == DonationStatus.pending;
+    // Active requests have a live status worth following.
+    final showTracking = onTrack != null && donation.status.isActive;
 
     return Material(
       color: Colors.transparent,
@@ -223,11 +229,39 @@ class DonationCard extends StatelessWidget {
               ),
             ],
           ),
-              // ── Footer actions: edit (pending) + cancel ───────────────────
-              if (showEdit || showCancel) ...[
+              // ── Footer actions: tracking + edit (pending) + cancel ────────
+              if (showTracking || showEdit || showCancel) ...[
                 SizedBox(height: 10.h),
                 Row(
                   children: [
+                    if (showTracking) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: onTrack,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colorScheme.primary,
+                            side: BorderSide(
+                              color: colorScheme.primary.withValues(alpha: 0.4),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 8.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.radiusMD.r,
+                              ),
+                            ),
+                          ),
+                          icon: const Icon(Icons.route_rounded, size: 16),
+                          label: Text(
+                            'متابعة',
+                            style: AppTextStyles.labelLarge.copyWith(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (showEdit || showCancel) SizedBox(width: 8.w),
+                    ],
                     if (showEdit) ...[
                       Expanded(
                         child: OutlinedButton.icon(

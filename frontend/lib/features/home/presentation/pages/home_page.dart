@@ -487,6 +487,11 @@ class _MyDonationsTabState extends State<_MyDonationsTab> {
                 donation: donation,
                 onTap: () =>
                     context.push(RouteNames.donationAuditPath(donation.id)),
+                onTrack: donation.status.isActive
+                    ? () => context.push(
+                          RouteNames.donationDetailsPath(donation.id),
+                        )
+                    : null,
                 onEdit: donation.status == DonationStatus.pending
                     ? () => context
                           .push(RouteNames.donationEdit, extra: donation)
