@@ -14,6 +14,7 @@ import 'package:dio/dio.dart' as _i361;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
 import '../../features/auth/data/datasources/auth_remote_data_source.dart'
     as _i107;
@@ -23,6 +24,7 @@ import '../../features/auth/domain/repositories/auth_repository.dart' as _i787;
 import '../../features/auth/domain/usecases/get_current_user_usecase.dart'
     as _i17;
 import '../../features/auth/domain/usecases/login_usecase.dart' as _i188;
+import '../../features/auth/domain/usecases/logout_usecase.dart' as _i48;
 import '../../features/auth/domain/usecases/register_charity_usecase.dart'
     as _i408;
 import '../../features/auth/domain/usecases/register_donor_usecase.dart'
@@ -85,17 +87,37 @@ import '../../features/donation/presentation/bloc/donation_details_cubit.dart'
     as _i477;
 import '../../features/donation/presentation/bloc/my_donations_cubit.dart'
     as _i186;
+import '../../features/profile/data/datasources/profile_remote_data_source.dart'
+    as _i847;
+import '../../features/profile/data/repositories/profile_repository_impl.dart'
+    as _i334;
+import '../../features/profile/domain/repositories/profile_repository.dart'
+    as _i894;
+import '../../features/profile/domain/usecases/change_password_usecase.dart'
+    as _i550;
+import '../../features/profile/domain/usecases/get_my_profile_usecase.dart'
+    as _i981;
+import '../../features/profile/domain/usecases/update_profile_photo_usecase.dart'
+    as _i669;
+import '../../features/profile/domain/usecases/update_profile_usecase.dart'
+    as _i478;
+import '../../features/profile/presentation/bloc/profile_cubit.dart' as _i800;
 import '../network/network_info.dart' as _i932;
+import '../theme/theme_cubit.dart' as _i611;
 import 'injection_container.dart' as _i809;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
-  _i174.GetIt init({
+  Future<_i174.GetIt> init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
-  }) {
+  }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final coreModule = _$CoreModule();
+    await gh.factoryAsync<_i460.SharedPreferences>(
+      () => coreModule.sharedPreferences,
+      preResolve: true,
+    );
     gh.lazySingleton<_i558.FlutterSecureStorage>(
       () => coreModule.secureStorage,
     );
@@ -111,6 +133,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i912.CharityRemoteDataSource>(
       () => coreModule.charityRemoteDataSource,
     );
+    gh.lazySingleton<_i847.ProfileRemoteDataSource>(
+      () => coreModule.profileRemoteDataSource,
+    );
     gh.lazySingleton<_i560.CharityRepository>(
       () => _i227.CharityRepositoryImpl(
         remoteDataSource: gh<_i912.CharityRemoteDataSource>(),
@@ -124,11 +149,23 @@ extension GetItInjectableX on _i174.GetIt {
         secureStorage: gh<_i558.FlutterSecureStorage>(),
       ),
     );
+    gh.lazySingleton<_i894.ProfileRepository>(
+      () => _i334.ProfileRepositoryImpl(
+        remoteDataSource: gh<_i847.ProfileRemoteDataSource>(),
+        networkInfo: gh<_i932.NetworkInfo>(),
+      ),
+    );
+    gh.lazySingleton<_i611.ThemeCubit>(
+      () => _i611.ThemeCubit(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i17.GetCurrentUserUseCase>(
       () => _i17.GetCurrentUserUseCase(gh<_i787.AuthRepository>()),
     );
     gh.lazySingleton<_i188.LoginUseCase>(
       () => _i188.LoginUseCase(gh<_i787.AuthRepository>()),
+    );
+    gh.lazySingleton<_i48.LogoutUseCase>(
+      () => _i48.LogoutUseCase(gh<_i787.AuthRepository>()),
     );
     gh.lazySingleton<_i408.RegisterCharityUseCase>(
       () => _i408.RegisterCharityUseCase(gh<_i787.AuthRepository>()),
@@ -159,6 +196,18 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i55.RecordImpactUseCase>(
       () => _i55.RecordImpactUseCase(gh<_i560.CharityRepository>()),
+    );
+    gh.lazySingleton<_i550.ChangePasswordUseCase>(
+      () => _i550.ChangePasswordUseCase(gh<_i894.ProfileRepository>()),
+    );
+    gh.lazySingleton<_i981.GetMyProfileUseCase>(
+      () => _i981.GetMyProfileUseCase(gh<_i894.ProfileRepository>()),
+    );
+    gh.lazySingleton<_i669.UpdateProfilePhotoUseCase>(
+      () => _i669.UpdateProfilePhotoUseCase(gh<_i894.ProfileRepository>()),
+    );
+    gh.lazySingleton<_i478.UpdateProfileUseCase>(
+      () => _i478.UpdateProfileUseCase(gh<_i894.ProfileRepository>()),
     );
     gh.factory<_i360.DistributionFormCubit>(
       () => _i360.DistributionFormCubit(gh<_i55.RecordImpactUseCase>()),
@@ -205,6 +254,14 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i754.UpdateDonationUseCase>(
       () => _i754.UpdateDonationUseCase(gh<_i664.DonationRepository>()),
+    );
+    gh.factory<_i800.ProfileCubit>(
+      () => _i800.ProfileCubit(
+        gh<_i981.GetMyProfileUseCase>(),
+        gh<_i478.UpdateProfileUseCase>(),
+        gh<_i669.UpdateProfilePhotoUseCase>(),
+        gh<_i550.ChangePasswordUseCase>(),
+      ),
     );
     gh.factory<_i186.MyDonationsCubit>(
       () => _i186.MyDonationsCubit(

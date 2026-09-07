@@ -46,4 +46,7 @@ abstract class AuthRemoteDataSource {
 
   @GET(ApiConstants.pathMe)
   Future<MeResponseModel> getCurrentUser();
+
+  @POST(ApiConstants.pathLogout)
+  Future<void> logout();
 }

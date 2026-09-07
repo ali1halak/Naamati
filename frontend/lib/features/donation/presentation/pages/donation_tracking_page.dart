@@ -300,7 +300,9 @@ class _PendingView extends StatelessWidget {
                   ),
                   padding: EdgeInsets.symmetric(vertical: 14.h),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusMD.r,
+                    ),
                   ),
                 ),
                 icon: const Icon(Icons.edit_rounded, size: 18),
@@ -328,7 +330,9 @@ class _PendingView extends StatelessWidget {
                     ),
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusMD.r,
+                      ),
                     ),
                   ),
                   icon: state.actionInProgress == DonationAction.cancel
@@ -411,11 +415,7 @@ class _AcceptedView extends StatelessWidget {
                   color: onPrimary.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.check_rounded,
-                  size: 26.r,
-                  color: onPrimary,
-                ),
+                child: Icon(Icons.check_rounded, size: 26.r, color: onPrimary),
               ),
               SizedBox(width: AppConstants.paddingMD.w),
               Expanded(
@@ -498,7 +498,7 @@ class _AcceptedView extends StatelessWidget {
             label: 'تم التسليم',
             leadingIcon: const Icon(Icons.check_circle_outline_rounded),
             onPressed: onConfirmPickup,
-        ),
+          ),
         SizedBox(height: AppConstants.paddingSM.h),
         Center(
           child: TextButton(
@@ -761,7 +761,9 @@ class _CharityCard extends StatelessWidget {
                 foregroundImage: charity.logoUrl != null
                     ? NetworkImage(charity.logoUrl!)
                     : null,
-                onForegroundImageError: (_, _) {},
+                onForegroundImageError: charity.logoUrl != null
+                    ? (_, _) {}
+                    : null,
                 child: Text(
                   _initials,
                   style: AppTextStyles.titleMedium.copyWith(
@@ -816,10 +818,7 @@ class _CharityCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppConstants.paddingSM.h),
-          Divider(
-            color: colorScheme.outline.withValues(alpha: 0.3),
-            height: 1,
-          ),
+          Divider(color: colorScheme.outline.withValues(alpha: 0.3), height: 1),
           SizedBox(height: AppConstants.paddingSM.h),
           Row(
             children: [
@@ -951,9 +950,7 @@ class _CancelDialogState extends State<_CancelDialog> {
             TextField(
               controller: _reasonController,
               maxLength: 255,
-              decoration: const InputDecoration(
-                hintText: 'السبب (اختياري)',
-              ),
+              decoration: const InputDecoration(hintText: 'السبب (اختياري)'),
             ),
           ],
         ),
@@ -963,12 +960,11 @@ class _CancelDialogState extends State<_CancelDialog> {
             child: const Text('تراجع'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(_reasonController.text.trim()),
+            onPressed: () =>
+                Navigator.of(context).pop(_reasonController.text.trim()),
             child: Text(
               'نعم، إلغاء',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-              ),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
         ],

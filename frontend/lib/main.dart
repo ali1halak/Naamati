@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'core/di/injection_container.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_cubit.dart';
 import 'features/splash/presentation/splash_lottie.dart';
 
 /// Application entry point.
@@ -28,7 +30,7 @@ void main() async {
   await dotenv.load(fileName: ".env");
 
   // Register all core (and later, feature) dependencies.
-  configureDependencies();
+  await configureDependencies();
 
   // Pre-decode the splash lottie so it renders on the splash's first frame
   // instead of appearing after a visible delay.
@@ -48,13 +50,18 @@ class NaamatiApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp.router(
-          title: 'نِعْمَتِي',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: ThemeMode.system,
-          routerConfig: AppRouter.router,
+        return BlocProvider<ThemeCubit>(
+          create: (_) => sl<ThemeCubit>(),
+          child: BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, themeMode) => MaterialApp.router(
+              title: 'نِعْمَتِي',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: themeMode,
+              routerConfig: AppRouter.router,
+            ),
+          ),
         );
       },
     );

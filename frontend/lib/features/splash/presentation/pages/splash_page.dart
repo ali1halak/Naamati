@@ -10,6 +10,9 @@ import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/usecases/usecase.dart';
+import '../../../auth/domain/entities/user.dart';
+import '../../../auth/domain/usecases/get_current_user_usecase.dart';
 import '../splash_lottie.dart';
 
 /// Animated brand splash screen.
@@ -46,7 +49,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   late final AnimationController _lottieController;
 
   Timer? _fallbackTimer;
-  bool _isAuth = false;
+  String _destination = RouteNames.welcome;
   bool _authDone = false;
   bool _animDone = false;
   bool _navigated = false;
@@ -105,20 +108,45 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       ..forward(from: 0);
   }
 
+  /// Checks for a stored token and, if present, resolves *which* home the
+  /// signed-in account belongs on — a bare "has a token" check previously
+  /// sent every authenticated user (charity included) to the donor home,
+  /// mirrors the role/status branch [LoginCubit]'s listener already uses.
   Future<void> _checkAuth() async {
     final secureStorage = sl<FlutterSecureStorage>();
     final accessToken = await secureStorage.read(key: StorageKeys.accessToken);
-    _isAuth = accessToken != null && accessToken.isNotEmpty;
+    if (accessToken == null || accessToken.isEmpty) {
+      _destination = RouteNames.welcome;
+      _authDone = true;
+      _tryNavigate();
+      return;
+    }
+
+    final result = await sl<GetCurrentUserUseCase>()(const NoParams());
+    _destination = result.fold(
+      // Stale/expired token — the auth interceptor already cleared it.
+      (_) => RouteNames.welcome,
+      _destinationFor,
+    );
     _authDone = true;
     _tryNavigate();
   }
 
+  String _destinationFor(User user) {
+    if (user.accountType == 'charity') {
+      if (user.status == 'suspended') return RouteNames.charitySuspended;
+      if (user.status == 'pending') return RouteNames.charityPending;
+      return RouteNames.charityHome;
+    }
+    return RouteNames.home;
+  }
+
   /// Leaves the splash only after both the animation finished and the auth
-  /// token has been read.
+  /// check has resolved.
   void _tryNavigate() {
     if (!mounted || _navigated || !_authDone || !_animDone) return;
     _navigated = true;
-    context.go(_isAuth ? RouteNames.home : RouteNames.welcome);
+    context.go(_destination);
   }
 
   @override

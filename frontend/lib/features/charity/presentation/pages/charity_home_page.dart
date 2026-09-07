@@ -10,6 +10,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_error_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/loading_indicator.dart';
+import '../../../home/presentation/widgets/app_drawer.dart';
 import '../bloc/available_requests_cubit.dart';
 import '../bloc/available_requests_state.dart';
 import '../widgets/accept_request_sheet.dart';
@@ -50,6 +51,7 @@ class _CharityHomeBodyState extends State<_CharityHomeBody> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: _CharityHomeAppBar(colorScheme: Theme.of(context).colorScheme),
+        drawer: const AppDrawer(homeRoute: RouteNames.charityHome),
         body: switch (_selectedIndex) {
           0 => const _AvailableRequestsTab(),
           1 => const _ComingSoonTab(title: 'الطلبات النشطة'),
@@ -81,6 +83,16 @@ class _CharityHomeAppBar extends StatelessWidget
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
       centerTitle: true,
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: Icon(
+            Icons.menu_rounded,
+            size: 24.r,
+            color: colorScheme.onSurface,
+          ),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
       title: Text(
         'نعمتي',
         style: AppTextStyles.titleLarge.copyWith(

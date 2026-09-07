@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Charity\CharityViolationController;
 use App\Http\Controllers\Api\Donor\DonationRequestController;
 use App\Http\Controllers\Api\FoodCategoryController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 // Route ids are numeric. Without this a request for /requests/abc reaches the
@@ -29,6 +30,17 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
         // Shared by donors and charities — each only ever sees its own feed.
         Route::get('/notifications', [NotificationController::class, 'index']);
         Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+
+        // Self-service account management. Deliberately NOT under type:donor /
+        // type:charity — a charity awaiting approval must still be able to
+        // view and edit its own profile even though it is blocked from every
+        // /charity/* route until active.
+        Route::prefix('profile')->group(function () {
+            Route::get('/', [ProfileController::class, 'show']);
+            Route::put('/', [ProfileController::class, 'update'])->middleware('throttle:10,1');
+            Route::post('/photo', [ProfileController::class, 'updatePhoto'])->middleware('throttle:10,1');
+            Route::post('/password', [ProfileController::class, 'changePassword'])->middleware('throttle:5,1');
+        });
 
         // ---- Donor ----
         Route::middleware('type:donor')->prefix('donor')->group(function () {

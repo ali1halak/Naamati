@@ -3,10 +3,12 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/charity/data/datasources/charity_remote_data_source.dart';
 import '../../features/donation/data/datasources/donation_remote_data_source.dart';
+import '../../features/profile/data/datasources/profile_remote_data_source.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
 import 'injection_container.config.dart';
@@ -18,8 +20,8 @@ final sl = GetIt.instance;
   preferRelativeImports: true,
   asExtension: true,
 )
-void configureDependencies() {
-  sl.init();
+Future<void> configureDependencies() async {
+  await sl.init();
 }
 
 @module
@@ -46,4 +48,12 @@ abstract class CoreModule {
   @lazySingleton
   CharityRemoteDataSource get charityRemoteDataSource =>
       CharityRemoteDataSource(dio);
+
+  @lazySingleton
+  ProfileRemoteDataSource get profileRemoteDataSource =>
+      ProfileRemoteDataSource(dio);
+
+  @preResolve
+  Future<SharedPreferences> get sharedPreferences =>
+      SharedPreferences.getInstance();
 }

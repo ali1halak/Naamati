@@ -192,4 +192,15 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(const NetworkFailure());
     }
   }
+
+  @override
+  Future<void> logout() async {
+    try {
+      await remoteDataSource.logout();
+    } catch (_) {
+      // Best-effort — the token may already be invalid/expired server-side.
+    }
+    await secureStorage.delete(key: StorageKeys.accessToken);
+    await secureStorage.delete(key: StorageKeys.refreshToken);
+  }
 }

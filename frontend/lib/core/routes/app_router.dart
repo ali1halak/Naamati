@@ -17,6 +17,10 @@ import '../../features/donation/presentation/pages/edit_donation_page.dart';
 import '../../features/donation/presentation/pages/donation_audit_page.dart';
 import '../../features/donation/presentation/pages/donation_tracking_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/profile/domain/entities/my_profile.dart';
+import '../../features/profile/presentation/pages/edit_profile_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import 'route_names.dart';
 
@@ -225,14 +229,18 @@ class AppRouter {
     GoRoute(
       path: RouteNames.profile,
       name: 'profile',
+      builder: (context, state) => const ProfilePage(),
+    ),
+    GoRoute(
+      path: RouteNames.editProfile,
+      name: 'edit-profile',
       builder: (context, state) =>
-          const _PlaceholderPage(), // replace with ProfilePage
+          EditProfilePage(profile: state.extra as MyProfile),
     ),
     GoRoute(
       path: RouteNames.settings,
       name: 'settings',
-      builder: (context, state) =>
-          const _PlaceholderPage(), // replace with SettingsPage
+      builder: (context, state) => const SettingsPage(),
     ),
   ];
 }

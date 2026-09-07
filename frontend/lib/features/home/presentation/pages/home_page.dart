@@ -18,6 +18,7 @@ import '../../../donation/presentation/widgets/donation_card.dart';
 import '../../../donation/presentation/widgets/my_donations_filter_bar.dart';
 import '../../../donation/domain/entities/donation_status.dart';
 import '../../../donation/domain/entities/my_donations_filter.dart';
+import '../widgets/app_drawer.dart';
 import '../widgets/home_bottom_nav.dart';
 import '../widgets/new_donation_card.dart';
 
@@ -76,6 +77,7 @@ class _DonorHomeBodyState extends State<_DonorHomeBody> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: _HomeAppBar(colorScheme: Theme.of(context).colorScheme),
+        drawer: const AppDrawer(homeRoute: RouteNames.home),
         body: Stack(
           children: [
             const _HeartBackground(),
@@ -109,17 +111,15 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
-      leading: IconButton(
-        icon: Icon(
-          Icons.menu_rounded,
-          size: 24.r,
-          color: colorScheme.onSurface,
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: Icon(
+            Icons.menu_rounded,
+            size: 24.r,
+            color: colorScheme.onSurface,
+          ),
+          onPressed: () => Scaffold.of(context).openDrawer(),
         ),
-        onPressed: () {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('القائمة قريباً')));
-        },
       ),
       centerTitle: true,
       title: Text(
@@ -225,9 +225,7 @@ class _CancelDialogState extends State<_CancelDialog> {
             TextField(
               controller: _reasonController,
               maxLength: 255,
-              decoration: const InputDecoration(
-                hintText: 'السبب (اختياري)',
-              ),
+              decoration: const InputDecoration(hintText: 'السبب (اختياري)'),
             ),
           ],
         ),
@@ -237,12 +235,11 @@ class _CancelDialogState extends State<_CancelDialog> {
             child: const Text('تراجع'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(_reasonController.text.trim()),
+            onPressed: () =>
+                Navigator.of(context).pop(_reasonController.text.trim()),
             child: Text(
               'نعم، إلغاء',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-              ),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
         ],
@@ -305,9 +302,7 @@ class _MyDonationsTabState extends State<_MyDonationsTab> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok ? 'تم إلغاء الطلب' : 'تعذر إلغاء الطلب'),
-      ),
+      SnackBar(content: Text(ok ? 'تم إلغاء الطلب' : 'تعذر إلغاء الطلب')),
     );
   }
 
@@ -489,12 +484,12 @@ class _MyDonationsTabState extends State<_MyDonationsTab> {
                     context.push(RouteNames.donationAuditPath(donation.id)),
                 onTrack: donation.status.isActive
                     ? () => context.push(
-                          RouteNames.donationDetailsPath(donation.id),
-                        )
+                        RouteNames.donationDetailsPath(donation.id),
+                      )
                     : null,
                 onEdit: donation.status == DonationStatus.pending
-                    ? () => context
-                          .push(RouteNames.donationEdit, extra: donation)
+                    ? () =>
+                          context.push(RouteNames.donationEdit, extra: donation)
                     : null,
                 onCancel: () => _confirmCancel(donation.id),
                 isCancelling: state.cancellingId == donation.id,

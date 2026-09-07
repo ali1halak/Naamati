@@ -34,4 +34,9 @@ abstract class AuthRepository {
   });
 
   Future<Either<Failure, User>> getCurrentUser();
+
+  /// Best-effort server-side token revocation, then always clears the local
+  /// session — the token may already be stale, but the user must be able to
+  /// log out regardless of network state.
+  Future<void> logout();
 }
