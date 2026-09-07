@@ -17,7 +17,7 @@ DonationRequestModel _$DonationRequestModelFromJson(
           json['food_category'] as Map<String, dynamic>,
         ),
   needsCooking: json['needs_cooking'] as bool,
-  quantityDesc: json['quantity_desc'] as String,
+  quantity: (json['quantity'] as num).toInt(),
   description: json['description'] as String?,
   customCategory: json['custom_category'] as String?,
   validUntil: json['valid_until'] == null
@@ -75,7 +75,7 @@ Map<String, dynamic> _$DonationRequestModelToJson(
   'id': instance.id,
   'status': _$DonationStatusEnumMap[instance.status]!,
   'needs_cooking': instance.needsCooking,
-  'quantity_desc': instance.quantityDesc,
+  'quantity': instance.quantity,
   'description': instance.description,
   'custom_category': instance.customCategory,
   'valid_until': instance.validUntil?.toIso8601String(),

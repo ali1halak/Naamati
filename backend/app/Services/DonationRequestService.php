@@ -97,7 +97,7 @@ class DonationRequestService
                 'donor_id'         => $donorId,
                 'food_category_id' => $data['food_category_id'],
                 'needs_cooking'    => $needsCooking,
-                'quantity_desc'    => $data['quantity_desc'],
+                'quantity'         => (int) $data['quantity'],
                 'description'      => $data['description'] ?? null,
                 'custom_category'  => $data['custom_category'] ?? null,
                 'valid_until'      => $data['valid_until'],
@@ -155,7 +155,7 @@ class DonationRequestService
                 'food_category_id' => $data['food_category_id'],
                 'needs_cooking'    => $data['needs_cooking']
                     ?? FoodCategory::findOrFail($data['food_category_id'])->default_needs_cooking,
-                'quantity_desc'    => $data['quantity_desc'],
+                'quantity'         => (int) $data['quantity'],
                 'description'      => $data['description'] ?? null,
                 'custom_category'  => $data['custom_category'] ?? null,
                 'valid_until'      => $data['valid_until'],

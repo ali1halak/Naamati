@@ -32,9 +32,9 @@ class DonationRequestSeeder extends Seeder
             return;
         }
 
-        // Plain positive numbers (estimated people count) — matches the
-        // create/update validation, which rejects free text.
-        $quantities = ['12', '20', '8', '30', '15', '25', '40', '6'];
+        // Plain positive numbers (estimated people count, 1–99999) — matches
+        // the create/update validation, which rejects free text.
+        $quantities = [12, 20, 8, 30, 15, 25, 40, 6];
         $descriptions = [
             'أرز مع دجاج، محضّر اليوم', 'خضار طازجة من سلة اليوم',
             'معجنات متنوعة، خُبزت صباحاً', 'معلبات متنوعة لم تُفتح',
@@ -89,7 +89,7 @@ class DonationRequestSeeder extends Seeder
                     'charity_id' => $charityId,
                     'food_category_id' => $categories->random()->id,
                     'needs_cooking' => (bool) random_int(0, 1),
-                    'quantity_desc' => trim($quantities[array_rand($quantities)]),
+                    'quantity' => $quantities[array_rand($quantities)],
                     'description' => $descriptions[array_rand($descriptions)],
                     'valid_until' => $createdAt->copy()->addDays(random_int(1, 3)),
                     'pickup_until' => $createdAt->copy()->addHours(random_int(4, 24)),

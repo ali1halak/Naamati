@@ -43,7 +43,7 @@ class DonationRequestModel extends DonationRequest {
     required super.status,
     this.foodCategory,
     @JsonKey(name: 'needs_cooking') required super.needsCooking,
-    @JsonKey(name: 'quantity_desc') required super.quantityDesc,
+    @JsonKey(name: 'quantity') required super.quantity,
     super.description,
     @JsonKey(name: 'custom_category') super.customCategory,
     @JsonKey(name: 'valid_until') super.validUntil,

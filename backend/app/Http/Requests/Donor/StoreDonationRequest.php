@@ -35,9 +35,8 @@ class StoreDonationRequest extends FormRequest
             // Optional: when omitted we fall back to the category's default.
             'needs_cooking' => ['sometimes', 'boolean'],
 
-            // A plain positive number (estimated people count) — free text
-            // invited entries like "تكفي -5 أشخاص".
-            'quantity_desc' => ['required', 'integer', 'min:1', 'max:99999'],
+            // A plain positive number (estimated people count, 1–99999).
+            'quantity'      => ['required', 'integer', 'min:1', 'max:99999'],
             'description'   => ['nullable', 'string', 'max:255'],
 
             // Required only when the donor files under "غير ذلك" (icon: other)
@@ -109,9 +108,9 @@ class StoreDonationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'quantity_desc.integer' => 'يجب أن تكون الكمية رقماً صحيحاً (عدد الأشخاص التقديري).',
-            'quantity_desc.min'     => 'يجب أن تكون الكمية 1 على الأقل.',
-            'quantity_desc.max'     => 'الكمية كبيرة بشكل غير واقعي.',
+            'quantity.integer' => 'يجب أن تكون الكمية رقماً صحيحاً (عدد الأشخاص التقديري).',
+            'quantity.min'     => 'يجب أن تكون الكمية 1 على الأقل.',
+            'quantity.max'     => 'الكمية كبيرة بشكل غير واقعي.',
             'contact_phone.regex'   => 'رقم التواصل غير صحيح.',
             'valid_until.before_or_equal'      => 'يجب ألا يتجاوز وقت انتهاء الصلاحية 30 يوماً من الآن.',
             'valid_until.after'            => 'يجب أن يكون وقت انتهاء صلاحية الطعام في المستقبل.',

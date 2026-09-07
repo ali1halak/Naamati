@@ -239,8 +239,9 @@ class _DonationAuditView extends StatelessWidget {
                                           .trim()
                                           .isNotEmpty)
                                   ? audit.orderInfo.description!
-                                  : (audit.orderInfo.quantityDesc ??
-                                        'لا يوجد وصف'),
+                                  : (audit.orderInfo.quantity == null
+                                        ? 'لا يوجد وصف'
+                                        : 'الكمية التقديرية: ${audit.orderInfo.quantity} شخص'),
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: colorScheme.onSurface,
                                 fontSize: 13.sp,

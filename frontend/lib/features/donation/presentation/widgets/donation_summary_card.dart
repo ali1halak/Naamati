@@ -44,9 +44,7 @@ class DonationSummaryCard extends StatelessWidget {
           _SummaryRow(
             icon: Icons.local_dining_rounded,
             label: 'الكمية',
-            value: int.tryParse(donation.quantityDesc) != null
-                ? '${donation.quantityDesc} شخص'
-                : donation.quantityDesc,
+            value: '${donation.quantity} شخص',
           ),
           _SummaryRow(
             icon: donation.needsCooking

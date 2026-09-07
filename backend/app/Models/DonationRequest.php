@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class DonationRequest extends Model
 {
     protected $fillable = [
-        'donor_id', 'charity_id', 'food_category_id', 'needs_cooking', 'quantity_desc',
+        'donor_id', 'charity_id', 'food_category_id', 'needs_cooking', 'quantity',
         'description', 'custom_category', 'valid_until', 'pickup_until', 'pickup_address',
         'pickup_notes', 'latitude', 'longitude', 'contact_phone', 'status', 'accepted_at',
         'eta_minutes', 'picked_up_at', 'donor_confirmed_at', 'charity_confirmed_at',
@@ -21,6 +21,7 @@ class DonationRequest extends Model
     {
         return [
             'needs_cooking' => 'boolean',
+            'quantity'      => 'integer',
             'status'        => RequestStatus::class,
             'cancelled_by'  => CancelledBy::class,
             'valid_until'   => 'datetime',

@@ -42,7 +42,7 @@ abstract class DonationRemoteDataSource {
   Future<DonationResponseModel> createDonation({
     @Part(name: 'food_category_id') required int foodCategoryId,
     @Part(name: 'needs_cooking') required bool needsCooking,
-    @Part(name: 'quantity_desc') required String quantityDesc,
+    @Part(name: 'quantity') required int quantity,
     @Part(name: 'description') String? description,
     @Part(name: 'custom_category') String? customCategory,
     @Part(name: 'valid_until') required String validUntil,
@@ -68,7 +68,7 @@ abstract class DonationRemoteDataSource {
     @Part(name: '_method') required String method,
     @Part(name: 'food_category_id') required int foodCategoryId,
     @Part(name: 'needs_cooking') required bool needsCooking,
-    @Part(name: 'quantity_desc') required String quantityDesc,
+    @Part(name: 'quantity') required int quantity,
     @Part(name: 'description') String? description,
     @Part(name: 'custom_category') String? customCategory,
     @Part(name: 'valid_until') required String validUntil,

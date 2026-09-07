@@ -32,7 +32,7 @@ class DonationRequestResource extends JsonResource
 
             'food_category' => new FoodCategoryResource($this->whenLoaded('foodCategory')),
             'needs_cooking' => $this->needs_cooking,
-            'quantity_desc' => $this->quantity_desc,
+            'quantity'      => $this->quantity,
             'description'   => $this->description,
 
             // Set only when the donor filed under "غير ذلك" and named the food.

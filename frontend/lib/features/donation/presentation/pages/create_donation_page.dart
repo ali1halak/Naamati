@@ -200,7 +200,8 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
       CreateDonationParams(
         foodCategoryId: selectedCategoryId,
         needsCooking: cubit.state.needsCooking,
-        quantityDesc: _quantityController.text.trim(),
+        // The stepper's validator guarantees a whole number 1–99999.
+        quantity: int.parse(_quantityController.text.trim()),
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),

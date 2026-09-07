@@ -39,7 +39,7 @@ class CharityOrderAuditResource extends JsonResource
                 'category_icon'  => $this->foodCategory?->icon,
                 'food_type'      => $this->foodCategory?->name_ar,
                 'food_condition' => $this->needs_cooking ? 'نيء' : 'جاهز للتوزيع',
-                'quantity_desc'  => $this->quantity_desc,
+                'quantity'        => $this->quantity,
                 'description'    => $this->description,
                 'expiry_date'    => $this->valid_until?->toDateString(),
                 'created_at'     => ArabicDate::dayTime($this->created_at),

@@ -140,7 +140,7 @@ return [
         // Donation request
         'food_category_id' => 'صنف الطعام',
         'needs_cooking'    => 'يحتاج طهي',
-        'quantity_desc'    => 'وصف الكمية',
+        'quantity'         => 'الكمية',
         'description'      => 'الوصف',
         'valid_until'      => 'مدة صلاحية الطعام',
         'pickup_until'     => 'آخر موعد للاستلام',
