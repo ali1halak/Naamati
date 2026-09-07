@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Donor\DonationRequestController;
 use App\Http\Controllers\Api\FoodCategoryController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\TokenController;
 use Illuminate\Support\Facades\Route;
 
 // Route ids are numeric. Without this a request for /requests/abc reaches the
@@ -23,7 +24,13 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
         Route::post('/login', [AuthController::class, 'login']);
     });
 
-    Route::middleware('auth:sanctum')->group(function () {
+    // A refresh token is only good for this one call.
+    Route::middleware(['auth:sanctum', 'ability:refresh'])
+        ->post('/refresh', [TokenController::class, 'refresh']);
+
+    // Everything else needs an access token. Tokens issued before the pair
+    // existed carry `*`, which satisfies this too, so old sessions keep working.
+    Route::middleware(['auth:sanctum', 'ability:access'])->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
         Route::get('/food-categories', [FoodCategoryController::class, 'index']);

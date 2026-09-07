@@ -50,6 +50,11 @@
             "key": "admin_static_token",
             "value": "",
             "type": "string"
+        },
+        {
+            "key": "refresh_token",
+            "value": "",
+            "type": "string"
         }
     ],
     "item": [
@@ -66,7 +71,8 @@
                                 "exec": [
                                     "pm.test('status is 201', () => pm.response.to.have.status(201));",
                                     "const json = pm.response.json();",
-                                    "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);"
+                                    "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);",
+                                    "if (json.data && json.data.refresh_token) pm.collectionVariables.set('refresh_token', json.data.refresh_token);"
                                 ]
                             }
                         }
@@ -125,7 +131,7 @@
                                     ]
                                 }
                             },
-                            "status": "Created",
+                            "status": "201",
                             "code": 201,
                             "_postman_previewlanguage": "json",
                             "header": [
@@ -135,7 +141,7 @@
                                 }
                             ],
                             "cookie": [],
-                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"donor\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Ahmad\",\n      \"type\": \"restaurant\",\n      \"email\": \"ahmad.donor@example.com\",\n      \"phone\": \"0999999999\",\n      \"created_at\": \"2026-08-31T22:26:58.000000Z\",\n      \"updated_at\": \"2026-08-31T22:26:58.000000Z\"\n    },\n    \"token\": \"5|yc1UXJuPBZ1JitKy8j6AzypVSfCHLGrnp3wTz0EHd1e76285\"\n  },\n  \"message\": \"Registered successfully\"\n}"
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"type\": \"donor\",\n        \"user\": {\n            \"name\": \"Ahmad\",\n            \"type\": \"restaurant\",\n            \"email\": \"pm-pair-donor-d62cae@example.invalid\",\n            \"phone\": \"0999999999\",\n            \"updated_at\": \"2026-09-07T19:30:02.000000Z\",\n            \"created_at\": \"2026-09-07T19:30:02.000000Z\",\n            \"id\": 39,\n            \"avatar_url\": null\n        },\n        \"access_token\": \"105|UfDJnMnlfuSzcwyTX5N9G3HfTU0ZZY171x48Y63n63116eb9\",\n        \"refresh_token\": \"106|fO5nnggrnfXbhYAQYwkmzCKGvyTR6yEKZh2vprfZ715c0e56\",\n        \"token_type\": \"Bearer\",\n        \"expires_in\": 3600,\n        \"token\": \"105|UfDJnMnlfuSzcwyTX5N9G3HfTU0ZZY171x48Y63n63116eb9\"\n    },\n    \"message\": \"تم إنشاء الحساب بنجاح\"\n}"
                         },
                         {
                             "name": "422 Email already taken",
@@ -186,7 +192,8 @@
                                 "exec": [
                                     "pm.test('status is 201', () => pm.response.to.have.status(201));",
                                     "const json = pm.response.json();",
-                                    "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);"
+                                    "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);",
+                                    "if (json.data && json.data.refresh_token) pm.collectionVariables.set('refresh_token', json.data.refresh_token);"
                                 ]
                             }
                         }
@@ -293,7 +300,7 @@
                                     ]
                                 }
                             },
-                            "status": "Created",
+                            "status": "201",
                             "code": 201,
                             "_postman_previewlanguage": "json",
                             "header": [
@@ -303,7 +310,7 @@
                                 }
                             ],
                             "cookie": [],
-                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"charity\",\n    \"user\": {\n      \"id\": 2,\n      \"name\": \"Al-Birr Charity\",\n      \"email\": \"birr@example.com\",\n      \"phone\": \"0911111111\",\n      \"has_kitchen\": true,\n      \"status\": \"pending\",\n      \"address\": \"Aleppo - Al-Furqan\",\n      \"work_start\": \"08:00\",\n      \"work_end\": \"16:00\",\n      \"license_document\": null,\n      \"created_at\": \"2026-08-31T22:26:59.000000Z\",\n      \"updated_at\": \"2026-08-31T22:26:59.000000Z\",\n      \"logo_url\": null\n    },\n    \"token\": \"6|wkgRz0KlIJ1IVj65OZGVhD0OtscnVpu6XmvYEJ5B5c6f5155\"\n  },\n  \"message\": \"Registered successfully. Your account is pending admin approval.\"\n}"
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"type\": \"charity\",\n        \"user\": {\n            \"name\": \"Al-Birr Charity\",\n            \"email\": \"pm-pair-charity-d62cae@example.invalid\",\n            \"phone\": \"0911111111\",\n            \"has_kitchen\": true,\n            \"status\": \"pending\",\n            \"address\": \"Aleppo - Al-Furqan\",\n            \"work_start\": \"08:00\",\n            \"work_end\": \"16:00\",\n            \"license_document\": null,\n            \"updated_at\": \"2026-09-07T19:30:04.000000Z\",\n            \"created_at\": \"2026-09-07T19:30:04.000000Z\",\n            \"id\": 54,\n            \"logo_url\": null\n        },\n        \"access_token\": \"107|xQ7nQz6p4d4XCAwFp6H0G6RbFkoSZBzBWKK3ILU8d6ad4934\",\n        \"refresh_token\": \"108|CDE8PF4ispXHYM3vN8j6oMfQc3XyoAZNUW9j40ro406f29a5\",\n        \"token_type\": \"Bearer\",\n        \"expires_in\": 3600,\n        \"token\": \"107|xQ7nQz6p4d4XCAwFp6H0G6RbFkoSZBzBWKK3ILU8d6ad4934\"\n    },\n    \"message\": \"تم إنشاء الحساب بنجاح\"\n}"
                         },
                         {
                             "name": "422 Missing charity fields",
@@ -354,7 +361,8 @@
                                 "exec": [
                                     "pm.test('status is 200', () => pm.response.to.have.status(200));",
                                     "const json = pm.response.json();",
-                                    "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);"
+                                    "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);",
+                                    "if (json.data && json.data.refresh_token) pm.collectionVariables.set('refresh_token', json.data.refresh_token);"
                                 ]
                             }
                         }
@@ -411,7 +419,7 @@
                                     ]
                                 }
                             },
-                            "status": "OK",
+                            "status": "200",
                             "code": 200,
                             "_postman_previewlanguage": "json",
                             "header": [
@@ -421,7 +429,7 @@
                                 }
                             ],
                             "cookie": [],
-                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"donor\",\n    \"user\": {\n      \"id\": 3,\n      \"name\": \"Ahmad\",\n      \"type\": \"restaurant\",\n      \"email\": \"ahmad.donor@example.com\",\n      \"phone\": \"0999999999\",\n      \"created_at\": \"2026-08-24T19:02:47.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:47.000000Z\"\n    },\n    \"token\": \"7|b2Hg3zyLpGRVgUTZsNFnkWrttNI1fDPKD02HuQ2qc26bba8b\"\n  },\n  \"message\": null\n}"
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"type\": \"donor\",\n        \"user\": {\n            \"id\": 39,\n            \"name\": \"Ahmad\",\n            \"type\": \"restaurant\",\n            \"email\": \"pm-pair-donor-d62cae@example.invalid\",\n            \"phone\": \"0999999999\",\n            \"created_at\": \"2026-09-07T19:30:02.000000Z\",\n            \"updated_at\": \"2026-09-07T19:30:02.000000Z\",\n            \"avatar_url\": null\n        },\n        \"access_token\": \"109|5BQ7XtVGZJTYyJJ7nuhH4wUIgOaJxIqr0IkGTpCk9a3ad8bf\",\n        \"refresh_token\": \"110|rDZgJxpA4LocZmU8DHCjjwFwcCy5gQ2iyXTyjj9i679aeb26\",\n        \"token_type\": \"Bearer\",\n        \"expires_in\": 3600,\n        \"token\": \"109|5BQ7XtVGZJTYyJJ7nuhH4wUIgOaJxIqr0IkGTpCk9a3ad8bf\"\n    },\n    \"message\": null\n}"
                         },
                         {
                             "name": "200 OK (charity)",
@@ -447,7 +455,7 @@
                                     ]
                                 }
                             },
-                            "status": "OK",
+                            "status": "200",
                             "code": 200,
                             "_postman_previewlanguage": "json",
                             "header": [
@@ -457,7 +465,7 @@
                                 }
                             ],
                             "cookie": [],
-                            "body": "{\n  \"success\": true,\n  \"data\": {\n    \"type\": \"charity\",\n    \"user\": {\n      \"id\": 2,\n      \"name\": \"Al-Birr Charity\",\n      \"email\": \"birr@example.com\",\n      \"phone\": \"0911111111\",\n      \"has_kitchen\": true,\n      \"status\": \"pending\",\n      \"license_document\": null,\n      \"rating_avg\": null,\n      \"ratings_count\": 0,\n      \"address\": \"Aleppo - Al-Furqan\",\n      \"work_start\": \"08:00:00\",\n      \"work_end\": \"16:00:00\",\n      \"created_at\": \"2026-08-24T19:02:48.000000Z\",\n      \"updated_at\": \"2026-08-24T19:02:48.000000Z\",\n      \"logo_url\": null\n    },\n    \"token\": \"8|wkgRz0KlIJ1IVj65OZGVhD0OtscnVpu6XmvYEJ5B5c6f5155\"\n  },\n  \"message\": null\n}"
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"type\": \"charity\",\n        \"user\": {\n            \"id\": 54,\n            \"name\": \"Al-Birr Charity\",\n            \"email\": \"pm-pair-charity-d62cae@example.invalid\",\n            \"phone\": \"0911111111\",\n            \"has_kitchen\": true,\n            \"status\": \"active\",\n            \"license_document\": null,\n            \"rating_avg\": null,\n            \"ratings_count\": 0,\n            \"address\": \"Aleppo - Al-Furqan\",\n            \"work_start\": \"08:00:00\",\n            \"work_end\": \"16:00:00\",\n            \"created_at\": \"2026-09-07T19:30:04.000000Z\",\n            \"updated_at\": \"2026-09-07T19:30:06.000000Z\",\n            \"logo_url\": null\n        },\n        \"access_token\": \"111|4zQcfEUronyVteeMAkPrBtyz6FZmftV6CPCrxGrmc3699fee\",\n        \"refresh_token\": \"112|biWWVPMHRzhR1pxpm1zPxnuhJ3s7sEthD4b5UIr113157239\",\n        \"token_type\": \"Bearer\",\n        \"expires_in\": 3600,\n        \"token\": \"111|4zQcfEUronyVteeMAkPrBtyz6FZmftV6CPCrxGrmc3699fee\"\n    },\n    \"message\": null\n}"
                         },
                         {
                             "name": "401 Invalid credentials",
@@ -2664,7 +2672,7 @@
                                     "value": "application/json"
                                 }
                             ],
-                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"type\": \"admin\",\n        \"user\": {\n            \"id\": 2,\n            \"name\": \"مدير النظام\",\n            \"email\": \"pm-admin@naamaty.local\",\n            \"created_at\": \"2026-09-07T14:45:59.000000Z\",\n            \"updated_at\": \"2026-09-07T14:45:59.000000Z\"\n        },\n        \"token\": \"94|GhmY1asZWW1nVUj9YxMz024QW4oN6fVz8ualygFfc44a6b43\"\n    },\n    \"message\": \"تم تسجيل الدخول\"\n}"
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"type\": \"admin\",\n        \"user\": {\n            \"id\": 3,\n            \"name\": \"مدير النظام\",\n            \"email\": \"pm-pair-admin-d62cae@example.invalid\",\n            \"created_at\": \"2026-09-07T19:30:09.000000Z\",\n            \"updated_at\": \"2026-09-07T19:30:09.000000Z\"\n        },\n        \"access_token\": \"113|RyiWGQKFQZ8Hxnb3Qo1pFAuLnEKqB9lRaZNfYmeF80879723\",\n        \"refresh_token\": \"114|whSV65bgZHGPa84QJNjVm37mGM7YPoy4bzTFHYgK821ac1bb\",\n        \"token_type\": \"Bearer\",\n        \"expires_in\": 3600,\n        \"token\": \"113|RyiWGQKFQZ8Hxnb3Qo1pFAuLnEKqB9lRaZNfYmeF80879723\"\n    },\n    \"message\": \"تم تسجيل الدخول\"\n}"
                         },
                         {
                             "name": "401 Invalid credentials",
@@ -3142,6 +3150,163 @@
                                 }
                             ],
                             "body": "{\n    \"success\": false,\n    \"data\": null,\n    \"message\": \"فشل التحقق من البيانات\",\n    \"errors\": {\n        \"admin_note\": [\n            \"ملاحظة الإدارة قصيرة جداً، اشرح سبب المخالفة.\"\n        ]\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Auth — تجديد الجلسة",
+            "item": [
+                {
+                    "name": "تجديد التوكن",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const b = pm.response.json();",
+                                    "if (b.success && b.data) {",
+                                    "    if (b.data.token) pm.collectionVariables.set(\"token\", b.data.token);",
+                                    "    if (b.data.access_token) pm.collectionVariables.set(\"token\", b.data.access_token);",
+                                    "    if (b.data.refresh_token) pm.collectionVariables.set(\"refresh_token\", b.data.refresh_token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{refresh_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/refresh",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "refresh"
+                            ]
+                        },
+                        "description": "Exchanges the refresh token for a brand new pair. Send the REFRESH token as\nthe bearer here — an access token is refused with 403, because it lacks the\n`refresh` ability.\n\nROTATION\nThe pair you send in is destroyed by this call. Presenting the same refresh\ntoken again fails with 401 — this is what turns a copied token into a dead one\nthe moment the real client refreshes, so store the new pair before doing\nanything else.\n\nWHEN TO CALL THIS\nAccess tokens last 1 hour (`expires_in` in every login/register response).\nCall /refresh proactively before it expires, or reactively the first time a\nrequest comes back 401 — either way, retry the original request with the new\naccess_token afterwards.\n\nRefresh tokens last 30 days. When one is rejected, the session is over and the\napp should return to the login screen.\n\nThis one endpoint works for a donor, a charity, or an admin token alike — the\ngate is the token's ability, not the account type."
+                    },
+                    "response": [
+                        {
+                            "name": "200 New pair issued",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{refresh_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/refresh",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "refresh"
+                                    ]
+                                },
+                                "description": "Exchanges the refresh token for a brand new pair. Send the REFRESH token as\nthe bearer here — an access token is refused with 403, because it lacks the\n`refresh` ability.\n\nROTATION\nThe pair you send in is destroyed by this call. Presenting the same refresh\ntoken again fails with 401 — this is what turns a copied token into a dead one\nthe moment the real client refreshes, so store the new pair before doing\nanything else.\n\nWHEN TO CALL THIS\nAccess tokens last 1 hour (`expires_in` in every login/register response).\nCall /refresh proactively before it expires, or reactively the first time a\nrequest comes back 401 — either way, retry the original request with the new\naccess_token afterwards.\n\nRefresh tokens last 30 days. When one is rejected, the session is over and the\napp should return to the login screen.\n\nThis one endpoint works for a donor, a charity, or an admin token alike — the\ngate is the token's ability, not the account type."
+                            },
+                            "status": "200",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"data\": {\n        \"access_token\": \"103|o8XAMijdYPk4B4VVL0btGaUfqR25IxamweNLIA2O9ff9c42d\",\n        \"refresh_token\": \"104|5panHznFMGVu6hNfR56lfWiV6TBZ7iFiaNLIy2VXfe2a1dda\",\n        \"token_type\": \"Bearer\",\n        \"expires_in\": 3600,\n        \"token\": \"103|o8XAMijdYPk4B4VVL0btGaUfqR25IxamweNLIA2O9ff9c42d\"\n    },\n    \"message\": \"تم تجديد الجلسة\"\n}"
+                        },
+                        {
+                            "name": "403 Access token cannot refresh",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{refresh_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/refresh",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "refresh"
+                                    ]
+                                },
+                                "description": "Exchanges the refresh token for a brand new pair. Send the REFRESH token as\nthe bearer here — an access token is refused with 403, because it lacks the\n`refresh` ability.\n\nROTATION\nThe pair you send in is destroyed by this call. Presenting the same refresh\ntoken again fails with 401 — this is what turns a copied token into a dead one\nthe moment the real client refreshes, so store the new pair before doing\nanything else.\n\nWHEN TO CALL THIS\nAccess tokens last 1 hour (`expires_in` in every login/register response).\nCall /refresh proactively before it expires, or reactively the first time a\nrequest comes back 401 — either way, retry the original request with the new\naccess_token afterwards.\n\nRefresh tokens last 30 days. When one is rejected, the session is over and the\napp should return to the login screen.\n\nThis one endpoint works for a donor, a charity, or an admin token alike — the\ngate is the token's ability, not the account type."
+                            },
+                            "status": "403",
+                            "code": 403,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"data\": null,\n    \"message\": \"ليس لديك صلاحية لهذا الإجراء\",\n    \"errors\": null\n}"
+                        },
+                        {
+                            "name": "401 Refresh token already spent",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{refresh_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/refresh",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "refresh"
+                                    ]
+                                },
+                                "description": "Exchanges the refresh token for a brand new pair. Send the REFRESH token as\nthe bearer here — an access token is refused with 403, because it lacks the\n`refresh` ability.\n\nROTATION\nThe pair you send in is destroyed by this call. Presenting the same refresh\ntoken again fails with 401 — this is what turns a copied token into a dead one\nthe moment the real client refreshes, so store the new pair before doing\nanything else.\n\nWHEN TO CALL THIS\nAccess tokens last 1 hour (`expires_in` in every login/register response).\nCall /refresh proactively before it expires, or reactively the first time a\nrequest comes back 401 — either way, retry the original request with the new\naccess_token afterwards.\n\nRefresh tokens last 30 days. When one is rejected, the session is over and the\napp should return to the login screen.\n\nThis one endpoint works for a donor, a charity, or an admin token alike — the\ngate is the token's ability, not the account type."
+                            },
+                            "status": "401",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"data\": null,\n    \"message\": \"يجب تسجيل الدخول أولاً\",\n    \"errors\": null\n}"
                         }
                     ]
                 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Admin;
+use App\Services\TokenService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -23,6 +24,8 @@ class AdminAuthController extends Controller
 {
     use ApiResponse;
 
+    public function __construct(private readonly TokenService $tokens) {}
+
     public function login(LoginRequest $request)
     {
         $admin = Admin::where('email', $request->email)->first();
@@ -34,9 +37,9 @@ class AdminAuthController extends Controller
         }
 
         return $this->ok([
-            'type'  => 'admin',
-            'user'  => $admin,
-            'token' => $admin->createToken('admin-auth', ['admin'])->plainTextToken,
+            'type' => 'admin',
+            'user' => $admin,
+            ...$this->tokens->issue($admin, 'admin-auth'),
         ], 'تم تسجيل الدخول');
     }
 
@@ -51,7 +54,7 @@ class AdminAuthController extends Controller
     /** Revokes only the token used for this call. */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $this->tokens->revokeSession($request->user(), $request->user()->currentAccessToken()->name);
 
         return $this->ok(null, 'تم تسجيل الخروج');
     }

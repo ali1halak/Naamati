@@ -10,6 +10,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Charity;
 use App\Models\Donor;
 use App\Services\AuthService;
+use App\Services\TokenService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -17,8 +18,10 @@ class AuthController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private AuthService $authService)
-    {
+    public function __construct(
+        private AuthService $authService,
+        private TokenService $tokens,
+    ) {
     }
 
     public function registerDonor(RegisterRequest $request)
@@ -31,12 +34,10 @@ class AuthController extends Controller
             'password' => $request->password,
         ]);
 
-        $token = $donor->createToken('donor-auth')->plainTextToken;
-
         return $this->ok([
-            'type'  => 'donor',
-            'user'  => $donor,
-            'token' => $token,
+            'type' => 'donor',
+            'user' => $donor,
+            ...$this->tokens->issue($donor, 'donor-auth'),
         ], 'تم إنشاء الحساب بنجاح', 201);
     }
 
@@ -64,12 +65,10 @@ class AuthController extends Controller
             'license_document'  => $licenseDocumentPath,
         ]);
 
-        $token = $charity->createToken('charity-auth')->plainTextToken;
-
         return $this->ok([
-            'type'  => 'charity',
-            'user'  => $charity,
-            'token' => $token,
+            'type' => 'charity',
+            'user' => $charity,
+            ...$this->tokens->issue($charity, 'charity-auth'),
         ], 'تم إنشاء الحساب بنجاح', 201);
     }
 
@@ -81,19 +80,19 @@ class AuthController extends Controller
             return $this->fail('البريد الإلكتروني أو كلمة المرور غير صحيحة', 401);
         }
 
-        $token = $result['user']->createToken($result['type'] . '-auth')->plainTextToken;
-
         return $this->ok([
-            'type'  => $result['type'],
-            'user'  => $result['user'],
-            'token' => $token,
+            'type' => $result['type'],
+            'user' => $result['user'],
+            ...$this->tokens->issue($result['user'], $result['type'] . '-auth'),
         ]);
     }
 
     public function logout(Request $request)
     {
         $user = $request->user();
-        $user->currentAccessToken()->delete();
+
+        // Drops both halves of this device's pair; other devices stay in.
+        $this->tokens->revokeSession($user, $user->currentAccessToken()->name);
 
         // Stop pushing to a device that just signed out of this account.
         if ($user->fcm_token !== null) {
