@@ -16,8 +16,8 @@ class DonationRequest extends Equatable {
   /// Whether the food needs cooking before consumption.
   final bool needsCooking;
 
-  /// Free-text quantity description (e.g. "وجبات تكفي 10 أشخاص").
-  final String quantityDesc;
+  /// Estimated people count the donor entered (1–99999).
+  final int quantity;
 
   /// Optional extra description.
   final String? description;
@@ -90,7 +90,7 @@ class DonationRequest extends Equatable {
     required this.status,
     this.foodCategory,
     required this.needsCooking,
-    required this.quantityDesc,
+    required this.quantity,
     this.description,
     this.customCategory,
     this.validUntil,
@@ -143,7 +143,7 @@ class DonationRequest extends Equatable {
     status,
     foodCategory,
     needsCooking,
-    quantityDesc,
+    quantity,
     description,
     customCategory,
     validUntil,

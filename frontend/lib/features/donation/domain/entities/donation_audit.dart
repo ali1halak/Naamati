@@ -38,7 +38,7 @@ class DonationOrderInfo extends Equatable {
   final String? foodType;
   final String? foodCondition;
   final String? expiryDate;
-  final String? quantityDesc;
+  final int? quantity;
   final String? description;
 
   const DonationOrderInfo({
@@ -49,7 +49,7 @@ class DonationOrderInfo extends Equatable {
     this.foodType,
     this.foodCondition,
     this.expiryDate,
-    this.quantityDesc,
+    this.quantity,
     this.description,
   });
 
@@ -62,7 +62,7 @@ class DonationOrderInfo extends Equatable {
     foodType,
     foodCondition,
     expiryDate,
-    quantityDesc,
+    quantity,
     description,
   ];
 }

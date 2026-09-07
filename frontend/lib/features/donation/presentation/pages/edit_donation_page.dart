@@ -97,7 +97,7 @@ class _EditDonationViewState extends State<_EditDonationView> {
   void initState() {
     super.initState();
     final d = widget.donation;
-    _quantityController = TextEditingController(text: d.quantityDesc);
+    _quantityController = TextEditingController(text: '${d.quantity}');
     _descriptionController = TextEditingController(text: d.description ?? '');
     _customCategoryController = TextEditingController();
     _addressController = TextEditingController(text: d.pickupAddress);
@@ -205,7 +205,8 @@ class _EditDonationViewState extends State<_EditDonationView> {
       CreateDonationParams(
         foodCategoryId: selectedCategoryId,
         needsCooking: cubit.state.needsCooking,
-        quantityDesc: _quantityController.text.trim(),
+        // The stepper's validator guarantees a whole number 1–99999.
+        quantity: int.parse(_quantityController.text.trim()),
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),

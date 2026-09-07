@@ -76,7 +76,7 @@ class DonationRequestLifecycleTest extends TestCase
             'donor_id' => 1,
             'food_category_id' => $this->vegetables->id,
             'needs_cooking' => false,
-            'quantity_desc' => '10',
+            'quantity' => '10',
             'valid_until' => now()->addDays(2),
             'pickup_until' => now()->addDay(),
             'pickup_address' => 'Aleppo',
@@ -161,14 +161,14 @@ class DonationRequestLifecycleTest extends TestCase
             ->putJson("/api/v1/donor/requests/{$request->id}", [
                 'food_category_id' => $this->vegetables->id,
                 'needs_cooking' => false,
-                'quantity_desc' => 25,
+                'quantity' => 25,
                 'valid_until' => now()->addDays(3)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_address' => 'Aleppo - Al-Furqan',
                 'contact_phone' => '0999000111',
             ])
             ->assertStatus(200)
-            ->assertJsonPath('data.quantity_desc', '25');
+            ->assertJsonPath('data.quantity', 25);
     }
 
     public function test_edit_is_rejected_once_not_pending(): void
@@ -178,7 +178,7 @@ class DonationRequestLifecycleTest extends TestCase
         $this->withToken($this->donorToken)
             ->putJson("/api/v1/donor/requests/{$request->id}", [
                 'food_category_id' => $this->vegetables->id,
-                'quantity_desc' => 25,
+                'quantity' => 25,
                 'valid_until' => now()->addDays(3)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_address' => 'Aleppo',
@@ -202,7 +202,7 @@ class DonationRequestLifecycleTest extends TestCase
         $this->withToken($this->donorToken)
             ->putJson("/api/v1/donor/requests/{$request->id}", [
                 'food_category_id' => $this->vegetables->id,
-                'quantity_desc' => 25,
+                'quantity' => 25,
                 'valid_until' => now()->addDays(3)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_address' => 'Aleppo',
@@ -235,7 +235,7 @@ class DonationRequestLifecycleTest extends TestCase
                 '_method' => 'PUT',
                 'food_category_id' => $this->vegetables->id,
                 'needs_cooking' => 'false',
-                'quantity_desc' => '10',
+                'quantity' => '10',
                 'valid_until' => now()->addDays(3)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_address' => 'Aleppo',
@@ -271,7 +271,7 @@ class DonationRequestLifecycleTest extends TestCase
             ->post("/api/v1/donor/requests/{$request->id}", [
                 '_method' => 'PUT',
                 'food_category_id' => $this->vegetables->id,
-                'quantity_desc' => '10',
+                'quantity' => '10',
                 'valid_until' => now()->addDays(3)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_address' => 'Aleppo',
@@ -297,7 +297,7 @@ class DonationRequestLifecycleTest extends TestCase
             ->post("/api/v1/donor/requests/{$request->id}", [
                 '_method' => 'PUT',
                 'food_category_id' => $this->vegetables->id,
-                'quantity_desc' => '10',
+                'quantity' => '10',
                 'valid_until' => now()->addDays(3)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_address' => 'Aleppo',
@@ -315,7 +315,7 @@ class DonationRequestLifecycleTest extends TestCase
         $response = $this->withToken($this->donorToken)
             ->postJson('/api/v1/donor/requests', [
                 'food_category_id' => $this->vegetables->id,
-                'quantity_desc' => 10,
+                'quantity' => 10,
                 'custom_category' => 'آيفون 15',
                 'valid_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDay()->format('Y-m-d H:i:s'),
@@ -337,7 +337,7 @@ class DonationRequestLifecycleTest extends TestCase
             ->postJson('/api/v1/donor/requests', [
                 'food_category_id' => $this->meat->id,
                 'needs_cooking' => false,
-                'quantity_desc' => 7,
+                'quantity' => 7,
                 'valid_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDay()->format('Y-m-d H:i:s'),
                 'pickup_address' => 'Aleppo',
@@ -354,7 +354,7 @@ class DonationRequestLifecycleTest extends TestCase
             ->postJson('/api/v1/donor/requests', [
                 'food_category_id' => $this->other->id,
                 'needs_cooking' => true,
-                'quantity_desc' => 7,
+                'quantity' => 7,
                 'custom_category' => 'مربى منزلي',
                 'valid_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDay()->format('Y-m-d H:i:s'),
@@ -370,7 +370,7 @@ class DonationRequestLifecycleTest extends TestCase
         $this->withToken($this->donorToken)
             ->postJson('/api/v1/donor/requests', [
                 'food_category_id' => $this->other->id,
-                'quantity_desc' => 7,
+                'quantity' => 7,
                 'valid_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDay()->format('Y-m-d H:i:s'),
                 'pickup_address' => 'Aleppo',
@@ -384,7 +384,7 @@ class DonationRequestLifecycleTest extends TestCase
     {
         $payload = [
             'food_category_id' => $this->vegetables->id,
-            'quantity_desc' => 10,
+            'quantity' => 10,
             'valid_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
             'pickup_until' => now()->addDay()->format('Y-m-d H:i:s'),
             'pickup_address' => 'Aleppo',
@@ -411,7 +411,7 @@ class DonationRequestLifecycleTest extends TestCase
         $this->withToken($this->donorToken)
             ->postJson('/api/v1/donor/requests', [
                 'food_category_id' => $this->vegetables->id,
-                'quantity_desc' => 10,
+                'quantity' => 10,
                 'valid_until' => now()->addDays(31)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_address' => 'Aleppo',
@@ -427,7 +427,7 @@ class DonationRequestLifecycleTest extends TestCase
         $this->withToken($this->donorToken)
             ->postJson('/api/v1/donor/requests', [
                 'food_category_id' => $this->vegetables->id,
-                'quantity_desc' => 10,
+                'quantity' => 10,
                 'valid_until' => now()->addDays(29)->format('Y-m-d H:i:s'),
                 'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
                 'pickup_address' => 'Aleppo',
@@ -448,7 +448,7 @@ class DonationRequestLifecycleTest extends TestCase
 
         foreach (['-5', 'تكفي 10', '0'] as $bad) {
             $this->withToken($this->donorToken)
-                ->postJson('/api/v1/donor/requests', $payload + ['quantity_desc' => $bad])
+                ->postJson('/api/v1/donor/requests', $payload + ['quantity' => $bad])
                 ->assertStatus(422);
         }
     }

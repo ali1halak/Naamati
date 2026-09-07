@@ -94,7 +94,7 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
   Future<DonationResponseModel> createDonation({
     required int foodCategoryId,
     required bool needsCooking,
-    required String quantityDesc,
+    required int quantity,
     String? description,
     String? customCategory,
     required String validUntil,
@@ -113,7 +113,7 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
     final _data = FormData();
     _data.fields.add(MapEntry('food_category_id', foodCategoryId.toString()));
     _data.fields.add(MapEntry('needs_cooking', needsCooking.toString()));
-    _data.fields.add(MapEntry('quantity_desc', quantityDesc));
+    _data.fields.add(MapEntry('quantity', quantity.toString()));
     if (description != null) {
       _data.fields.add(MapEntry('description', description));
     }
@@ -178,7 +178,7 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
     required String method,
     required int foodCategoryId,
     required bool needsCooking,
-    required String quantityDesc,
+    required int quantity,
     String? description,
     String? customCategory,
     required String validUntil,
@@ -199,7 +199,7 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
     _data.fields.add(MapEntry('_method', method));
     _data.fields.add(MapEntry('food_category_id', foodCategoryId.toString()));
     _data.fields.add(MapEntry('needs_cooking', needsCooking.toString()));
-    _data.fields.add(MapEntry('quantity_desc', quantityDesc));
+    _data.fields.add(MapEntry('quantity', quantity.toString()));
     if (description != null) {
       _data.fields.add(MapEntry('description', description));
     }

@@ -45,7 +45,7 @@ class DonationRequestResource extends Resource
 
                 Tables\Columns\TextColumn::make('foodCategory.name_ar')->label('الصنف')->searchable(),
 
-                Tables\Columns\TextColumn::make('quantity_desc')->label('الكمية')->limit(30),
+                Tables\Columns\TextColumn::make('quantity')->label('الكمية (شخص)')->sortable(),
 
                 Tables\Columns\TextColumn::make('donor.name')->label('المتبرع')->searchable()->limit(20),
 
@@ -92,7 +92,7 @@ class DonationRequestResource extends Resource
         return $infolist->schema([
             Section::make('التبرع')->schema([
                 TextEntry::make('foodCategory.name_ar')->label('الصنف'),
-                TextEntry::make('quantity_desc')->label('الكمية'),
+                TextEntry::make('quantity')->label('الكمية (شخص)'),
                 TextEntry::make('needs_cooking')
                     ->label('حالة الطعام')
                     ->formatStateUsing(fn (bool $state) => $state ? 'نيء — يحتاج طهياً' : 'جاهز للتوزيع'),

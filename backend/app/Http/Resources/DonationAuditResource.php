@@ -34,7 +34,7 @@ class DonationAuditResource extends JsonResource
                 'food_type'     => $this->foodCategory?->name_ar,
                 'food_condition' => $this->needs_cooking ? 'نيء' : 'جاهز للتوزيع',
                 'expiry_date'   => $this->valid_until?->toDateString(),
-                'quantity_desc' => $this->quantity_desc,
+                'quantity'       => $this->quantity,
                 'description'   => $this->description,
             ],
 

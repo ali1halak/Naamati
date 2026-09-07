@@ -42,8 +42,8 @@ class UpdateDonationRequest extends FormRequest
 
             'needs_cooking' => ['sometimes', 'boolean'],
 
-            // Same rule as create: a plain positive people count.
-            'quantity_desc' => ['required', 'integer', 'min:1', 'max:99999'],
+            // Same rule as create: a plain positive people count (1–99999).
+            'quantity'      => ['required', 'integer', 'min:1', 'max:99999'],
             'description'   => ['nullable', 'string', 'max:255'],
 
             'custom_category' => ['nullable', 'string', 'max:150'],
@@ -130,9 +130,9 @@ class UpdateDonationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'quantity_desc.integer' => 'The quantity must be a whole number (estimated people count).',
-            'quantity_desc.min'     => 'The quantity must be at least 1.',
-            'quantity_desc.max'     => 'The quantity is unrealistically large.',
+            'quantity.integer' => 'The quantity must be a whole number (estimated people count).',
+            'quantity.min'     => 'The quantity must be at least 1.',
+            'quantity.max'     => 'The quantity is unrealistically large.',
             'contact_phone.regex'   => 'The contact phone must be a valid phone number.',
             'valid_until.before_or_equal' => 'The food expiry must be within 30 days from now.',
             'valid_until.after'            => 'The food expiry time must be in the future.',

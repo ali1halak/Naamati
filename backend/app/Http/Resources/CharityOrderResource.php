@@ -22,14 +22,15 @@ class CharityOrderResource extends JsonResource
         return [
             'id'          => $this->id,
             'title'       => $this->foodCategory?->name_ar,
-            'description' => $this->description ?: $this->quantity_desc,
+            // The card's only text when the donor wrote no description.
+            'description' => $this->description ?: "كمية تقديرية: {$this->quantity} شخص",
 
             // First photo for the card; the rest are on the details screen.
             'image_url' => $this->whenLoaded('images', fn () => $this->images->first()?->url),
             'images'    => $this->whenLoaded('images', fn () => $this->images->pluck('url')),
 
             'category_icon' => $this->foodCategory?->icon,
-            'quantity_desc' => $this->quantity_desc,
+            'quantity'      => $this->quantity,
 
             // Drives the kitchen rule: a charity without one never sees these,
             // but the badge still matters on the card.

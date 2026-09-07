@@ -9,7 +9,8 @@ class CreateDonationParams extends Equatable {
   /// Sent explicitly (defaults from the category are applied by the UI).
   final bool needsCooking;
 
-  final String quantityDesc;
+  /// Estimated people count (1–99999) — the stepper guarantees a whole number.
+  final int quantity;
   final String? description;
 
   /// Free-text food name required when the category is "غير ذلك" (other),
@@ -43,7 +44,7 @@ class CreateDonationParams extends Equatable {
   const CreateDonationParams({
     required this.foodCategoryId,
     required this.needsCooking,
-    required this.quantityDesc,
+    required this.quantity,
     this.description,
     this.customCategory,
     required this.validUntil,
@@ -61,7 +62,7 @@ class CreateDonationParams extends Equatable {
   List<Object?> get props => [
     foodCategoryId,
     needsCooking,
-    quantityDesc,
+    quantity,
     description,
     customCategory,
     validUntil,

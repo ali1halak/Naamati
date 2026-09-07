@@ -70,8 +70,10 @@ class DonationRequestController extends Controller
                 );
 
                 $q->where('description', 'like', "%{$term}%")
-                    ->orWhere('quantity_desc', 'like', "%{$term}%")
                     ->orWhere('custom_category', 'like', "%{$term}%")
+                    // Quantity is a number now, so a numeric search term
+                    // matches it exactly instead of a LIKE over digits.
+                    ->when(ctype_digit($term), fn ($q) => $q->orWhere('quantity', (int) $term))
                     ->orWhereHas(
                         'foodCategory',
                         fn ($c) => $c->where('name_ar', 'like', "%{$term}%"),

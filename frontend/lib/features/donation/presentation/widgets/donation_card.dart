@@ -141,7 +141,7 @@ class DonationCard extends StatelessWidget {
                       (donation.description != null &&
                               donation.description!.trim().isNotEmpty)
                           ? donation.description!
-                          : donation.quantityDesc,
+                          : 'الكمية التقديرية: ${donation.quantity} شخص',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodySmall.copyWith(
@@ -174,8 +174,8 @@ class DonationCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        // Estimated people count, when it is a plain number.
-                        if (int.tryParse(donation.quantityDesc) != null) ...[
+                        // Estimated people count (quantity is a number now).
+                        ...[
                           SizedBox(width: 10.w),
                           Icon(
                             Icons.groups_rounded,
@@ -185,7 +185,7 @@ class DonationCard extends StatelessWidget {
                           SizedBox(width: 4.w),
                           Flexible(
                             child: Text(
-                              '${donation.quantityDesc} شخص',
+                              '${donation.quantity} شخص',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTextStyles.labelSmall.copyWith(

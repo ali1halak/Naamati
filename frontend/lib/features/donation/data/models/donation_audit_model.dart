@@ -60,7 +60,7 @@ class OrderInfoModel extends DonationOrderInfo {
     @JsonKey(name: 'food_type') super.foodType,
     @JsonKey(name: 'food_condition') super.foodCondition,
     @JsonKey(name: 'expiry_date') super.expiryDate,
-    @JsonKey(name: 'quantity_desc') super.quantityDesc,
+    @JsonKey(name: 'quantity') super.quantity,
     super.description,
   });
 

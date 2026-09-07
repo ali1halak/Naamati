@@ -125,7 +125,7 @@ class CharityWorkflowTest extends TestCase
             'donor_id'         => 1,
             'food_category_id' => $this->cooked->id,
             'needs_cooking'    => false,
-            'quantity_desc'    => '20 وجبة',
+            'quantity'         => 20,
             'valid_until'      => now()->addDays(2),
             'pickup_until'     => now()->addDay(),
             'pickup_address'   => 'حلب - الفرقان',

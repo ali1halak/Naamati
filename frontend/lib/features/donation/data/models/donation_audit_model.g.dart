@@ -43,7 +43,7 @@ OrderInfoModel _$OrderInfoModelFromJson(Map<String, dynamic> json) =>
       foodType: json['food_type'] as String?,
       foodCondition: json['food_condition'] as String?,
       expiryDate: json['expiry_date'] as String?,
-      quantityDesc: json['quantity_desc'] as String?,
+      quantity: (json['quantity'] as num?)?.toInt(),
       description: json['description'] as String?,
     );
 
@@ -56,7 +56,7 @@ Map<String, dynamic> _$OrderInfoModelToJson(OrderInfoModel instance) =>
       'food_type': instance.foodType,
       'food_condition': instance.foodCondition,
       'expiry_date': instance.expiryDate,
-      'quantity_desc': instance.quantityDesc,
+      'quantity': instance.quantity,
       'description': instance.description,
     };
 

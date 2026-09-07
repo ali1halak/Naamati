@@ -53,7 +53,7 @@ class DonationRepositoryImpl implements DonationRepository {
         final response = await remoteDataSource.createDonation(
           foodCategoryId: params.foodCategoryId,
           needsCooking: params.needsCooking,
-          quantityDesc: params.quantityDesc,
+          quantity: params.quantity,
           description: params.description,
           customCategory: params.customCategory,
           validUntil: params.validUntil.toIso8601String(),
@@ -170,7 +170,7 @@ class DonationRepositoryImpl implements DonationRepository {
           method: 'PUT',
           foodCategoryId: params.foodCategoryId,
           needsCooking: params.needsCooking,
-          quantityDesc: params.quantityDesc,
+          quantity: params.quantity,
           description: params.description,
           customCategory: params.customCategory,
           validUntil: params.validUntil.toIso8601String(),
