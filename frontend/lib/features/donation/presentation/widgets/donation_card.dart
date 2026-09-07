@@ -152,7 +152,6 @@ class DonationCard extends StatelessWidget {
                     ),
                     SizedBox(height: 8.h),
                     Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.calendar_today_outlined,
@@ -160,15 +159,19 @@ class DonationCard extends StatelessWidget {
                           color: colorScheme.onSurfaceVariant,
                         ),
                         SizedBox(width: 5.w),
-                        Text(
-                          donation.createdAtLabel ??
-                              DateFormatter.formatArabicDate(
-                                donation.createdAt,
-                              ),
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w500,
+                        Flexible(
+                          child: Text(
+                            donation.createdAtLabel ??
+                                DateFormatter.formatArabicDate(
+                                  donation.createdAt,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                         // Estimated people count, when it is a plain number.
@@ -180,12 +183,16 @@ class DonationCard extends StatelessWidget {
                             color: colorScheme.onSurfaceVariant,
                           ),
                           SizedBox(width: 4.w),
-                          Text(
-                            '${donation.quantityDesc} شخص',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w500,
+                          Flexible(
+                            child: Text(
+                              '${donation.quantityDesc} شخص',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
