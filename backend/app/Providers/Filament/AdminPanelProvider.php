@@ -9,7 +9,9 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
+use Filament\Support\Facades\FilamentAsset;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -30,6 +32,16 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
  */
 class AdminPanelProvider extends PanelProvider
 {
+    public function boot(): void
+    {
+        // Served from public/ rather than compiled through Vite: the panel is
+        // the only thing that uses it, and this keeps the backend free of a
+        // node build step.
+        FilamentAsset::register([
+            Css::make('naamaty-panel', asset('css/naamaty-panel.css')),
+        ]);
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel

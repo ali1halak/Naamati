@@ -6,6 +6,7 @@ use App\Enums\CharityStatus;
 use App\Filament\Resources\CharityResource\Pages;
 use App\Models\Charity;
 use App\Services\CharityService;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -15,6 +16,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 
 /**
  * Charity accounts, as the mobile app writes them.
@@ -62,6 +65,33 @@ class CharityResource extends Resource
                 TextInput::make('address')->label('العنوان')->required()->maxLength(255),
             ])->columns(2),
 
+            Section::make('وثيقة الترخيص')
+                ->description('راجع الوثيقة قبل الاعتماد — هي المستند الوحيد الذي يثبت أن الجمعية مرخّصة.')
+                ->schema([
+                    Placeholder::make('license_preview')
+                        ->label('')
+                        ->content(function (?Charity $record) {
+                            if (! $record?->license_document) {
+                                return new HtmlString(
+                                    '<span class="fi-color-danger text-sm">لم ترفع الجمعية أي وثيقة ترخيص.</span>'
+                                );
+                            }
+
+                            $url = Storage::disk('public')->url($record->license_document);
+                            $isImage = (bool) preg_match('/\.(jpe?g|png|webp)$/i', $record->license_document);
+
+                            // Images render inline; a PDF cannot, so it gets a link.
+                            return new HtmlString($isImage
+                                ? '<a href="' . e($url) . '" target="_blank" rel="noopener">'
+                                    . '<img src="' . e($url) . '" alt="وثيقة الترخيص" '
+                                    . 'style="max-height:22rem;border-radius:.75rem;border:1px solid rgb(214 211 209)">'
+                                    . '</a>'
+                                : '<a href="' . e($url) . '" target="_blank" rel="noopener" '
+                                    . 'class="fi-link fi-size-sm">فتح وثيقة الترخيص (PDF)</a>');
+                        })
+                        ->columnSpanFull(),
+                ]),
+
             Section::make('التشغيل')->schema([
                 Toggle::make('has_kitchen')
                     ->label('تمتلك مطبخاً')
@@ -94,6 +124,16 @@ class CharityResource extends Resource
                     }),
 
                 Tables\Columns\IconColumn::make('has_kitchen')->label('مطبخ')->boolean(),
+
+                Tables\Columns\IconColumn::make('license_document')
+                    ->label('الترخيص')
+                    ->boolean()
+                    ->state(fn (Charity $record) => $record->license_document !== null)
+                    ->trueIcon('heroicon-o-document-check')
+                    ->falseIcon('heroicon-o-document-minus')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->tooltip(fn (Charity $record) => $record->license_document ? 'وثيقة مرفوعة' : 'لم تُرفع وثيقة'),
 
                 Tables\Columns\TextColumn::make('rating_avg')
                     ->label('التقييم')
@@ -147,7 +187,15 @@ class CharityResource extends Resource
                         Notification::make()->title('تم تعليق الجمعية')->warning()->send();
                     }),
 
-                Tables\Actions\EditAction::make()->label('تعديل'),
+                Tables\Actions\Action::make('license')
+                    ->label('الترخيص')
+                    ->icon('heroicon-o-document-text')
+                    ->color('gray')
+                    ->visible(fn (Charity $record) => $record->license_document !== null)
+                    ->url(fn (Charity $record) => Storage::disk('public')->url($record->license_document))
+                    ->openUrlInNewTab(),
+
+                Tables\Actions\EditAction::make()->label('مراجعة'),
             ])
             ->defaultSort('created_at', 'desc');
     }
