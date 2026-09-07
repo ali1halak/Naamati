@@ -29,6 +29,30 @@ import '../../features/auth/domain/usecases/register_donor_usecase.dart'
     as _i1019;
 import '../../features/auth/presentation/bloc/login_cubit.dart' as _i281;
 import '../../features/auth/presentation/bloc/register_cubit.dart' as _i98;
+import '../../features/charity/data/datasources/charity_remote_data_source.dart'
+    as _i912;
+import '../../features/charity/data/repositories/charity_repository_impl.dart'
+    as _i227;
+import '../../features/charity/domain/repositories/charity_repository.dart'
+    as _i560;
+import '../../features/charity/domain/usecases/accept_request_usecase.dart'
+    as _i666;
+import '../../features/charity/domain/usecases/confirm_distribution_usecase.dart'
+    as _i1070;
+import '../../features/charity/domain/usecases/confirm_pickup_usecase.dart'
+    as _i1025;
+import '../../features/charity/domain/usecases/get_available_requests_usecase.dart'
+    as _i981;
+import '../../features/charity/domain/usecases/get_order_details_usecase.dart'
+    as _i1042;
+import '../../features/charity/domain/usecases/record_impact_usecase.dart'
+    as _i55;
+import '../../features/charity/presentation/bloc/available_requests_cubit.dart'
+    as _i621;
+import '../../features/charity/presentation/bloc/distribution_form_cubit.dart'
+    as _i360;
+import '../../features/charity/presentation/bloc/order_tracking_cubit.dart'
+    as _i1070;
 import '../../features/donation/data/datasources/donation_remote_data_source.dart'
     as _i452;
 import '../../features/donation/data/repositories/donation_repository_impl.dart'
@@ -84,6 +108,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i452.DonationRemoteDataSource>(
       () => coreModule.donationRemoteDataSource,
     );
+    gh.lazySingleton<_i912.CharityRemoteDataSource>(
+      () => coreModule.charityRemoteDataSource,
+    );
+    gh.lazySingleton<_i560.CharityRepository>(
+      () => _i227.CharityRepositoryImpl(
+        remoteDataSource: gh<_i912.CharityRemoteDataSource>(),
+        networkInfo: gh<_i932.NetworkInfo>(),
+      ),
+    );
     gh.lazySingleton<_i787.AuthRepository>(
       () => _i153.AuthRepositoryImpl(
         remoteDataSource: gh<_i107.AuthRemoteDataSource>(),
@@ -109,6 +142,27 @@ extension GetItInjectableX on _i174.GetIt {
         networkInfo: gh<_i932.NetworkInfo>(),
       ),
     );
+    gh.lazySingleton<_i666.AcceptRequestUseCase>(
+      () => _i666.AcceptRequestUseCase(gh<_i560.CharityRepository>()),
+    );
+    gh.lazySingleton<_i1070.ConfirmDistributionUseCase>(
+      () => _i1070.ConfirmDistributionUseCase(gh<_i560.CharityRepository>()),
+    );
+    gh.lazySingleton<_i1025.ConfirmPickupUseCase>(
+      () => _i1025.ConfirmPickupUseCase(gh<_i560.CharityRepository>()),
+    );
+    gh.lazySingleton<_i981.GetAvailableRequestsUseCase>(
+      () => _i981.GetAvailableRequestsUseCase(gh<_i560.CharityRepository>()),
+    );
+    gh.lazySingleton<_i1042.GetOrderDetailsUseCase>(
+      () => _i1042.GetOrderDetailsUseCase(gh<_i560.CharityRepository>()),
+    );
+    gh.lazySingleton<_i55.RecordImpactUseCase>(
+      () => _i55.RecordImpactUseCase(gh<_i560.CharityRepository>()),
+    );
+    gh.factory<_i360.DistributionFormCubit>(
+      () => _i360.DistributionFormCubit(gh<_i55.RecordImpactUseCase>()),
+    );
     gh.factory<_i98.RegisterCubit>(
       () => _i98.RegisterCubit(
         gh<_i1019.RegisterDonorUseCase>(),
@@ -117,6 +171,13 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i281.LoginCubit>(
       () => _i281.LoginCubit(gh<_i188.LoginUseCase>()),
+    );
+    gh.factory<_i1070.OrderTrackingCubit>(
+      () => _i1070.OrderTrackingCubit(
+        gh<_i1042.GetOrderDetailsUseCase>(),
+        gh<_i1025.ConfirmPickupUseCase>(),
+        gh<_i1070.ConfirmDistributionUseCase>(),
+      ),
     );
     gh.lazySingleton<_i850.CancelDonationUseCase>(
       () => _i850.CancelDonationUseCase(gh<_i664.DonationRepository>()),
@@ -157,6 +218,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i850.CancelDonationUseCase>(),
         gh<_i728.ConfirmPickupUseCase>(),
         gh<_i543.RateDonationUseCase>(),
+      ),
+    );
+    gh.factory<_i621.AvailableRequestsCubit>(
+      () => _i621.AvailableRequestsCubit(
+        gh<_i981.GetAvailableRequestsUseCase>(),
+        gh<_i666.AcceptRequestUseCase>(),
       ),
     );
     gh.factory<_i456.CreateDonationCubit>(

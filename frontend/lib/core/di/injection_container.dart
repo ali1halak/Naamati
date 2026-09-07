@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
+import '../../features/charity/data/datasources/charity_remote_data_source.dart';
 import '../../features/donation/data/datasources/donation_remote_data_source.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
@@ -41,4 +42,8 @@ abstract class CoreModule {
   @lazySingleton
   DonationRemoteDataSource get donationRemoteDataSource =>
       DonationRemoteDataSource(dio);
+
+  @lazySingleton
+  CharityRemoteDataSource get charityRemoteDataSource =>
+      CharityRemoteDataSource(dio);
 }

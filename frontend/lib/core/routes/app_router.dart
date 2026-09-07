@@ -8,6 +8,9 @@ import '../../features/auth/presentation/pages/charity_account_status_page.dart'
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
+import '../../features/charity/presentation/pages/charity_home_page.dart';
+import '../../features/charity/presentation/pages/distribution_data_page.dart';
+import '../../features/charity/presentation/pages/order_tracking_page.dart';
 import '../../features/donation/domain/entities/donation_request.dart';
 import '../../features/donation/presentation/pages/create_donation_page.dart';
 import '../../features/donation/presentation/pages/edit_donation_page.dart';
@@ -77,18 +80,6 @@ class _NotFoundPage extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _CharityHomePlaceholder extends StatelessWidget {
-  const _CharityHomePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('الجمعية')),
-      body: const Center(child: Text('Charity Home — قريباً')),
     );
   }
 }
@@ -217,7 +208,19 @@ class AppRouter {
     GoRoute(
       path: RouteNames.charityHome,
       name: 'charity-home',
-      builder: (context, state) => const _CharityHomePlaceholder(),
+      builder: (context, state) => const CharityHomePage(),
+    ),
+    GoRoute(
+      path: RouteNames.charityOrderTracking,
+      name: 'charity-order-tracking',
+      builder: (context, state) =>
+          OrderTrackingPage(orderId: int.parse(state.pathParameters['id']!)),
+    ),
+    GoRoute(
+      path: RouteNames.charityDistributionData,
+      name: 'charity-distribution-data',
+      builder: (context, state) =>
+          DistributionDataPage(orderId: int.parse(state.pathParameters['id']!)),
     ),
     GoRoute(
       path: RouteNames.profile,

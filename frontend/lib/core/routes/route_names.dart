@@ -36,6 +36,20 @@ abstract class RouteNames {
   // ── Charity (الجمعية) ─────────────────────────────────────────────────────────
   static const String charityHome = '/charity/home';
 
+  /// Charity order tracking (قبول الطلب → تأكيد أخذ الطلب → تأكيد توزيع الطلب).
+  static const String charityOrderTracking = '/charity/orders/:id';
+
+  /// Convenience builder for [charityOrderTracking] deep links.
+  static String charityOrderTrackingPath(int id) => '/charity/orders/$id';
+
+  /// Distribution data form (بيانات التوزيع), filed now or later.
+  static const String charityDistributionData =
+      '/charity/orders/:id/distribution';
+
+  /// Convenience builder for [charityDistributionData] deep links.
+  static String charityDistributionDataPath(int id) =>
+      '/charity/orders/$id/distribution';
+
   // ── Auth ─────────────────────────────────────────────────────────────────────
   static const String login = '/login';
   static const String register = '/register';
