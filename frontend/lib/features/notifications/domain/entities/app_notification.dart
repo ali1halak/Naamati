@@ -10,6 +10,22 @@ enum NotificationKind {
   handoverConfirmed,
   @JsonValue('request_cancelled')
   requestCancelled,
+  @JsonValue('new_request_available')
+  newRequestAvailable,
+  @JsonValue('awaiting_other_confirmation')
+  awaitingOtherConfirmation,
+  @JsonValue('distribution_completed')
+  distributionCompleted,
+  @JsonValue('request_expired')
+  requestExpired,
+  @JsonValue('request_no_show')
+  requestNoShow,
+  @JsonValue('new_rating')
+  newRating,
+  @JsonValue('charity_approved')
+  charityApproved,
+  @JsonValue('charity_suspended')
+  charitySuspended,
   @JsonValue('unknown')
   unknown,
 }

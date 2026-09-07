@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -116,13 +117,27 @@ class _EditProfileViewState extends State<_EditProfileView> {
     _formKey.currentState?.validate();
   }
 
+  bool _isPickingPhoto = false;
+
   Future<void> _pickPhoto() async {
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-    if (picked == null || !mounted) return;
-    await context.read<ProfileCubit>().updatePhoto(File(picked.path));
+    // The plugin throws `already_active` if a second pick starts before the
+    // first one's picker UI has returned — a fast double-tap is enough to
+    // trigger it, since [ProfileCubit]'s own loading state only flips after
+    // pickImage() already resolved.
+    if (_isPickingPhoto) return;
+    _isPickingPhoto = true;
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (picked == null || !mounted) return;
+      await context.read<ProfileCubit>().updatePhoto(File(picked.path));
+    } on PlatformException {
+      // Another pick is already in flight — ignore, it will complete on its own.
+    } finally {
+      _isPickingPhoto = false;
+    }
   }
 
   Future<void> _save() async {

@@ -47,16 +47,27 @@ import '../../features/charity/domain/usecases/confirm_pickup_usecase.dart'
     as _i1025;
 import '../../features/charity/domain/usecases/get_available_requests_usecase.dart'
     as _i981;
+import '../../features/charity/domain/usecases/get_my_orders_usecase.dart'
+    as _i45;
+import '../../features/charity/domain/usecases/get_order_audit_usecase.dart'
+    as _i947;
 import '../../features/charity/domain/usecases/get_order_details_usecase.dart'
     as _i1042;
+import '../../features/charity/domain/usecases/get_violations_usecase.dart'
+    as _i557;
 import '../../features/charity/domain/usecases/record_impact_usecase.dart'
     as _i55;
 import '../../features/charity/presentation/bloc/available_requests_cubit.dart'
     as _i621;
+import '../../features/charity/presentation/bloc/charity_order_audit_cubit.dart'
+    as _i990;
 import '../../features/charity/presentation/bloc/distribution_form_cubit.dart'
     as _i360;
+import '../../features/charity/presentation/bloc/my_orders_cubit.dart' as _i470;
 import '../../features/charity/presentation/bloc/order_tracking_cubit.dart'
     as _i1070;
+import '../../features/charity/presentation/bloc/violations_cubit.dart'
+    as _i987;
 import '../../features/donation/data/datasources/donation_remote_data_source.dart'
     as _i452;
 import '../../features/donation/data/repositories/donation_repository_impl.dart'
@@ -220,8 +231,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i981.GetAvailableRequestsUseCase>(
       () => _i981.GetAvailableRequestsUseCase(gh<_i560.CharityRepository>()),
     );
+    gh.lazySingleton<_i45.GetMyOrdersUseCase>(
+      () => _i45.GetMyOrdersUseCase(gh<_i560.CharityRepository>()),
+    );
+    gh.lazySingleton<_i947.GetOrderAuditUseCase>(
+      () => _i947.GetOrderAuditUseCase(gh<_i560.CharityRepository>()),
+    );
     gh.lazySingleton<_i1042.GetOrderDetailsUseCase>(
       () => _i1042.GetOrderDetailsUseCase(gh<_i560.CharityRepository>()),
+    );
+    gh.lazySingleton<_i557.GetViolationsUseCase>(
+      () => _i557.GetViolationsUseCase(gh<_i560.CharityRepository>()),
     );
     gh.lazySingleton<_i55.RecordImpactUseCase>(
       () => _i55.RecordImpactUseCase(gh<_i560.CharityRepository>()),
@@ -256,6 +276,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1025.ConfirmPickupUseCase>(),
         gh<_i1070.ConfirmDistributionUseCase>(),
       ),
+    );
+    gh.factory<_i990.CharityOrderAuditCubit>(
+      () => _i990.CharityOrderAuditCubit(gh<_i947.GetOrderAuditUseCase>()),
     );
     gh.lazySingleton<_i850.CancelDonationUseCase>(
       () => _i850.CancelDonationUseCase(gh<_i664.DonationRepository>()),
@@ -304,6 +327,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i163.FlutterLocalNotificationsPlugin>(),
       ),
     );
+    gh.factory<_i470.MyOrdersCubit>(
+      () => _i470.MyOrdersCubit(gh<_i45.GetMyOrdersUseCase>()),
+    );
     gh.factory<_i477.DonationDetailsCubit>(
       () => _i477.DonationDetailsCubit(
         gh<_i992.GetDonationDetailsUseCase>(),
@@ -317,6 +343,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i981.GetAvailableRequestsUseCase>(),
         gh<_i666.AcceptRequestUseCase>(),
       ),
+    );
+    gh.factory<_i987.ViolationsCubit>(
+      () => _i987.ViolationsCubit(gh<_i557.GetViolationsUseCase>()),
     );
     gh.factory<_i281.LoginCubit>(
       () => _i281.LoginCubit(

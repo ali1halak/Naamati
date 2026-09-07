@@ -26,6 +26,14 @@ class NotificationTile extends StatelessWidget {
     NotificationKind.requestAccepted => Icons.check_circle_outline_rounded,
     NotificationKind.handoverConfirmed => Icons.inventory_2_outlined,
     NotificationKind.requestCancelled => Icons.cancel_outlined,
+    NotificationKind.newRequestAvailable => Icons.campaign_outlined,
+    NotificationKind.awaitingOtherConfirmation => Icons.hourglass_top_rounded,
+    NotificationKind.distributionCompleted => Icons.volunteer_activism_outlined,
+    NotificationKind.requestExpired => Icons.timer_off_outlined,
+    NotificationKind.requestNoShow => Icons.person_off_outlined,
+    NotificationKind.newRating => Icons.star_outline_rounded,
+    NotificationKind.charityApproved => Icons.verified_outlined,
+    NotificationKind.charitySuspended => Icons.block_outlined,
     NotificationKind.unknown => Icons.notifications_outlined,
   };
 
@@ -61,6 +69,63 @@ class NotificationTile extends StatelessWidget {
           body: donorName != null
               ? 'ألغى $donorName طلب التبرع الذي قبلته.'
               : 'ألغى المتبرع طلب التبرع الذي قبلته.',
+        );
+      case NotificationKind.newRequestAvailable:
+        final categoryName = payload['category_name'] as String?;
+        return (
+          title: 'طلب تبرع جديد متاح',
+          body: categoryName != null
+              ? 'تم نشر طلب تبرع جديد ($categoryName) قد يهمّك.'
+              : 'تم نشر طلب تبرع جديد قد يهمّك.',
+        );
+      case NotificationKind.awaitingOtherConfirmation:
+        final confirmedByDonor = payload['confirmed_by'] == 'donor';
+        return (
+          title: 'بانتظار تأكيدك',
+          body: confirmedByDonor
+              ? 'أكّد المتبرع تسليم الطعام — أكّد استلامك من جهتك لإتمام العملية.'
+              : 'أكّدت الجمعية استلام الطعام — أكّد تسليمك من جهتك لإتمام العملية.',
+        );
+      case NotificationKind.distributionCompleted:
+        final charityName = payload['charity_name'] as String?;
+        return (
+          title: 'تم توزيع تبرعك',
+          body: charityName != null
+              ? 'وزّعت جمعية $charityName تبرعك بنجاح. جزاك الله خيراً.'
+              : 'تم توزيع تبرعك بنجاح. جزاك الله خيراً.',
+        );
+      case NotificationKind.requestExpired:
+        return (
+          title: 'انتهت صلاحية طلبك',
+          body: 'انتهت صلاحية الطعام في طلبك دون أن تقبله أي جمعية.',
+        );
+      case NotificationKind.requestNoShow:
+        final charityName = payload['charity_name'] as String?;
+        return (
+          title: 'لم تحضر الجمعية',
+          body: charityName != null
+              ? 'لم تحضر جمعية $charityName لاستلام طلبك في الموعد المحدد.'
+              : 'لم تحضر الجمعية المقبولة لاستلام طلبك في الموعد المحدد.',
+        );
+      case NotificationKind.newRating:
+        final stars = payload['stars'];
+        return (
+          title: 'تقييم جديد',
+          body: stars != null
+              ? 'قيّمك أحد المتبرعين بـ $stars من 5 نجوم.'
+              : 'حصلت على تقييم جديد.',
+        );
+      case NotificationKind.charityApproved:
+        return (
+          title: 'تم تفعيل حسابك',
+          body:
+              'تم اعتماد حساب جمعيتكم — يمكنكم الآن تصفح طلبات التبرع وقبولها.',
+        );
+      case NotificationKind.charitySuspended:
+        return (
+          title: 'تم إيقاف حسابك',
+          body:
+              'تم إيقاف حساب جمعيتكم من قبل الإدارة. للاستفسار يرجى التواصل معنا.',
         );
       case NotificationKind.unknown:
         return (title: 'إشعار', body: '');

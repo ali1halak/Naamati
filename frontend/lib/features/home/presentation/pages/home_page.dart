@@ -12,12 +12,16 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_error_widget.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/loading_indicator.dart';
+import '../../../../core/usecases/usecase.dart';
+import '../../../auth/domain/entities/user.dart';
+import '../../../auth/domain/usecases/get_current_user_usecase.dart';
 import '../../../donation/presentation/bloc/my_donations_cubit.dart';
 import '../../../donation/presentation/bloc/my_donations_state.dart';
 import '../../../donation/presentation/widgets/donation_card.dart';
 import '../../../donation/presentation/widgets/my_donations_filter_bar.dart';
 import '../../../donation/domain/entities/donation_status.dart';
 import '../../../donation/domain/entities/my_donations_filter.dart';
+import '../../../profile/presentation/widgets/profile_avatar.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/home_bottom_nav.dart';
 import '../widgets/new_donation_card.dart';
@@ -58,6 +62,19 @@ class _DonorHomeBody extends StatefulWidget {
 
 class _DonorHomeBodyState extends State<_DonorHomeBody> {
   int _selectedIndex = 0;
+  User? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final result = await sl<GetCurrentUserUseCase>()(const NoParams());
+    if (!mounted) return;
+    result.fold((_) {}, (user) => setState(() => _user = user));
+  }
 
   void _onTapNav(int index) {
     setState(() => _selectedIndex = index);
@@ -76,7 +93,10 @@ class _DonorHomeBodyState extends State<_DonorHomeBody> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: _HomeAppBar(colorScheme: Theme.of(context).colorScheme),
+        appBar: _HomeAppBar(
+          colorScheme: Theme.of(context).colorScheme,
+          user: _user,
+        ),
         drawer: const AppDrawer(homeRoute: RouteNames.home),
         body: Stack(
           children: [
@@ -98,8 +118,9 @@ class _DonorHomeBodyState extends State<_DonorHomeBody> {
 
 class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final ColorScheme colorScheme;
+  final User? user;
 
-  const _HomeAppBar({required this.colorScheme});
+  const _HomeAppBar({required this.colorScheme, this.user});
 
   @override
   Size get preferredSize => Size.fromHeight(AppConstants.appBarHeight.h);
@@ -143,13 +164,10 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: EdgeInsets.only(left: 12.w, right: 4.w),
           child: GestureDetector(
             onTap: () => context.push('/profile'),
-            child: CircleAvatar(
-              radius: 16.r,
-              backgroundColor: colorScheme.primaryContainer,
-              backgroundImage: const NetworkImage(
-                'https://i.pravatar.cc/150?img=32',
-              ),
-              onBackgroundImageError: (exception, stackTrace) {},
+            child: ProfileAvatar(
+              imageUrl: user?.photoUrl,
+              name: user?.name ?? '',
+              radius: 16,
             ),
           ),
         ),

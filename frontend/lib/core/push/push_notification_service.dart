@@ -123,6 +123,13 @@ class PushNotificationService {
   /// right screen (donor tracking vs. charity order tracking) is picked
   /// without needing to know the current session's role.
   void _navigateFromData(Map<String, dynamic> data) {
+    // Not yet accepted by this charity — send it to the board to review and
+    // accept, not straight to a tracking screen it doesn't own yet.
+    if (data['type'] == 'new_request_available') {
+      AppRouter.router.push(RouteNames.charityHome);
+      return;
+    }
+
     final donationId = int.tryParse(
       data['donation_request_id']?.toString() ?? '',
     );

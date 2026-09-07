@@ -73,6 +73,13 @@ class _NotificationsViewState extends State<_NotificationsView> {
   void _onTapNotification(AppNotification notification) {
     context.read<NotificationsCubit>().markRead(notification.id);
 
+    // Not yet accepted by this charity — send it to the board to review and
+    // accept, not straight to a tracking screen it doesn't own yet.
+    if (notification.kind == NotificationKind.newRequestAvailable) {
+      context.push(RouteNames.charityHome);
+      return;
+    }
+
     final donationId = notification.donationRequestId;
     if (donationId == null) return;
 

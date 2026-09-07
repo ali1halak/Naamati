@@ -50,6 +50,13 @@ abstract class RouteNames {
   static String charityDistributionDataPath(int id) =>
       '/charity/orders/$id/distribution';
 
+  /// Read-only order audit (تفاصيل الطلب) — reached from "الطلبات السابقة".
+  static const String charityOrderDetails = '/charity/orders/:id/details';
+
+  /// Convenience builder for [charityOrderDetails] deep links.
+  static String charityOrderDetailsPath(int id) =>
+      '/charity/orders/$id/details';
+
   // ── Auth ─────────────────────────────────────────────────────────────────────
   static const String login = '/login';
   static const String register = '/register';

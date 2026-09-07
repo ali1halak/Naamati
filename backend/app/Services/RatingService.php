@@ -10,6 +10,10 @@ use Illuminate\Validation\ValidationException;
 
 class RatingService
 {
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
+
     /**
      * The donor rates the charity once the food has actually changed hands.
      *
@@ -39,6 +43,7 @@ class RatingService
             ]);
 
             $this->refreshCharityAverage($request->charity_id);
+            $this->notifications->newRating($request, $rating);
 
             return $rating;
         });

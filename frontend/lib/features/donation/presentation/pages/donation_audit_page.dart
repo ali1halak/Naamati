@@ -390,11 +390,17 @@ class _DonationAuditView extends StatelessWidget {
                     ] else ...[
                       CustomButton(
                         label: '★ تقييم الجمعية',
-                        onPressed: () => _showRatingModal(
-                          context,
-                          context.read<DonationAuditCubit>(),
-                          charityName,
-                        ),
+                        // Only ratable from handover onward (backend:
+                        // `can_rate_charity`) — disabled while the request is
+                        // still pending/accepted instead of letting the tap
+                        // fail server-side.
+                        onPressed: audit.canRateCharity
+                            ? () => _showRatingModal(
+                                context,
+                                context.read<DonationAuditCubit>(),
+                                charityName,
+                              )
+                            : null,
                       ),
                     ],
                     SizedBox(height: 20.h),

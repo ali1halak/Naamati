@@ -5,7 +5,10 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../donation/domain/entities/donation_request.dart';
+import '../../../donation/domain/entities/paginated_donations.dart';
+import '../../domain/entities/charity_order_audit.dart';
 import '../../domain/entities/paginated_available_requests.dart';
+import '../../domain/entities/violation.dart';
 import '../../domain/repositories/charity_repository.dart';
 import '../datasources/charity_remote_data_source.dart';
 
@@ -87,6 +90,86 @@ class CharityRepositoryImpl implements CharityRepository {
         }
         return Left(
           ServerFailure(message: response.message ?? 'فشل تحميل تفاصيل الطلب'),
+        );
+      } catch (e) {
+        return Left(mapExceptionToFailure(e));
+      }
+    } else {
+      return const Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, PaginatedDonations>> getMyOrders({
+    int page = 1,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final response = await remoteDataSource.getMyOrders(page: page);
+        if (response.success) {
+          final payload = response.data;
+          final meta = payload.meta;
+          return Right(
+            PaginatedDonations(
+              items: payload.data,
+              currentPage: meta?.currentPage ?? page,
+              lastPage: meta?.lastPage ?? page,
+              total: meta?.total ?? payload.data.length,
+            ),
+          );
+        }
+        return Left(
+          ServerFailure(message: response.message ?? 'فشل تحميل الطلبات'),
+        );
+      } catch (e) {
+        return Left(mapExceptionToFailure(e));
+      }
+    } else {
+      return const Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, CharityOrderAudit>> getOrderAudit(int id) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final response = await remoteDataSource.getOrderAudit(id);
+        if (response.success) {
+          return Right(response.data);
+        }
+        return Left(
+          ServerFailure(message: response.message ?? 'فشل تحميل تفاصيل الطلب'),
+        );
+      } catch (e) {
+        return Left(mapExceptionToFailure(e));
+      }
+    } else {
+      return const Left(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, PaginatedViolations>> getViolations({
+    int page = 1,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final response = await remoteDataSource.getViolations(page: page);
+        if (response.success) {
+          final payload = response.data;
+          final meta = payload.meta;
+          return Right(
+            PaginatedViolations(
+              items: payload.data,
+              currentPage: meta?.currentPage ?? page,
+              lastPage: meta?.lastPage ?? page,
+              total: meta?.total ?? payload.data.length,
+              compliance: payload.compliance,
+            ),
+          );
+        }
+        return Left(
+          ServerFailure(message: response.message ?? 'فشل تحميل سجل المخالفات'),
         );
       } catch (e) {
         return Left(mapExceptionToFailure(e));

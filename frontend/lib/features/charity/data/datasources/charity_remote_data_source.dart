@@ -3,7 +3,9 @@ import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
 
 import '../../../donation/data/models/donation_responses.dart';
+import '../models/charity_order_audit_response.dart';
 import '../models/charity_responses.dart';
+import '../models/violation_responses.dart';
 
 part 'charity_remote_data_source.g.dart';
 
@@ -28,6 +30,24 @@ abstract class CharityRemoteDataSource {
 
   @GET('/charity/requests/{id}')
   Future<DonationResponseModel> getOrderDetails(@Path('id') int id);
+
+  /// This charity's own work queue and history — same resource shape as the
+  /// donor's own list (`DonationRequestResource`), just scoped server-side.
+  @GET('/charity/requests')
+  Future<DonationListResponseModel> getMyOrders({
+    @Query('status') String? status,
+    @Query('page') int? page,
+  });
+
+  /// Grouped audit view of one order this charity handled (تفاصيل الطلب) —
+  /// distinct from [getOrderDetails]'s flat shape, which the active-tracking
+  /// screen uses instead.
+  @GET('/charity/requests/{id}/details')
+  Future<CharityOrderAuditResponseModel> getOrderAudit(@Path('id') int id);
+
+  /// سجل المخالفات — read-only compliance record.
+  @GET('/charity/violations')
+  Future<ViolationListResponseModel> getViolations({@Query('page') int? page});
 
   /// The charity's own half of the two-sided handover confirmation.
   @POST('/charity/requests/{id}/pickup')

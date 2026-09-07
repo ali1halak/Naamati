@@ -13,6 +13,8 @@ class UserModel extends User {
     super.phone,
     @JsonKey(includeFromJson: false, includeToJson: false) super.accountType,
     super.status,
+    @JsonKey(name: 'avatar_url') super.avatarUrl,
+    @JsonKey(name: 'logo_url') super.logoUrl,
     @JsonKey(name: 'created_at') super.createdAt,
     @JsonKey(name: 'updated_at') super.updatedAt,
   });

@@ -60,16 +60,16 @@ class CharityBottomNav extends StatelessWidget {
               ),
               Expanded(
                 child: _NavItem(
-                  icon: Icons.local_shipping_rounded,
-                  label: 'الطلبات النشطة',
+                  icon: Icons.history_rounded,
+                  label: 'الطلبات السابقة',
                   selected: selectedIndex == 1,
                   onTap: () => onTap(1),
                 ),
               ),
               Expanded(
                 child: _NavItem(
-                  icon: Icons.task_alt_rounded,
-                  label: 'المكتملات',
+                  icon: Icons.report_gmailerrorred_rounded,
+                  label: 'المخالفات',
                   selected: selectedIndex == 2,
                   onTap: () => onTap(2),
                 ),

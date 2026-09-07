@@ -27,7 +27,7 @@ class CharityRegisterRequest extends FormRequest
         return [
             'name'             => ['required', 'string', 'max:120'],
             'email'            => ['required', 'email', 'unique:charities,email', 'unique:donors,email'],
-            'phone'            => ['required', 'string', 'max:20'],
+            'phone'            => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s]{7,15}$/'],
             'password'         => ['required', 'string', 'min:8', 'confirmed'],
             'has_kitchen'      => ['required', 'boolean'],
             'address'          => ['required', 'string', 'max:255'],
@@ -42,6 +42,7 @@ class CharityRegisterRequest extends FormRequest
         return [
             'email.unique'   => 'هذا البريد الإلكتروني مسجّل مسبقاً.',
             'work_end.after' => 'يجب أن تكون نهاية الدوام بعد بدايتها.',
+            'phone.regex'    => 'رقم الهاتف غير صحيح.',
         ];
     }
 }

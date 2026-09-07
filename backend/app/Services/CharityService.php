@@ -8,6 +8,10 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CharityService
 {
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
+
     /**
      * List charities for the admin, newest first, optionally filtered by status.
      */
@@ -32,14 +36,18 @@ class CharityService
         }
 
         $charity->update(['status' => CharityStatus::Active]);
+        $charity->refresh();
+        $this->notifications->charityStatusChanged($charity, approved: true);
 
-        return $charity->refresh();
+        return $charity;
     }
 
     public function suspend(Charity $charity): Charity
     {
         $charity->update(['status' => CharityStatus::Suspended]);
+        $charity->refresh();
+        $this->notifications->charityStatusChanged($charity, approved: false);
 
-        return $charity->refresh();
+        return $charity;
     }
 }

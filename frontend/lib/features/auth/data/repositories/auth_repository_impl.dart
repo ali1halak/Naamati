@@ -33,6 +33,8 @@ class AuthRepositoryImpl implements AuthRepository {
       phone: user.phone,
       accountType: accountType,
       status: user.status,
+      avatarUrl: user.avatarUrl,
+      logoUrl: user.logoUrl,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     );

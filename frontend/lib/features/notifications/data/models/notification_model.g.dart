@@ -36,5 +36,13 @@ const _$NotificationKindEnumMap = {
   NotificationKind.requestAccepted: 'request_accepted',
   NotificationKind.handoverConfirmed: 'handover_confirmed',
   NotificationKind.requestCancelled: 'request_cancelled',
+  NotificationKind.newRequestAvailable: 'new_request_available',
+  NotificationKind.awaitingOtherConfirmation: 'awaiting_other_confirmation',
+  NotificationKind.distributionCompleted: 'distribution_completed',
+  NotificationKind.requestExpired: 'request_expired',
+  NotificationKind.requestNoShow: 'request_no_show',
+  NotificationKind.newRating: 'new_rating',
+  NotificationKind.charityApproved: 'charity_approved',
+  NotificationKind.charitySuspended: 'charity_suspended',
   NotificationKind.unknown: 'unknown',
 };

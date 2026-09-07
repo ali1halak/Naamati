@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CancelledBy;
+use App\Enums\CharityStatus;
 use App\Enums\RequestStatus;
 use App\Enums\ViolationType;
 use App\Models\Charity;
@@ -92,7 +93,7 @@ class DonationRequestService
         $needsCooking = $data['needs_cooking']
             ?? FoodCategory::findOrFail($data['food_category_id'])->default_needs_cooking;
 
-        return DB::transaction(function () use ($donorId, $data, $needsCooking) {
+        $request = DB::transaction(function () use ($donorId, $data, $needsCooking) {
             $request = DonationRequest::create([
                 'donor_id'         => $donorId,
                 'food_category_id' => $data['food_category_id'],
@@ -123,6 +124,29 @@ class DonationRequestService
 
             return $request;
         });
+
+        // Outside the transaction: this fans out an HTTP push call per
+        // eligible charity, which should not hold the DB connection open.
+        $this->notifyEligibleCharities($request);
+
+        return $request;
+    }
+
+    /**
+     * Every active charity that could accept this request (same eligibility
+     * as `availableFor`, minus the per-request violation exclusion — a brand
+     * new request cannot have one yet) gets nudged that it exists.
+     */
+    private function notifyEligibleCharities(DonationRequest $request): void
+    {
+        $charities = Charity::query()
+            ->where('status', CharityStatus::Active)
+            ->when($request->needs_cooking, fn ($q) => $q->where('has_kitchen', true))
+            ->get();
+
+        if ($charities->isNotEmpty()) {
+            $this->notifications->newRequestAvailable($request, $charities);
+        }
     }
 
     /**
@@ -293,6 +317,8 @@ class DonationRequestService
             // Still waiting on the other side — the status deliberately stays
             // `accepted` so the app can show "بانتظار تأكيد الطرف الآخر".
             if (! $request->handoverFullyConfirmed()) {
+                $this->notifications->awaitingOtherConfirmation($request, $party);
+
                 return $request;
             }
 
@@ -341,6 +367,7 @@ class DonationRequestService
         ]);
 
         $this->log($request, $from, RequestStatus::Completed, 'distribution confirmed by charity');
+        $this->notifications->distributionCompleted($request);
 
         return $request->refresh();
     }
@@ -492,6 +519,7 @@ class DonationRequestService
                 $from = $r->status;
                 $r->update(['status' => RequestStatus::Expired]);
                 $this->log($r, $from, RequestStatus::Expired, 'انتهت صلاحية الطعام قبل أن تقبله جمعية');
+                $this->notifications->requestExpired($r);
 
                 return true;
             });
@@ -523,6 +551,7 @@ class DonationRequestService
                 $from = $r->status;
                 $r->update(['status' => RequestStatus::NoShow]);
                 $this->log($r, $from, RequestStatus::NoShow, 'لم تحضر الجمعية في الموعد المحدد');
+                $this->notifications->requestNoShow($r);
 
                 if ($r->charity_id !== null) {
                     Violation::create([

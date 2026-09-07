@@ -9,6 +9,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/welcome_page.dart';
 import '../../features/charity/presentation/pages/charity_home_page.dart';
+import '../../features/charity/presentation/pages/charity_order_details_page.dart';
 import '../../features/charity/presentation/pages/distribution_data_page.dart';
 import '../../features/charity/presentation/pages/order_tracking_page.dart';
 import '../../features/donation/domain/entities/donation_request.dart';
@@ -226,6 +227,13 @@ class AppRouter {
       name: 'charity-distribution-data',
       builder: (context, state) =>
           DistributionDataPage(orderId: int.parse(state.pathParameters['id']!)),
+    ),
+    GoRoute(
+      path: RouteNames.charityOrderDetails,
+      name: 'charity-order-details',
+      builder: (context, state) => CharityOrderDetailsPage(
+        orderId: int.parse(state.pathParameters['id']!),
+      ),
     ),
     GoRoute(
       path: RouteNames.profile,

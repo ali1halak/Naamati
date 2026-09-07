@@ -34,7 +34,7 @@ class UpdateProfileRequest extends FormRequest
     {
         $common = [
             'name'  => ['required', 'string', 'max:120'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s]{7,15}$/'],
         ];
 
         if ($this->user() instanceof Donor) {
@@ -56,6 +56,7 @@ class UpdateProfileRequest extends FormRequest
         return [
             'type.in'         => 'نوع المتبرع يجب أن يكون: فرد أو مطعم أو فندق أو شركة.',
             'work_end.after'  => 'يجب أن تكون نهاية الدوام بعد بدايتها.',
+            'phone.regex'     => 'رقم الهاتف غير صحيح.',
         ];
     }
 }

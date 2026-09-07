@@ -8,6 +8,7 @@ use App\Models\Charity;
 use App\Services\CharityService;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Get;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -60,8 +61,23 @@ class CharityResource extends Resource
         return $form->schema([
             Section::make('بيانات الجمعية')->schema([
                 TextInput::make('name')->label('اسم الجمعية')->required()->maxLength(120),
-                TextInput::make('email')->label('البريد الإلكتروني')->email()->required()->maxLength(150),
-                TextInput::make('phone')->label('رقم الهاتف')->required()->maxLength(20),
+                TextInput::make('email')->label('البريد الإلكتروني')->email()->required()->maxLength(150)
+                    // Registration checks both tables (CharityRegisterRequest)
+                    // — without this, saving a duplicate email here throws a
+                    // raw DB unique-constraint error instead of a clean message.
+                    ->unique(ignoreRecord: true)
+                    ->rules(['unique:donors,email'])
+                    ->validationMessages([
+                        'unique' => 'هذا البريد الإلكتروني مستخدم من حساب آخر.',
+                    ]),
+                TextInput::make('phone')->label('رقم الهاتف')->tel()->required()->maxLength(20)
+                    // Same pattern as the donor-side contact_phone rule
+                    // (StoreDonationRequest) — a plain TextInput otherwise
+                    // accepts any text, letters included.
+                    ->rules(['regex:/^\+?[0-9\s]{7,15}$/'])
+                    ->validationMessages([
+                        'regex' => 'رقم الهاتف غير صحيح — أرقام فقط (يمكن أن يبدأ بـ +).',
+                    ]),
                 TextInput::make('address')->label('العنوان')->required()->maxLength(255),
             ])->columns(2),
 
@@ -70,25 +86,7 @@ class CharityResource extends Resource
                 ->schema([
                     Placeholder::make('license_preview')
                         ->label('')
-                        ->content(function (?Charity $record) {
-                            if (! $record?->license_document) {
-                                return new HtmlString(
-                                    '<span class="fi-color-danger text-sm">لم ترفع الجمعية أي وثيقة ترخيص.</span>'
-                                );
-                            }
-
-                            $url = Storage::disk('public')->url($record->license_document);
-                            $isImage = (bool) preg_match('/\.(jpe?g|png|webp)$/i', $record->license_document);
-
-                            // Images render inline; a PDF cannot, so it gets a link.
-                            return new HtmlString($isImage
-                                ? '<a href="' . e($url) . '" target="_blank" rel="noopener">'
-                                    . '<img src="' . e($url) . '" alt="وثيقة الترخيص" '
-                                    . 'style="max-height:22rem;border-radius:.75rem;border:1px solid rgb(214 211 209)">'
-                                    . '</a>'
-                                : '<a href="' . e($url) . '" target="_blank" rel="noopener" '
-                                    . 'class="fi-link fi-size-sm">فتح وثيقة الترخيص (PDF)</a>');
-                        })
+                        ->content(fn (?Charity $record) => static::licensePreviewHtml($record))
                         ->columnSpanFull(),
                 ]),
 
@@ -96,8 +94,30 @@ class CharityResource extends Resource
                 Toggle::make('has_kitchen')
                     ->label('تمتلك مطبخاً')
                     ->helperText('الجمعيات بدون مطبخ لا تُعرض عليها الأطعمة التي تحتاج طهياً.'),
-                TextInput::make('work_start')->label('بداية الدوام')->type('time')->required(),
-                TextInput::make('work_end')->label('نهاية الدوام')->type('time')->required(),
+                TextInput::make('work_start')
+                    ->label('بداية الدوام')
+                    ->type('time')
+                    ->required()
+                    ->live(),
+                TextInput::make('work_end')
+                    ->label('نهاية الدوام')
+                    ->type('time')
+                    ->required()
+                    // Registration already enforces this (CharityRegisterRequest)
+                    // — the admin edit form was missing the same guard, letting
+                    // an end time before the start time save silently. A
+                    // Get-based closure (rather than the `after:work_start`
+                    // string rule) reads the sibling field's live value
+                    // directly, so it can't silently no-op if Filament's
+                    // save-time data array ever shapes the key differently.
+                    ->rules([
+                        fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                            $start = $get('work_start');
+                            if ($start && $value && $value <= $start) {
+                                $fail('يجب أن تكون نهاية الدوام بعد بدايتها.');
+                            }
+                        },
+                    ]),
             ])->columns(3),
         ]);
     }
@@ -192,12 +212,49 @@ class CharityResource extends Resource
                     ->icon('heroicon-o-document-text')
                     ->color('gray')
                     ->visible(fn (Charity $record) => $record->license_document !== null)
-                    ->url(fn (Charity $record) => Storage::disk('public')->url($record->license_document))
-                    ->openUrlInNewTab(),
+                    ->modalHeading('وثيقة الترخيص')
+                    ->modalContent(fn (Charity $record) => static::licensePreviewHtml($record))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('إغلاق'),
 
                 Tables\Actions\EditAction::make()->label('مراجعة'),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    /**
+     * Renders the license document inline (image or PDF) rather than as a
+     * plain link — a bare `target="_blank"` navigation to a `.pdf` URL gets
+     * grabbed by browser download-manager extensions (e.g. IDM) before the
+     * browser's own viewer ever sees it. An `<iframe>`/`<img>` is not a
+     * top-level navigation, so it renders undisturbed.
+     */
+    private static function licensePreviewHtml(?Charity $record): HtmlString
+    {
+        if (! $record?->license_document) {
+            return new HtmlString(
+                '<span class="fi-color-danger text-sm">لم ترفع الجمعية أي وثيقة ترخيص.</span>'
+            );
+        }
+
+        $url = Storage::disk('public')->url($record->license_document);
+        $isImage = (bool) preg_match('/\.(jpe?g|png|webp)$/i', $record->license_document);
+
+        if ($isImage) {
+            return new HtmlString(
+                '<a href="' . e($url) . '" target="_blank" rel="noopener">'
+                    . '<img src="' . e($url) . '" alt="وثيقة الترخيص" '
+                    . 'style="max-height:22rem;border-radius:.75rem;border:1px solid rgb(214 211 209)">'
+                    . '</a>'
+            );
+        }
+
+        return new HtmlString(
+            '<iframe src="' . e($url) . '" title="وثيقة الترخيص" '
+                . 'style="width:100%;height:32rem;border:1px solid rgb(214 211 229);border-radius:.75rem"></iframe>'
+                . '<div class="fi-mt-2"><a href="' . e($url) . '" target="_blank" rel="noopener" '
+                . 'class="fi-link fi-size-sm">فتح في تبويب جديد</a></div>'
+        );
     }
 
     public static function getEloquentQuery(): Builder
