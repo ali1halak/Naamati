@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\AdminAuthController;
 use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Charity\CharityRequestController;
@@ -85,7 +86,15 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
     });
 
     // Admin — authenticated with the static X-Admin-Token header, not Sanctum.
+    // Admin sign-in. Throttled with the other credential endpoints.
+    Route::middleware('throttle:5,1')->prefix('admin')->group(function () {
+        Route::post('/login', [AdminAuthController::class, 'login']);
+    });
+
     Route::middleware('admin.token')->prefix('admin')->group(function () {
+        Route::get('/me', [AdminAuthController::class, 'me']);
+        Route::post('/logout', [AdminAuthController::class, 'logout']);
+
         Route::get('/charities', [AdminController::class, 'charities']);
         Route::post('/charities/{charity}/approve', [AdminController::class, 'approve']);
         Route::post('/charities/{charity}/suspend', [AdminController::class, 'suspend']);
