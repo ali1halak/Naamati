@@ -61,6 +61,15 @@ class UpdateDonationRequest extends FormRequest
             'longitude'      => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
 
             'contact_phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s]{7,15}$/'],
+
+            // Photo editing mirrors create: `images` are newly added files
+            // (multipart, images[] parts) and `removed_image_ids` are ids of
+            // this request's existing photos to drop. Ownership and the
+            // combined ≤4 cap are checked in after().
+            'images'             => ['sometimes', 'array', 'max:4'],
+            'images.*'           => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'removed_image_ids'  => ['sometimes', 'array'],
+            'removed_image_ids.*' => ['integer'],
         ];
     }
 
@@ -75,6 +84,29 @@ class UpdateDonationRequest extends FormRequest
                         $validator->errors()->add(
                             'status',
                             'Only pending requests can be edited'
+                        );
+                    }
+
+                    $removed = collect($this->input('removed_image_ids', []))
+                        ->map(fn ($id) => (int) $id)
+                        ->unique();
+
+                    // Removal targets must be photos of THIS request — a
+                    // foreign id is rejected outright, never silently ignored.
+                    $owned = $request->images()->pluck('id');
+                    if ($removed->diff($owned)->isNotEmpty()) {
+                        $validator->errors()->add(
+                            'removed_image_ids',
+                            'إحدى الصور المحددة للحذف لا تنتمي إلى هذا الطلب.'
+                        );
+                    }
+
+                    $kept = $owned->diff($removed)->count();
+                    $added = count($this->file('images', []));
+                    if ($kept + $added > 4) {
+                        $validator->errors()->add(
+                            'images',
+                            'لا يمكن إرفاق أكثر من 4 صور.'
                         );
                     }
 

@@ -27,8 +27,12 @@ class CreateDonationParams extends Equatable {
   /// Optional guidance for the charity driver ("call before arriving").
   final String? pickupNotes;
 
-  /// Up to 4 food photos, sent as multipart parts.
+  /// Up to 4 food photos, sent as multipart parts. On edits these are only
+  /// the newly added files; [removedImageIds] names the existing ones to drop.
   final List<File> images;
+
+  /// Edit only: ids of this request's existing photos to delete.
+  final List<int> removedImageIds;
 
   /// Optional map pin — either both coordinates or neither.
   final double? latitude;
@@ -47,6 +51,7 @@ class CreateDonationParams extends Equatable {
     required this.pickupAddress,
     this.pickupNotes,
     this.images = const [],
+    this.removedImageIds = const [],
     this.latitude,
     this.longitude,
     required this.contactPhone,
@@ -64,6 +69,7 @@ class CreateDonationParams extends Equatable {
     pickupAddress,
     pickupNotes,
     images,
+    removedImageIds,
     latitude,
     longitude,
     contactPhone,

@@ -13,6 +13,7 @@ use App\Enums\ViolationSeverity;
 use App\Models\Violation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -146,23 +147,64 @@ class DonationRequestService
 
         $data = $this->sanitizeAuthored($data);
 
-        $request->update([
-            'food_category_id' => $data['food_category_id'],
-            'needs_cooking'    => $data['needs_cooking']
-                ?? FoodCategory::findOrFail($data['food_category_id'])->default_needs_cooking,
-            'quantity_desc'    => $data['quantity_desc'],
-            'description'      => $data['description'] ?? null,
-            'custom_category'  => $data['custom_category'] ?? null,
-            'valid_until'      => $data['valid_until'],
-            'pickup_until'     => $data['pickup_until'],
-            'pickup_address'   => $data['pickup_address'],
-            'pickup_notes'     => $data['pickup_notes'] ?? null,
-            'latitude'         => $data['latitude'] ?? null,
-            'longitude'        => $data['longitude'] ?? null,
-            'contact_phone'    => $data['contact_phone'],
-        ]);
+        // Photos and fields move together inside one transaction so a failure
+        // halfway cannot leave the request describing different food than the
+        // photos attached to it.
+        return DB::transaction(function () use ($request, $data) {
+            $request->update([
+                'food_category_id' => $data['food_category_id'],
+                'needs_cooking'    => $data['needs_cooking']
+                    ?? FoodCategory::findOrFail($data['food_category_id'])->default_needs_cooking,
+                'quantity_desc'    => $data['quantity_desc'],
+                'description'      => $data['description'] ?? null,
+                'custom_category'  => $data['custom_category'] ?? null,
+                'valid_until'      => $data['valid_until'],
+                'pickup_until'     => $data['pickup_until'],
+                'pickup_address'   => $data['pickup_address'],
+                'pickup_notes'     => $data['pickup_notes'] ?? null,
+                'latitude'         => $data['latitude'] ?? null,
+                'longitude'        => $data['longitude'] ?? null,
+                'contact_phone'    => $data['contact_phone'],
+            ]);
 
-        return $request->refresh();
+            $this->syncImages($request, $data);
+
+            return $request->refresh();
+        });
+    }
+
+    /**
+     * Applies the photo edits that came with an update: drops the photos whose
+     * ids the donor removed (file first, then row) and appends newly uploaded
+     * files after the survivors. The ≤4 cap is validated upstream; ids not
+     * belonging to the request simply match nothing here.
+     */
+    private function syncImages(DonationRequest $request, array $data): void
+    {
+        $removedIds = collect($data['removed_image_ids'] ?? [])->unique();
+
+        if ($removedIds->isNotEmpty()) {
+            $request->images()
+                ->whereIn('id', $removedIds)
+                ->get()
+                ->each(function ($image) {
+                    Storage::disk('public')->delete($image->path);
+                    $image->delete();
+                });
+        }
+
+        $newFiles = array_values($data['images'] ?? []);
+
+        if ($newFiles !== []) {
+            $nextOrder = (int) $request->images()->max('sort_order') + 1;
+
+            foreach ($newFiles as $offset => $file) {
+                $request->images()->create([
+                    'path'       => $file->store('donation-images', 'public'),
+                    'sort_order' => $nextOrder + $offset,
+                ]);
+            }
+        }
     }
 
     /**

@@ -275,6 +275,15 @@ class _PendingView extends StatelessWidget {
           ),
         ),
         SizedBox(height: AppConstants.paddingXL.h),
+        // Primary exit right under the status: after posting, leaving is the
+        // natural next step — cancel stays far below and behind its
+        // confirmation dialog, so it can't be tapped by mistake.
+        CustomButton(
+          label: 'العودة للرئيسية',
+          leadingIcon: const Icon(Icons.home_rounded),
+          onPressed: () => context.go(RouteNames.home),
+        ),
+        SizedBox(height: AppConstants.paddingXL.h),
         DonationSummaryCard(donation: donation),
         SizedBox(height: AppConstants.paddingXL.h),
         // Pending requests stay editable right from the tracking screen.

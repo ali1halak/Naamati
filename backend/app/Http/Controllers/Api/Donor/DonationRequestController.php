@@ -207,8 +207,8 @@ class DonationRequestController extends Controller
         );
 
         return $this->ok(
-            new DonationRequestResource($donationRequest->load('foodCategory')),
-            'Donation request updated'
+            new DonationRequestResource($donationRequest->load(['foodCategory', 'images'])),
+            'تم حفظ التعديلات'
         );
     }
 

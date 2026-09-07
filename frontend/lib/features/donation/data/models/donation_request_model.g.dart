@@ -50,6 +50,11 @@ DonationRequestModel _$DonationRequestModelFromJson(
   images:
       (json['images'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       [],
+  imageIds:
+      (json['image_ids'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList() ??
+      [],
   createdAt: json['created_at'] == null
       ? null
       : DateTime.parse(json['created_at'] as String),
@@ -96,6 +101,7 @@ Map<String, dynamic> _$DonationRequestModelToJson(
   'charity': instance.charity,
   'rating': instance.rating,
   'images': instance.images,
+  'image_ids': instance.imageIds,
 };
 
 const _$DonationStatusEnumMap = {

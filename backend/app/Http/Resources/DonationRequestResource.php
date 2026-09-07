@@ -52,8 +52,11 @@ class DonationRequestResource extends JsonResource
             'charity'     => new CharityCardResource($this->whenLoaded('charity')),
             'eta_minutes' => $this->eta_minutes,
 
-            // Photos of the food, ordered as the donor uploaded them.
+            // Photos of the food, ordered as the donor uploaded them. `image_ids`
+            // travels beside `images` so the edit form can target a specific
+            // photo for removal without guessing from its URL.
             'images'    => $this->whenLoaded('images', fn () => $this->images->pluck('url')),
+            'image_ids' => $this->whenLoaded('images', fn () => $this->images->pluck('id')),
             'image_url' => $this->whenLoaded('images', fn () => $this->images->first()?->url),
 
             'accepted_at' => $this->accepted_at,

@@ -34,6 +34,10 @@ class DonationRequestModel extends DonationRequest {
   @JsonKey(defaultValue: [])
   final List<String> images;
 
+  @override
+  @JsonKey(name: 'image_ids', defaultValue: [])
+  final List<int> imageIds;
+
   const DonationRequestModel({
     required super.id,
     required super.status,
@@ -56,6 +60,7 @@ class DonationRequestModel extends DonationRequest {
     @JsonKey(name: 'donor_confirmed_at') super.donorConfirmedAt,
     @JsonKey(name: 'charity_confirmed_at') super.charityConfirmedAt,
     this.images = const [],
+    this.imageIds = const [],
     @JsonKey(name: 'created_at') super.createdAt,
     @JsonKey(name: 'cancel_reason') super.cancelReason,
     @JsonKey(name: 'cancelled_by') super.cancelledBy,
@@ -65,7 +70,11 @@ class DonationRequestModel extends DonationRequest {
     @JsonKey(name: 'created_at_label') super.createdAtLabel,
     this.rating,
   }) : super(
-      foodCategory: foodCategory, charity: charity, rating: rating, images: images);
+      foodCategory: foodCategory,
+      charity: charity,
+      rating: rating,
+      images: images,
+      imageIds: imageIds);
 
   factory DonationRequestModel.fromJson(Map<String, dynamic> json) =>
       _$DonationRequestModelFromJson(json);

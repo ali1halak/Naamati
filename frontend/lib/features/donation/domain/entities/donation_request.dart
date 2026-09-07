@@ -57,6 +57,10 @@ class DonationRequest extends Equatable {
   /// Food photo URLs (loaded with list/detail responses; empty otherwise).
   final List<String> images;
 
+  /// Backend ids matching [images] one-to-one — the edit form uses them to
+  /// target a specific existing photo for removal.
+  final List<int> imageIds;
+
   /// The two-sided handover receipts: the request only reaches `picked_up`
   /// once both are non-null. Null until the request is `accepted`.
   final DateTime? donorConfirmedAt;
@@ -103,6 +107,7 @@ class DonationRequest extends Equatable {
     this.donorConfirmedAt,
     this.charityConfirmedAt,
     this.images = const [],
+    this.imageIds = const [],
     this.cancelReason,
     this.cancelledBy,
     this.createdAt,
@@ -155,6 +160,7 @@ class DonationRequest extends Equatable {
     donorConfirmedAt,
     charityConfirmedAt,
     images,
+    imageIds,
     cancelReason,
     cancelledBy,
     createdAt,

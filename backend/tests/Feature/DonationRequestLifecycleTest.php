@@ -7,7 +7,9 @@ use App\Models\DonationRequest;
 use App\Models\FoodCategory;
 use App\Models\Strike;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -207,6 +209,103 @@ class DonationRequestLifecycleTest extends TestCase
                 'contact_phone' => '0999000111',
             ])
             ->assertStatus(404);
+    }
+
+    // ── Image editing ───────────────────────────────────────────────────────────
+
+    /**
+     * Multipart edit with method spoofing: removes one existing photo and
+     * appends a new one, keeping the others in order.
+     */
+    public function test_edit_can_remove_and_add_images(): void
+    {
+        Storage::fake('public');
+        $request = $this->createPending();
+        $kept = $request->images()->create([
+            'path' => UploadedFile::fake()->image('kept.jpg')->store('donation-images', 'public'),
+            'sort_order' => 0,
+        ]);
+        $removed = $request->images()->create([
+            'path' => UploadedFile::fake()->image('removed.jpg')->store('donation-images', 'public'),
+            'sort_order' => 1,
+        ]);
+
+        $this->withToken($this->donorToken)
+            ->post("/api/v1/donor/requests/{$request->id}", [
+                '_method' => 'PUT',
+                'food_category_id' => $this->vegetables->id,
+                'needs_cooking' => 'false',
+                'quantity_desc' => '10',
+                'valid_until' => now()->addDays(3)->format('Y-m-d H:i:s'),
+                'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
+                'pickup_address' => 'Aleppo',
+                'contact_phone' => '0999000111',
+                'removed_image_ids' => [(string) $removed->id],
+                'images' => [UploadedFile::fake()->image('new.jpg')],
+            ], ['content-type' => 'multipart/form-data'])
+            ->assertStatus(200);
+
+        $request->refresh()->load('images');
+        // The removed row is gone, the kept one stays and the new file is
+        // appended after it in upload order.
+        $this->assertSame(
+            [$kept->id, $request->images->last()->id],
+            $request->images->pluck('id')->all()
+        );
+        // The dropped photo's file is gone from the disk, the kept one is not.
+        Storage::disk('public')->assertMissing($removed->path);
+        Storage::disk('public')->assertExists($kept->path);
+    }
+
+    public function test_edit_rejects_removed_image_id_from_another_request(): void
+    {
+        Storage::fake('public');
+        $foreign = $this->createPending();
+        $foreignImage = $foreign->images()->create([
+            'path' => UploadedFile::fake()->image('foreign.jpg')->store('donation-images', 'public'),
+            'sort_order' => 0,
+        ]);
+        $request = $this->createPending();
+
+        $this->withToken($this->donorToken)
+            ->post("/api/v1/donor/requests/{$request->id}", [
+                '_method' => 'PUT',
+                'food_category_id' => $this->vegetables->id,
+                'quantity_desc' => '10',
+                'valid_until' => now()->addDays(3)->format('Y-m-d H:i:s'),
+                'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
+                'pickup_address' => 'Aleppo',
+                'contact_phone' => '0999000111',
+                'removed_image_ids' => [(string) $foreignImage->id],
+            ], ['content-type' => 'multipart/form-data'])
+            ->assertStatus(422)
+            ->assertJsonPath('errors.removed_image_ids.0', 'إحدى الصور المحددة للحذف لا تنتمي إلى هذا الطلب.');
+    }
+
+    public function test_edit_rejects_more_than_four_images_in_total(): void
+    {
+        Storage::fake('public');
+        $request = $this->createPending();
+        for ($i = 0; $i < 4; $i++) {
+            $request->images()->create([
+                'path' => UploadedFile::fake()->image("photo-{$i}.jpg")->store('donation-images', 'public'),
+                'sort_order' => $i,
+            ]);
+        }
+
+        $this->withToken($this->donorToken)
+            ->post("/api/v1/donor/requests/{$request->id}", [
+                '_method' => 'PUT',
+                'food_category_id' => $this->vegetables->id,
+                'quantity_desc' => '10',
+                'valid_until' => now()->addDays(3)->format('Y-m-d H:i:s'),
+                'pickup_until' => now()->addDays(2)->format('Y-m-d H:i:s'),
+                'pickup_address' => 'Aleppo',
+                'contact_phone' => '0999000111',
+                'images' => [UploadedFile::fake()->image('one-more.jpg')],
+            ], ['content-type' => 'multipart/form-data'])
+            ->assertStatus(422)
+            ->assertJsonPath('errors.images.0', 'لا يمكن إرفاق أكثر من 4 صور.');
     }
 
     // ── Authored-field sanitisation ─────────────────────────────────────────────

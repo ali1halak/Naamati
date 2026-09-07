@@ -52,24 +52,36 @@ abstract class DonationRemoteDataSource {
     @Part(name: 'latitude') double? latitude,
     @Part(name: 'longitude') double? longitude,
     @Part(name: 'contact_phone') required String contactPhone,
-    @Part(name: 'images') List<File>? images,
+    // Bracketed name so PHP collects the repeated parts into an `images`
+    // array; a plain `images` name makes Laravel see a single file instead.
+    @Part(name: 'images[]')
+    List<File>? images,
   });
 
-  @PUT('/donor/requests/{id}')
+  /// Multipart despite being an update: the donor may add photos here.
+  /// Laravel method spoofing (`_method=PUT`) lets a POST carry the files —
+  /// real PUT requests cannot have a multipart body in practice.
+  @MultiPart()
+  @POST('/donor/requests/{id}')
   Future<DonationResponseModel> updateDonation(
     @Path('id') int id, {
-    @Field('food_category_id') required int foodCategoryId,
-    @Field('needs_cooking') required bool needsCooking,
-    @Field('quantity_desc') required String quantityDesc,
-    @Field('description') String? description,
-    @Field('custom_category') String? customCategory,
-    @Field('valid_until') required String validUntil,
-    @Field('pickup_until') required String pickupUntil,
-    @Field('pickup_address') required String pickupAddress,
-    @Field('pickup_notes') String? pickupNotes,
-    @Field('latitude') double? latitude,
-    @Field('longitude') double? longitude,
-    @Field('contact_phone') required String contactPhone,
+    @Part(name: '_method') required String method,
+    @Part(name: 'food_category_id') required int foodCategoryId,
+    @Part(name: 'needs_cooking') required bool needsCooking,
+    @Part(name: 'quantity_desc') required String quantityDesc,
+    @Part(name: 'description') String? description,
+    @Part(name: 'custom_category') String? customCategory,
+    @Part(name: 'valid_until') required String validUntil,
+    @Part(name: 'pickup_until') required String pickupUntil,
+    @Part(name: 'pickup_address') required String pickupAddress,
+    @Part(name: 'pickup_notes') String? pickupNotes,
+    @Part(name: 'latitude') double? latitude,
+    @Part(name: 'longitude') double? longitude,
+    @Part(name: 'contact_phone') required String contactPhone,
+    // Ids of this request's existing photos to delete (one part per id,
+    // `removed_image_ids[]`), plus newly added files.
+    @Part(name: 'removed_image_ids[]') List<String>? removedImageIds,
+    @Part(name: 'images[]') List<File>? images,
   });
 
   @GET('/donor/requests/{id}')

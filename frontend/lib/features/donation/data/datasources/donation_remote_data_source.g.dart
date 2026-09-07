@@ -137,7 +137,7 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
       _data.files.addAll(
         images.map(
           (i) => MapEntry(
-            'images',
+            'images[]',
             MultipartFile.fromFileSync(
               i.path,
               filename: i.path.split(Platform.pathSeparator).last,
@@ -175,6 +175,7 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
   @override
   Future<DonationResponseModel> updateDonation(
     int id, {
+    required String method,
     required int foodCategoryId,
     required bool needsCooking,
     required String quantityDesc,
@@ -187,28 +188,60 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
     double? latitude,
     double? longitude,
     required String contactPhone,
+    List<String>? removedImageIds,
+    List<File>? images,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
-    final _data = {
-      'food_category_id': foodCategoryId,
-      'needs_cooking': needsCooking,
-      'quantity_desc': quantityDesc,
-      'description': description,
-      'custom_category': customCategory,
-      'valid_until': validUntil,
-      'pickup_until': pickupUntil,
-      'pickup_address': pickupAddress,
-      'pickup_notes': pickupNotes,
-      'latitude': latitude,
-      'longitude': longitude,
-      'contact_phone': contactPhone,
-    };
-    _data.removeWhere((k, v) => v == null);
+    final _data = FormData();
+    _data.fields.add(MapEntry('_method', method));
+    _data.fields.add(MapEntry('food_category_id', foodCategoryId.toString()));
+    _data.fields.add(MapEntry('needs_cooking', needsCooking.toString()));
+    _data.fields.add(MapEntry('quantity_desc', quantityDesc));
+    if (description != null) {
+      _data.fields.add(MapEntry('description', description));
+    }
+    if (customCategory != null) {
+      _data.fields.add(MapEntry('custom_category', customCategory));
+    }
+    _data.fields.add(MapEntry('valid_until', validUntil));
+    _data.fields.add(MapEntry('pickup_until', pickupUntil));
+    _data.fields.add(MapEntry('pickup_address', pickupAddress));
+    if (pickupNotes != null) {
+      _data.fields.add(MapEntry('pickup_notes', pickupNotes));
+    }
+    if (latitude != null) {
+      _data.fields.add(MapEntry('latitude', latitude.toString()));
+    }
+    if (longitude != null) {
+      _data.fields.add(MapEntry('longitude', longitude.toString()));
+    }
+    _data.fields.add(MapEntry('contact_phone', contactPhone));
+    removedImageIds?.forEach((i) {
+      _data.fields.add(MapEntry('removed_image_ids[]', i));
+    });
+    if (images != null) {
+      _data.files.addAll(
+        images.map(
+          (i) => MapEntry(
+            'images[]',
+            MultipartFile.fromFileSync(
+              i.path,
+              filename: i.path.split(Platform.pathSeparator).last,
+            ),
+          ),
+        ),
+      );
+    }
     final _options = _setStreamType<DonationResponseModel>(
-      Options(method: 'PUT', headers: _headers, extra: _extra)
+      Options(
+            method: 'POST',
+            headers: _headers,
+            extra: _extra,
+            contentType: 'multipart/form-data',
+          )
           .compose(
             _dio.options,
             '/donor/requests/${id}',

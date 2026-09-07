@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/base/base_state.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -9,10 +12,12 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/app_error_widget.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_textfield.dart';
 import '../../../../core/widgets/quantity_stepper.dart';
 import '../../domain/entities/donation_request.dart';
+import '../../domain/entities/donation_status.dart';
 import '../../domain/params/create_donation_params.dart';
 import '../bloc/create_donation_cubit.dart';
 import '../bloc/create_donation_state.dart';
@@ -28,6 +33,25 @@ class EditDonationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Belt-and-suspenders: entry points already gate this to pending requests
+    // and the backend refuses the update anyway — this only stops an outdated
+    // navigation (e.g. a stale list) from opening an editable form.
+    if (donation.status != DonationStatus.pending) {
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
+          body: Center(
+            child: AppErrorWidget(
+              message: 'لا يمكن تعديل الطلب — التعديل متاح فقط للطلبات قيد الانتظار',
+              retryLabel: 'رجوع',
+              onRetry: () => context.pop(),
+            ),
+          ),
+        ),
+      );
+    }
     return BlocProvider(
       create: (_) => sl<CreateDonationCubit>()..loadCategories(),
       child: _EditDonationView(donation: donation),
@@ -59,6 +83,16 @@ class _EditDonationViewState extends State<_EditDonationView> {
   DateTime? _validUntil;
   bool _initialised = false;
 
+  // Photo editing: photos already on the server (urls parallel their ids) plus
+  // newly picked files. Removing an existing photo only records its id — the
+  // deletion itself happens when the update succeeds.
+  late final List<String> _existingImageUrls;
+  late final List<int> _existingImageIds;
+  final List<int> _removedImageIds = [];
+  final List<File> _newImages = [];
+
+  static const _maxImages = 4;
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +109,8 @@ class _EditDonationViewState extends State<_EditDonationView> {
         TextEditingController(text: DateFormatter.formatDateTime(d.pickupUntil));
     _validUntilController =
         TextEditingController(text: DateFormatter.formatDateTime(d.validUntil));
+    _existingImageUrls = List.of(d.images);
+    _existingImageIds = List.of(d.imageIds);
   }
 
   @override
@@ -114,6 +150,30 @@ class _EditDonationViewState extends State<_EditDonationView> {
         _customCategoryController.text = customName;
       }
     });
+  }
+
+  Future<void> _pickImages() async {
+    final remaining = _maxImages - _existingImageUrls.length - _newImages.length;
+    if (remaining <= 0) return;
+
+    final picked = await ImagePicker().pickMultiImage(imageQuality: 80);
+    if (picked.isEmpty || !mounted) return;
+
+    setState(() {
+      _newImages.addAll(picked.take(remaining).map((x) => File(x.path)));
+    });
+  }
+
+  void _removeExistingImage(int index) {
+    setState(() {
+      _removedImageIds.add(_existingImageIds[index]);
+      _existingImageIds.removeAt(index);
+      _existingImageUrls.removeAt(index);
+    });
+  }
+
+  void _removeNewImage(int index) {
+    setState(() => _newImages.removeAt(index));
   }
 
   Future<void> _submit() async {
@@ -156,6 +216,8 @@ class _EditDonationViewState extends State<_EditDonationView> {
         pickupNotes: _pickupNotesController.text.trim().isEmpty
             ? null
             : _pickupNotesController.text.trim(),
+        images: _newImages,
+        removedImageIds: _removedImageIds,
         contactPhone: _phoneController.text.trim(),
       ),
     );
@@ -256,6 +318,20 @@ class _EditDonationViewState extends State<_EditDonationView> {
 
                   _SectionHeader('حالة الطعام'),
                   _FoodStateSection(),
+                  SizedBox(height: AppConstants.paddingXL.h),
+
+                  _SectionHeader('صور الطعام (حتى 4 صور)'),
+                  SizedBox(height: AppConstants.paddingMD.h),
+                  _EditImagesPicker(
+                    existingUrls: _existingImageUrls,
+                    newImages: _newImages,
+                    onAdd: _existingImageUrls.length + _newImages.length <
+                            _maxImages
+                        ? _pickImages
+                        : null,
+                    onRemoveExisting: _removeExistingImage,
+                    onRemoveNew: _removeNewImage,
+                  ),
                   SizedBox(height: AppConstants.paddingXL.h),
 
                   _SectionHeader('التوقيت'),
@@ -380,6 +456,145 @@ class _EditDonationViewState extends State<_EditDonationView> {
 }
 
 // ── Small shared pieces (kept local to the edit form) ─────────────────────────
+
+/// Photo strip for the edit form: photos already stored on the server (network
+/// images whose removal records their id) followed by newly picked files,
+/// plus an add tile while under the cap. Mirrors the create form's picker.
+class _EditImagesPicker extends StatelessWidget {
+  final List<String> existingUrls;
+  final List<File> newImages;
+  final VoidCallback? onAdd;
+  final ValueChanged<int> onRemoveExisting;
+  final ValueChanged<int> onRemoveNew;
+
+  const _EditImagesPicker({
+    required this.existingUrls,
+    required this.newImages,
+    this.onAdd,
+    required this.onRemoveExisting,
+    required this.onRemoveNew,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    Widget removeBadge(VoidCallback onTap) => PositionedDirectional(
+          end: 0,
+          top: 0,
+          child: Material(
+            color: colorScheme.error,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: Padding(
+                padding: EdgeInsets.all(3.r),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 14.r,
+                  color: colorScheme.onError,
+                ),
+              ),
+            ),
+          ),
+        );
+
+    return SizedBox(
+      height: 92.h,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        children: [
+          for (var i = 0; i < existingUrls.length; i++)
+            Padding(
+              padding: EdgeInsetsDirectional.only(end: 8.w),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusMD.r,
+                    ),
+                    child: Image.network(
+                      existingUrls[i],
+                      width: 92.r,
+                      height: 92.r,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Container(
+                        width: 92.r,
+                        height: 92.r,
+                        color: colorScheme.surfaceContainerHighest,
+                        child: Icon(
+                          Icons.image_not_supported_rounded,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                  removeBadge(() => onRemoveExisting(i)),
+                ],
+              ),
+            ),
+          for (var i = 0; i < newImages.length; i++)
+            Padding(
+              padding: EdgeInsetsDirectional.only(end: 8.w),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusMD.r,
+                    ),
+                    child: Image.file(
+                      newImages[i],
+                      width: 92.r,
+                      height: 92.r,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  removeBadge(() => onRemoveNew(i)),
+                ],
+              ),
+            ),
+          if (onAdd != null)
+            InkWell(
+              onTap: onAdd,
+              borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+              child: Container(
+                width: 92.r,
+                height: 92.r,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+                  border: Border.all(
+                    color: colorScheme.outline,
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add_a_photo_rounded,
+                      size: 24.r,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'إضافة',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 class _SectionHeader extends StatelessWidget {
   final String title;

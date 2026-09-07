@@ -167,6 +167,7 @@ class DonationRepositoryImpl implements DonationRepository {
       try {
         final response = await remoteDataSource.updateDonation(
           id,
+          method: 'PUT',
           foodCategoryId: params.foodCategoryId,
           needsCooking: params.needsCooking,
           quantityDesc: params.quantityDesc,
@@ -179,6 +180,10 @@ class DonationRepositoryImpl implements DonationRepository {
           latitude: params.latitude,
           longitude: params.longitude,
           contactPhone: params.contactPhone,
+          removedImageIds: params.removedImageIds.isEmpty
+              ? null
+              : params.removedImageIds.map((id) => '$id').toList(),
+          images: params.images.isEmpty ? null : params.images,
         );
         if (response.success) {
           return Right(response.data);
