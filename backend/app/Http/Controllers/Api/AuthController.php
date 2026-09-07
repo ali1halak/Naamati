@@ -92,7 +92,13 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+
+        // Stop pushing to a device that just signed out of this account.
+        if ($user->fcm_token !== null) {
+            $user->update(['fcm_token' => null]);
+        }
 
         return $this->ok(null, 'تم تسجيل الخروج');
     }

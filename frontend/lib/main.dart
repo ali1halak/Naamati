@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'core/di/injection_container.dart';
+import 'core/push/push_notification_service.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_cubit.dart';
@@ -29,8 +33,16 @@ void main() async {
   // Load environment variables.
   await dotenv.load(fileName: ".env");
 
+  // Reads android/app/google-services.json natively — no explicit options
+  // needed since only Android is targeted.
+  await Firebase.initializeApp();
+
   // Register all core (and later, feature) dependencies.
   await configureDependencies();
+
+  // Permission + token registration + foreground banners + tap-to-navigate.
+  // Fire-and-forget: push setup should never block first paint.
+  unawaited(sl<PushNotificationService>().init());
 
   // Pre-decode the splash lottie so it renders on the splash's first frame
   // instead of appearing after a visible delay.

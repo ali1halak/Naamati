@@ -50,4 +50,14 @@ class ProfileService
     {
         $user->update(['password' => $newPassword]);
     }
+
+    /**
+     * Registers this device as the account's push target. One token per
+     * account (last login/refresh wins) — see AuthController::logout for
+     * where it gets cleared again.
+     */
+    public function updateFcmToken(Donor|Charity $user, string $token): void
+    {
+        $user->update(['fcm_token' => $token]);
+    }
 }

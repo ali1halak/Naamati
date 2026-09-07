@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\ChangePasswordRequest;
+use App\Http\Requests\Profile\UpdateFcmTokenRequest;
 use App\Http\Requests\Profile\UpdateProfilePhotoRequest;
 use App\Http\Requests\Profile\UpdateProfileRequest;
 use App\Http\Resources\CharityProfileResource;
@@ -61,5 +62,12 @@ class ProfileController extends Controller
         $this->profiles->changePassword($request->user(), $request->validated()['password']);
 
         return $this->ok(null, 'تم تغيير كلمة المرور');
+    }
+
+    public function updateFcmToken(UpdateFcmTokenRequest $request)
+    {
+        $this->profiles->updateFcmToken($request->user(), $request->validated()['fcm_token']);
+
+        return $this->ok(null, 'تم تسجيل الجهاز');
     }
 }

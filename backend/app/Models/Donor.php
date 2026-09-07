@@ -12,8 +12,8 @@ class Donor extends Authenticatable
 {
     use HasApiTokens;
 
-    protected $fillable = ['name', 'type', 'email', 'phone', 'password', 'avatar_path'];
-    protected $hidden   = ['password', 'remember_token', 'avatar_path'];
+    protected $fillable = ['name', 'type', 'email', 'phone', 'password', 'avatar_path', 'fcm_token'];
+    protected $hidden   = ['password', 'remember_token', 'avatar_path', 'fcm_token'];
 
     protected $appends = ['avatar_url'];
 

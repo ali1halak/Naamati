@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "832109955967",
+    "project_id": "naamati-cefbd",
+    "storage_bucket": "naamati-cefbd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:832109955967:android:70379abadc89f289b9284a",
+        "android_client_info": {
+          "package_name": "com.example.naamati"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_Z3oGvTmOV9BM_wtZeqVYooCG5JxzOCY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

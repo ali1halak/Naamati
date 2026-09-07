@@ -15,11 +15,12 @@ class Charity extends Authenticatable
     protected $fillable = [
         'name', 'email', 'phone', 'password', 'has_kitchen',
         'status', 'license_document', 'logo_path', 'address', 'work_start', 'work_end',
+        'fcm_token',
     ];
 
     // rating_avg / ratings_count are derived columns owned by RatingObserver —
     // deliberately not fillable so nothing can write them by hand.
-    protected $hidden = ['password', 'remember_token', 'logo_path'];
+    protected $hidden = ['password', 'remember_token', 'logo_path', 'fcm_token'];
 
     protected $appends = ['logo_url'];
 

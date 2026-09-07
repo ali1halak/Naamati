@@ -43,4 +43,7 @@ abstract class ProfileRemoteDataSource {
     @Field('password') required String password,
     @Field('password_confirmation') required String passwordConfirmation,
   });
+
+  @POST('/profile/fcm-token')
+  Future<void> updateFcmToken({@Field('fcm_token') required String fcmToken});
 }

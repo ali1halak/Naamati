@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
@@ -56,4 +57,8 @@ abstract class CoreModule {
   @preResolve
   Future<SharedPreferences> get sharedPreferences =>
       SharedPreferences.getInstance();
+
+  @lazySingleton
+  FlutterLocalNotificationsPlugin get localNotifications =>
+      FlutterLocalNotificationsPlugin();
 }

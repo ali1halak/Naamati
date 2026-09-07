@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'dart:typed_data';
 
 import '../../../../core/base/base_state.dart';
+import '../../../../core/push/push_notification_service.dart';
 import '../../domain/usecases/register_charity_usecase.dart';
 import '../../domain/usecases/register_donor_usecase.dart';
 import 'register_state.dart';
@@ -11,9 +12,13 @@ import 'register_state.dart';
 class RegisterCubit extends Cubit<RegisterState> {
   final RegisterDonorUseCase _registerDonorUseCase;
   final RegisterCharityUseCase _registerCharityUseCase;
+  final PushNotificationService _pushNotificationService;
 
-  RegisterCubit(this._registerDonorUseCase, this._registerCharityUseCase)
-    : super(const RegisterState());
+  RegisterCubit(
+    this._registerDonorUseCase,
+    this._registerCharityUseCase,
+    this._pushNotificationService,
+  ) : super(const RegisterState());
 
   Future<void> registerDonor({
     required String name,
@@ -49,6 +54,7 @@ class RegisterCubit extends Cubit<RegisterState> {
       (user) {
         if (isClosed) return;
         emit(state.copyWith(status: BlocStatus.success, user: user));
+        _pushNotificationService.registerCurrentToken();
       },
     );
   }
@@ -97,6 +103,7 @@ class RegisterCubit extends Cubit<RegisterState> {
       (user) {
         if (isClosed) return;
         emit(state.copyWith(status: BlocStatus.success, user: user));
+        _pushNotificationService.registerCurrentToken();
       },
     );
   }

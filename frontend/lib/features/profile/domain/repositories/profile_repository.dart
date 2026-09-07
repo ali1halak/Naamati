@@ -31,4 +31,10 @@ abstract class ProfileRepository {
     required String password,
     required String passwordConfirmation,
   });
+
+  /// `POST /profile/fcm-token` — registers this device as the account's push
+  /// target. Best-effort from the caller's point of view (see
+  /// [PushNotificationService]), so failures are still surfaced as [Left]
+  /// but are safe to ignore.
+  Future<Either<Failure, Unit>> updateFcmToken(String fcmToken);
 }

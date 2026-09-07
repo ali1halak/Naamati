@@ -11,6 +11,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:connectivity_plus/connectivity_plus.dart' as _i895;
 import 'package:dio/dio.dart' as _i361;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'
+    as _i163;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
@@ -97,12 +99,15 @@ import '../../features/profile/domain/usecases/change_password_usecase.dart'
     as _i550;
 import '../../features/profile/domain/usecases/get_my_profile_usecase.dart'
     as _i981;
+import '../../features/profile/domain/usecases/update_fcm_token_usecase.dart'
+    as _i549;
 import '../../features/profile/domain/usecases/update_profile_photo_usecase.dart'
     as _i669;
 import '../../features/profile/domain/usecases/update_profile_usecase.dart'
     as _i478;
 import '../../features/profile/presentation/bloc/profile_cubit.dart' as _i800;
 import '../network/network_info.dart' as _i932;
+import '../push/push_notification_service.dart' as _i992;
 import '../theme/theme_cubit.dart' as _i611;
 import 'injection_container.dart' as _i809;
 
@@ -135,6 +140,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i847.ProfileRemoteDataSource>(
       () => coreModule.profileRemoteDataSource,
+    );
+    gh.lazySingleton<_i163.FlutterLocalNotificationsPlugin>(
+      () => coreModule.localNotifications,
     );
     gh.lazySingleton<_i560.CharityRepository>(
       () => _i227.CharityRepositoryImpl(
@@ -203,6 +211,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i981.GetMyProfileUseCase>(
       () => _i981.GetMyProfileUseCase(gh<_i894.ProfileRepository>()),
     );
+    gh.lazySingleton<_i549.UpdateFcmTokenUseCase>(
+      () => _i549.UpdateFcmTokenUseCase(gh<_i894.ProfileRepository>()),
+    );
     gh.lazySingleton<_i669.UpdateProfilePhotoUseCase>(
       () => _i669.UpdateProfilePhotoUseCase(gh<_i894.ProfileRepository>()),
     );
@@ -211,15 +222,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i360.DistributionFormCubit>(
       () => _i360.DistributionFormCubit(gh<_i55.RecordImpactUseCase>()),
-    );
-    gh.factory<_i98.RegisterCubit>(
-      () => _i98.RegisterCubit(
-        gh<_i1019.RegisterDonorUseCase>(),
-        gh<_i408.RegisterCharityUseCase>(),
-      ),
-    );
-    gh.factory<_i281.LoginCubit>(
-      () => _i281.LoginCubit(gh<_i188.LoginUseCase>()),
     );
     gh.factory<_i1070.OrderTrackingCubit>(
       () => _i1070.OrderTrackingCubit(
@@ -269,6 +271,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i850.CancelDonationUseCase>(),
       ),
     );
+    gh.lazySingleton<_i992.PushNotificationService>(
+      () => _i992.PushNotificationService(
+        gh<_i549.UpdateFcmTokenUseCase>(),
+        gh<_i163.FlutterLocalNotificationsPlugin>(),
+      ),
+    );
     gh.factory<_i477.DonationDetailsCubit>(
       () => _i477.DonationDetailsCubit(
         gh<_i992.GetDonationDetailsUseCase>(),
@@ -283,11 +291,24 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i666.AcceptRequestUseCase>(),
       ),
     );
+    gh.factory<_i281.LoginCubit>(
+      () => _i281.LoginCubit(
+        gh<_i188.LoginUseCase>(),
+        gh<_i992.PushNotificationService>(),
+      ),
+    );
     gh.factory<_i456.CreateDonationCubit>(
       () => _i456.CreateDonationCubit(
         gh<_i902.GetFoodCategoriesUseCase>(),
         gh<_i311.CreateDonationUseCase>(),
         gh<_i754.UpdateDonationUseCase>(),
+      ),
+    );
+    gh.factory<_i98.RegisterCubit>(
+      () => _i98.RegisterCubit(
+        gh<_i1019.RegisterDonorUseCase>(),
+        gh<_i408.RegisterCharityUseCase>(),
+        gh<_i992.PushNotificationService>(),
       ),
     );
     gh.factory<_i526.DonationAuditCubit>(

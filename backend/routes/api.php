@@ -40,6 +40,7 @@ Route::prefix('v1')->where(['id' => '[0-9]+', 'charity' => '[0-9]+'])->group(fun
             Route::put('/', [ProfileController::class, 'update'])->middleware('throttle:10,1');
             Route::post('/photo', [ProfileController::class, 'updatePhoto'])->middleware('throttle:10,1');
             Route::post('/password', [ProfileController::class, 'changePassword'])->middleware('throttle:5,1');
+            Route::post('/fcm-token', [ProfileController::class, 'updateFcmToken'])->middleware('throttle:10,1');
         });
 
         // ---- Donor ----
