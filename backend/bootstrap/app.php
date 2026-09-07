@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
+            // Ability gates: ordinary routes need `access`, POST /refresh needs
+            // `refresh`. A token holding only one cannot be used as the other.
+            'ability'     => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
             'type'        => \App\Http\Middleware\EnsureUserType::class,
             'admin.token' => \App\Http\Middleware\AdminToken::class,
         ]);
