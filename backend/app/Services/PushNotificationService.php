@@ -21,6 +21,10 @@ use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
  */
 class PushNotificationService
 {
+    public function __construct(private readonly Messaging $messaging)
+    {
+    }
+
     public function sendToUser(Donor|Charity $user, string $title, string $body, array $data = []): void
     {
         $token = $user->fcm_token;
@@ -37,14 +41,7 @@ class PushNotificationService
             ->withData($stringData);
 
         try {
-            // Resolved here, not via constructor injection: building this
-            // eagerly would make Laravel load and validate the Firebase
-            // service account for every controller that merely depends on
-            // NotificationService (which every donation route does) — a
-            // missing/misconfigured credential would then 500 on requests
-            // that never send a single push. Deferring it to the moment of
-            // sending puts a failure exactly where this catch can absorb it.
-            app(Messaging::class)->send($message);
+            $this->messaging->send($message);
         } catch (NotFound) {
             // The token is no longer registered (app uninstalled / data
             // cleared) — drop it so we stop trying.
