@@ -11,6 +11,7 @@ import '../../../../core/network/network_info.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
+import '../models/auth_response_model.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -23,6 +24,23 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.networkInfo,
     required this.secureStorage,
   });
+
+  /// Stores the access/refresh pair issued on login or registration.
+  ///
+  /// The refresh half only lives in secure storage; the access half is what
+  /// [DioClient]'s interceptor attaches to every request.
+  Future<void> _persistTokens(AuthDataModel data) async {
+    await secureStorage.write(
+      key: StorageKeys.accessToken,
+      value: data.token ?? '',
+    );
+    if (data.refreshToken != null && data.refreshToken!.isNotEmpty) {
+      await secureStorage.write(
+        key: StorageKeys.refreshToken,
+        value: data.refreshToken!,
+      );
+    }
+  }
 
   User _withAuthMetadata(User user, String? accountType) {
     return User(
@@ -53,10 +71,7 @@ class AuthRepositoryImpl implements AuthRepository {
         );
 
         if (response.success) {
-          await secureStorage.write(
-            key: StorageKeys.accessToken,
-            value: response.data.token ?? '',
-          );
+          await _persistTokens(response.data);
           return Right(
             _withAuthMetadata(response.data.user, response.data.type ?? ''),
           );
@@ -94,10 +109,7 @@ class AuthRepositoryImpl implements AuthRepository {
         );
 
         if (response.success) {
-          await secureStorage.write(
-            key: StorageKeys.accessToken,
-            value: response.data.token ?? '',
-          );
+          await _persistTokens(response.data);
           return Right(
             _withAuthMetadata(response.data.user, response.data.type ?? ''),
           );
@@ -152,10 +164,7 @@ class AuthRepositoryImpl implements AuthRepository {
         );
 
         if (response.success) {
-          await secureStorage.write(
-            key: StorageKeys.accessToken,
-            value: response.data.token ?? '',
-          );
+          await _persistTokens(response.data);
           return Right(
             _withAuthMetadata(response.data.user, response.data.type ?? ''),
           );

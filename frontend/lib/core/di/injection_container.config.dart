@@ -129,6 +129,7 @@ import '../../features/profile/domain/usecases/update_profile_photo_usecase.dart
 import '../../features/profile/domain/usecases/update_profile_usecase.dart'
     as _i478;
 import '../../features/profile/presentation/bloc/profile_cubit.dart' as _i800;
+import '../location/location_service.dart' as _i85;
 import '../network/network_info.dart' as _i932;
 import '../push/push_notification_service.dart' as _i992;
 import '../theme/theme_cubit.dart' as _i611;
@@ -170,6 +171,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i163.FlutterLocalNotificationsPlugin>(
       () => coreModule.localNotifications,
     );
+    gh.lazySingleton<_i85.LocationService>(() => _i85.LocationService());
     gh.lazySingleton<_i560.CharityRepository>(
       () => _i227.CharityRepositoryImpl(
         remoteDataSource: gh<_i912.CharityRemoteDataSource>(),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/location/open_in_maps_button.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -93,6 +94,13 @@ class AvailableRequestCard extends StatelessWidget {
                     label: 'الموقع',
                     value: request.locationZone!,
                   ),
+                if (request.latitude != null && request.longitude != null) ...[
+                  SizedBox(height: 4.h),
+                  OpenInMapsButton(
+                    latitude: request.latitude,
+                    longitude: request.longitude,
+                  ),
+                ],
                 SizedBox(height: AppConstants.paddingSM.h),
                 CustomButton(
                   label: 'قبول الطلب',

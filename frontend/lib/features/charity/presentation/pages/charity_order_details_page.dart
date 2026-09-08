@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/location/open_in_maps_button.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_error_widget.dart';
@@ -199,6 +200,18 @@ class _CharityOrderDetailsView extends StatelessWidget {
                             label: 'موقع الاستلام',
                             value: audit.pickup.location ?? '—',
                           ),
+                          if (audit.pickup.latitude != null &&
+                              audit.pickup.longitude != null)
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 6.h),
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: OpenInMapsButton(
+                                  latitude: audit.pickup.latitude,
+                                  longitude: audit.pickup.longitude,
+                                ),
+                              ),
+                            ),
                           _DetailRow(
                             label: 'وقت القبول',
                             value: audit.pickup.acceptedAt ?? '—',

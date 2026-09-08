@@ -54,11 +54,13 @@ class UpdateDonationRequest extends FormRequest
             'valid_until'  => ['required', 'date', 'after:now', 'before_or_equal:'.now()->addDays(30)->format('Y-m-d H:i:s')],
             'pickup_until' => ['required', 'date', 'after:now', 'before_or_equal:valid_until'],
 
+            // Reverse-geocoded client-side from the chosen pin — see
+            // StoreDonationRequest for why this is no longer free-typed.
             'pickup_address' => ['required', 'string', 'max:255'],
 
             'pickup_notes' => ['nullable', 'string', 'max:255'],
-            'latitude'       => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
-            'longitude'      => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
+            'latitude'  => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
 
             'contact_phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s]{7,15}$/'],
 
@@ -137,8 +139,8 @@ class UpdateDonationRequest extends FormRequest
             'valid_until.before_or_equal' => 'The food expiry must be within 30 days from now.',
             'valid_until.after'            => 'The food expiry time must be in the future.',
             'pickup_until.before_or_equal' => 'Pickup time cannot be later than the food expiry time.',
-            'latitude.required_with'       => 'Latitude is required when longitude is provided.',
-            'longitude.required_with'      => 'Longitude is required when latitude is provided.',
+            'latitude.required'            => 'يرجى تحديد موقع الاستلام.',
+            'longitude.required'           => 'يرجى تحديد موقع الاستلام.',
         ];
     }
 }

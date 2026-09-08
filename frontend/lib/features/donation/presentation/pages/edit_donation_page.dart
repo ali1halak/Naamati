@@ -9,6 +9,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/base/base_state.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/location/pickup_location.dart';
+import '../../../../core/location/pickup_location_field.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/validators.dart';
@@ -44,7 +46,8 @@ class EditDonationPage extends StatelessWidget {
           appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
           body: Center(
             child: AppErrorWidget(
-              message: 'لا يمكن تعديل الطلب — التعديل متاح فقط للطلبات قيد الانتظار',
+              message:
+                  'لا يمكن تعديل الطلب — التعديل متاح فقط للطلبات قيد الانتظار',
               retryLabel: 'رجوع',
               onRetry: () => context.pop(),
             ),
@@ -73,7 +76,7 @@ class _EditDonationViewState extends State<_EditDonationView> {
   late final TextEditingController _quantityController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _customCategoryController;
-  late final TextEditingController _addressController;
+  PickupLocation? _selectedLocation;
   late final TextEditingController _pickupNotesController;
   late final TextEditingController _phoneController;
   late final TextEditingController _pickupUntilController;
@@ -100,15 +103,23 @@ class _EditDonationViewState extends State<_EditDonationView> {
     _quantityController = TextEditingController(text: '${d.quantity}');
     _descriptionController = TextEditingController(text: d.description ?? '');
     _customCategoryController = TextEditingController();
-    _addressController = TextEditingController(text: d.pickupAddress);
+    if (d.latitude != null && d.longitude != null) {
+      _selectedLocation = PickupLocation(
+        latitude: d.latitude!,
+        longitude: d.longitude!,
+        address: d.pickupAddress,
+      );
+    }
     _pickupNotesController = TextEditingController(text: d.pickupNotes ?? '');
     _phoneController = TextEditingController(text: d.contactPhone);
     _pickupUntil = d.pickupUntil;
     _validUntil = d.validUntil;
-    _pickupUntilController =
-        TextEditingController(text: DateFormatter.formatDateTime(d.pickupUntil));
-    _validUntilController =
-        TextEditingController(text: DateFormatter.formatDateTime(d.validUntil));
+    _pickupUntilController = TextEditingController(
+      text: DateFormatter.formatDateTime(d.pickupUntil),
+    );
+    _validUntilController = TextEditingController(
+      text: DateFormatter.formatDateTime(d.validUntil),
+    );
     _existingImageUrls = List.of(d.images);
     _existingImageIds = List.of(d.imageIds);
   }
@@ -118,7 +129,6 @@ class _EditDonationViewState extends State<_EditDonationView> {
     _quantityController.dispose();
     _descriptionController.dispose();
     _customCategoryController.dispose();
-    _addressController.dispose();
     _pickupNotesController.dispose();
     _phoneController.dispose();
     _pickupUntilController.dispose();
@@ -153,7 +163,8 @@ class _EditDonationViewState extends State<_EditDonationView> {
   }
 
   Future<void> _pickImages() async {
-    final remaining = _maxImages - _existingImageUrls.length - _newImages.length;
+    final remaining =
+        _maxImages - _existingImageUrls.length - _newImages.length;
     if (remaining <= 0) return;
 
     final picked = await ImagePicker().pickMultiImage(imageQuality: 80);
@@ -200,6 +211,14 @@ class _EditDonationViewState extends State<_EditDonationView> {
       return;
     }
 
+    final location = _selectedLocation;
+    if (location == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('يرجى تحديد موقع الاستلام')));
+      return;
+    }
+
     await cubit.submitUpdate(
       widget.donation.id,
       CreateDonationParams(
@@ -213,7 +232,9 @@ class _EditDonationViewState extends State<_EditDonationView> {
         customCategory: customCategory.isEmpty ? null : customCategory,
         validUntil: _validUntil!,
         pickupUntil: _pickupUntil!,
-        pickupAddress: _addressController.text.trim(),
+        pickupAddress: location.address,
+        latitude: location.latitude,
+        longitude: location.longitude,
         pickupNotes: _pickupNotesController.text.trim().isEmpty
             ? null
             : _pickupNotesController.text.trim(),
@@ -261,9 +282,9 @@ class _EditDonationViewState extends State<_EditDonationView> {
           listener: (context, state) {
             if (state.status == BlocStatus.failure &&
                 state.errorMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage!)),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
             }
             if (state.status == BlocStatus.success &&
                 state.createdDonation != null) {
@@ -326,7 +347,8 @@ class _EditDonationViewState extends State<_EditDonationView> {
                   _EditImagesPicker(
                     existingUrls: _existingImageUrls,
                     newImages: _newImages,
-                    onAdd: _existingImageUrls.length + _newImages.length <
+                    onAdd:
+                        _existingImageUrls.length + _newImages.length <
                             _maxImages
                         ? _pickImages
                         : null,
@@ -364,15 +386,10 @@ class _EditDonationViewState extends State<_EditDonationView> {
                   SizedBox(height: AppConstants.paddingXL.h),
 
                   _SectionHeader('الموقع'),
-                  CustomTextField(
-                    label: 'عنوان الاستلام',
-                    hint: 'الحي، الشارع، أقرب معلم',
-                    controller: _addressController,
-                    maxLines: 2,
-                    isRequired: true,
-                    validator: requiredFieldValidator(
-                      fieldName: 'عنوان الاستلام',
-                    ),
+                  PickupLocationField(
+                    location: _selectedLocation,
+                    onChanged: (location) =>
+                        setState(() => _selectedLocation = location),
                   ),
                   SizedBox(height: AppConstants.paddingMD.h),
                   CustomTextField(
@@ -432,7 +449,13 @@ class _EditDonationViewState extends State<_EditDonationView> {
     );
     if (time == null) return;
 
-    final result = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final result = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
     if (!result.isAfter(DateTime.now())) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -481,25 +504,25 @@ class _EditImagesPicker extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     Widget removeBadge(VoidCallback onTap) => PositionedDirectional(
-          end: 0,
-          top: 0,
-          child: Material(
-            color: colorScheme.error,
-            shape: const CircleBorder(),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: onTap,
-              child: Padding(
-                padding: EdgeInsets.all(3.r),
-                child: Icon(
-                  Icons.close_rounded,
-                  size: 14.r,
-                  color: colorScheme.onError,
-                ),
-              ),
+      end: 0,
+      top: 0,
+      child: Material(
+        color: colorScheme.error,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.all(3.r),
+            child: Icon(
+              Icons.close_rounded,
+              size: 14.r,
+              color: colorScheme.onError,
             ),
           ),
-        );
+        ),
+      ),
+    );
 
     return SizedBox(
       height: 92.h,
@@ -566,10 +589,7 @@ class _EditImagesPicker extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
-                  border: Border.all(
-                    color: colorScheme.outline,
-                    width: 1,
-                  ),
+                  border: Border.all(color: colorScheme.outline, width: 1),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -680,21 +700,21 @@ class _CategoryDropdown extends StatelessWidget {
             prefixIcon: Icon(Icons.fastfood_outlined),
           ),
           items: state.categories.map((category) {
-            return DropdownMenuItem(value: category.id, child: Text(category.nameAr));
+            return DropdownMenuItem(
+              value: category.id,
+              child: Text(category.nameAr),
+            );
           }).toList(),
           onChanged: (id) {
             final category = state.categories.firstWhere((c) => c.id == id);
             context.read<CreateDonationCubit>().selectCategory(category);
           },
-          validator: (value) => value == null
-              ? 'يرجى اختيار نوع الطعام'
-              : null,
+          validator: (value) => value == null ? 'يرجى اختيار نوع الطعام' : null,
         ),
       ],
     );
   }
 }
-
 
 /// Cooking-state picker with the same rule as the create form: locked to the
 /// category default, editable only when the category is "غير ذلك".
@@ -716,7 +736,9 @@ class _FoodStateSection extends StatelessWidget {
           required bool selected,
           required VoidCallback? onTap,
         }) {
-          final fg = selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant;
+          final fg = selected
+              ? colorScheme.onPrimary
+              : colorScheme.onSurfaceVariant;
           final locked = onTap == null;
           return Expanded(
             child: Opacity(
@@ -728,9 +750,13 @@ class _FoodStateSection extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 14.h),
                   decoration: BoxDecoration(
                     color: selected ? colorScheme.primary : colorScheme.surface,
-                    borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusMD.r,
+                    ),
                     border: Border.all(
-                      color: selected ? colorScheme.primary : colorScheme.outline,
+                      color: selected
+                          ? colorScheme.primary
+                          : colorScheme.outline,
                       width: 1,
                     ),
                   ),

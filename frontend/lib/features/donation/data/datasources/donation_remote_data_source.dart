@@ -49,13 +49,12 @@ abstract class DonationRemoteDataSource {
     @Part(name: 'pickup_until') required String pickupUntil,
     @Part(name: 'pickup_address') required String pickupAddress,
     @Part(name: 'pickup_notes') String? pickupNotes,
-    @Part(name: 'latitude') double? latitude,
-    @Part(name: 'longitude') double? longitude,
+    @Part(name: 'latitude') required double latitude,
+    @Part(name: 'longitude') required double longitude,
     @Part(name: 'contact_phone') required String contactPhone,
     // Bracketed name so PHP collects the repeated parts into an `images`
     // array; a plain `images` name makes Laravel see a single file instead.
-    @Part(name: 'images[]')
-    List<File>? images,
+    @Part(name: 'images[]') List<File>? images,
   });
 
   /// Multipart despite being an update: the donor may add photos here.
@@ -75,8 +74,8 @@ abstract class DonationRemoteDataSource {
     @Part(name: 'pickup_until') required String pickupUntil,
     @Part(name: 'pickup_address') required String pickupAddress,
     @Part(name: 'pickup_notes') String? pickupNotes,
-    @Part(name: 'latitude') double? latitude,
-    @Part(name: 'longitude') double? longitude,
+    @Part(name: 'latitude') required double latitude,
+    @Part(name: 'longitude') required double longitude,
     @Part(name: 'contact_phone') required String contactPhone,
     // Ids of this request's existing photos to delete (one part per id,
     // `removed_image_ids[]`), plus newly added files.

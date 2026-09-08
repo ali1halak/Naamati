@@ -8,39 +8,22 @@ import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../auth/domain/entities/user.dart';
-import '../../../auth/domain/usecases/get_current_user_usecase.dart';
 import '../../../auth/domain/usecases/logout_usecase.dart';
 import '../../../profile/presentation/widgets/profile_avatar.dart';
 
 /// Shared navigation drawer for both the donor and charity home screens.
 ///
-/// Fetches the current user once (via the existing [GetCurrentUserUseCase] —
-/// no dedicated endpoint needed just for this header) to show a name/email
-/// header, then lists: الرئيسية, الملف الشخصي, الإعدادات, تسجيل الخروج.
-class AppDrawer extends StatefulWidget {
+/// [user] is passed in rather than fetched here — the home page already
+/// loads it for its own app bar avatar and refreshes it whenever the user
+/// returns from the profile screen, so the drawer's header always shows the
+/// same (fresh) name/photo instead of a stale copy fetched once on open.
+class AppDrawer extends StatelessWidget {
   /// Where "الرئيسية" navigates — differs between the donor and charity home.
   final String homeRoute;
 
-  const AppDrawer({super.key, required this.homeRoute});
+  final User? user;
 
-  @override
-  State<AppDrawer> createState() => _AppDrawerState();
-}
-
-class _AppDrawerState extends State<AppDrawer> {
-  User? _user;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUser();
-  }
-
-  Future<void> _loadUser() async {
-    final result = await sl<GetCurrentUserUseCase>()(const NoParams());
-    if (!mounted) return;
-    result.fold((_) {}, (user) => setState(() => _user = user));
-  }
+  const AppDrawer({super.key, required this.homeRoute, this.user});
 
   Future<void> _confirmLogout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
@@ -97,14 +80,14 @@ class _AppDrawerState extends State<AppDrawer> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _DrawerHeader(user: _user),
+              _DrawerHeader(user: user),
               SizedBox(height: AppConstants.paddingSM.h),
               _DrawerItem(
                 icon: Icons.home_rounded,
                 label: 'الرئيسية',
                 onTap: () {
                   Navigator.of(context).pop();
-                  context.go(widget.homeRoute);
+                  context.go(homeRoute);
                 },
               ),
               _DrawerItem(
@@ -174,7 +157,7 @@ class _DrawerHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ProfileAvatar(imageUrl: null, name: name, radius: 30),
+          ProfileAvatar(imageUrl: user?.photoUrl, name: name, radius: 30),
           SizedBox(height: AppConstants.paddingMD.h),
           Text(
             name,

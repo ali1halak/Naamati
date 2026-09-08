@@ -35,9 +35,10 @@ class CreateDonationParams extends Equatable {
   /// Edit only: ids of this request's existing photos to delete.
   final List<int> removedImageIds;
 
-  /// Optional map pin — either both coordinates or neither.
-  final double? latitude;
-  final double? longitude;
+  /// Set from GPS or the map picker — [pickupAddress] is reverse-geocoded
+  /// from this, never typed by hand.
+  final double latitude;
+  final double longitude;
 
   final String contactPhone;
 
@@ -53,8 +54,8 @@ class CreateDonationParams extends Equatable {
     this.pickupNotes,
     this.images = const [],
     this.removedImageIds = const [],
-    this.latitude,
-    this.longitude,
+    required this.latitude,
+    required this.longitude,
     required this.contactPhone,
   });
 

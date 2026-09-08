@@ -13,15 +13,20 @@ class PaginatedAvailableRequests extends Equatable {
   /// Total number of pages the backend reports.
   final int lastPage;
 
+  /// Total number of available requests across all pages — used for the
+  /// bottom nav badge.
+  final int total;
+
   const PaginatedAvailableRequests({
     required this.items,
     required this.currentPage,
     required this.lastPage,
+    required this.total,
   });
 
   /// Whether another page can be requested after [currentPage].
   bool get hasMore => currentPage < lastPage;
 
   @override
-  List<Object?> get props => [items, currentPage, lastPage];
+  List<Object?> get props => [items, currentPage, lastPage, total];
 }

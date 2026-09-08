@@ -101,8 +101,8 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
     required String pickupUntil,
     required String pickupAddress,
     String? pickupNotes,
-    double? latitude,
-    double? longitude,
+    required double latitude,
+    required double longitude,
     required String contactPhone,
     List<File>? images,
   }) async {
@@ -126,12 +126,8 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
     if (pickupNotes != null) {
       _data.fields.add(MapEntry('pickup_notes', pickupNotes));
     }
-    if (latitude != null) {
-      _data.fields.add(MapEntry('latitude', latitude.toString()));
-    }
-    if (longitude != null) {
-      _data.fields.add(MapEntry('longitude', longitude.toString()));
-    }
+    _data.fields.add(MapEntry('latitude', latitude.toString()));
+    _data.fields.add(MapEntry('longitude', longitude.toString()));
     _data.fields.add(MapEntry('contact_phone', contactPhone));
     if (images != null) {
       _data.files.addAll(
@@ -185,8 +181,8 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
     required String pickupUntil,
     required String pickupAddress,
     String? pickupNotes,
-    double? latitude,
-    double? longitude,
+    required double latitude,
+    required double longitude,
     required String contactPhone,
     List<String>? removedImageIds,
     List<File>? images,
@@ -212,12 +208,8 @@ class _DonationRemoteDataSource implements DonationRemoteDataSource {
     if (pickupNotes != null) {
       _data.fields.add(MapEntry('pickup_notes', pickupNotes));
     }
-    if (latitude != null) {
-      _data.fields.add(MapEntry('latitude', latitude.toString()));
-    }
-    if (longitude != null) {
-      _data.fields.add(MapEntry('longitude', longitude.toString()));
-    }
+    _data.fields.add(MapEntry('latitude', latitude.toString()));
+    _data.fields.add(MapEntry('longitude', longitude.toString()));
     _data.fields.add(MapEntry('contact_phone', contactPhone));
     removedImageIds?.forEach((i) {
       _data.fields.add(MapEntry('removed_image_ids[]', i));

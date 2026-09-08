@@ -3,24 +3,34 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/location/open_in_maps_button.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_textfield.dart';
 
 /// Bottom sheet asking the charity for its expected arrival time before it
 /// claims a request — the backend requires `eta_minutes` (5–480) so the donor
-/// knows when to expect pickup.
+/// knows when to expect pickup. Also offers "التحديد على الخريطة" so the
+/// charity can check the route before committing to an ETA.
 class AcceptRequestSheet extends StatefulWidget {
-  const AcceptRequestSheet({super.key});
+  final double? latitude;
+  final double? longitude;
+
+  const AcceptRequestSheet({super.key, this.latitude, this.longitude});
 
   /// Shows the sheet and returns the chosen ETA in minutes, or null if the
   /// user dismissed it.
-  static Future<int?> show(BuildContext context) {
+  static Future<int?> show(
+    BuildContext context, {
+    double? latitude,
+    double? longitude,
+  }) {
     return showModalBottomSheet<int>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const AcceptRequestSheet(),
+      builder: (_) =>
+          AcceptRequestSheet(latitude: latitude, longitude: longitude),
     );
   }
 
@@ -112,6 +122,15 @@ class _AcceptRequestSheetState extends State<AcceptRequestSheet> {
                     fontSize: 13.sp,
                   ),
                 ),
+                if (widget.latitude != null && widget.longitude != null) ...[
+                  SizedBox(height: 10.h),
+                  Center(
+                    child: OpenInMapsButton(
+                      latitude: widget.latitude,
+                      longitude: widget.longitude,
+                    ),
+                  ),
+                ],
                 SizedBox(height: AppConstants.paddingLG.h),
                 CustomTextField(
                   label: 'الوقت المتوقع للوصول (بالدقائق)',

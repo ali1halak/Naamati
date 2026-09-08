@@ -15,7 +15,9 @@ import '../../../../core/usecases/usecase.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../../../auth/domain/usecases/get_current_user_usecase.dart';
 import '../../../home/presentation/widgets/app_drawer.dart';
+import '../../../notifications/presentation/widgets/notification_bell_icon.dart';
 import '../../../profile/presentation/widgets/profile_avatar.dart';
+import '../../domain/entities/available_request.dart';
 import '../../domain/entities/violation.dart';
 import '../bloc/available_requests_cubit.dart';
 import '../bloc/available_requests_state.dart';
@@ -96,8 +98,9 @@ class _CharityHomeBodyState extends State<_CharityHomeBody> {
         appBar: _CharityHomeAppBar(
           colorScheme: Theme.of(context).colorScheme,
           user: _user,
+          onProfileReturn: _loadUser,
         ),
-        drawer: const AppDrawer(homeRoute: RouteNames.charityHome),
+        drawer: AppDrawer(homeRoute: RouteNames.charityHome, user: _user),
         body: switch (_selectedIndex) {
           0 => const _AvailableRequestsTab(),
           1 => const _MyOrdersTab(),
@@ -116,8 +119,13 @@ class _CharityHomeAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final ColorScheme colorScheme;
   final User? user;
+  final VoidCallback? onProfileReturn;
 
-  const _CharityHomeAppBar({required this.colorScheme, this.user});
+  const _CharityHomeAppBar({
+    required this.colorScheme,
+    this.user,
+    this.onProfileReturn,
+  });
 
   @override
   Size get preferredSize => Size.fromHeight(AppConstants.appBarHeight.h);
@@ -149,18 +157,14 @@ class _CharityHomeAppBar extends StatelessWidget
         ),
       ),
       actions: [
-        IconButton(
-          icon: Icon(
-            Icons.notifications_none_rounded,
-            size: 24.r,
-            color: colorScheme.onSurface,
-          ),
-          onPressed: () => context.push(RouteNames.notifications),
-        ),
+        const NotificationBellIcon(),
         Padding(
           padding: EdgeInsets.only(left: 12.w, right: 4.w),
           child: GestureDetector(
-            onTap: () => context.push(RouteNames.profile),
+            onTap: () async {
+              await context.push(RouteNames.profile);
+              onProfileReturn?.call();
+            },
             child: ProfileAvatar(
               imageUrl: user?.photoUrl,
               name: user?.name ?? '',
@@ -211,12 +215,19 @@ class _AvailableRequestsTabState extends State<_AvailableRequestsTab> {
     super.dispose();
   }
 
-  Future<void> _accept(int id) async {
+  Future<void> _accept(AvailableRequest request) async {
     final cubit = context.read<AvailableRequestsCubit>();
-    final etaMinutes = await AcceptRequestSheet.show(context);
+    final etaMinutes = await AcceptRequestSheet.show(
+      context,
+      latitude: request.latitude,
+      longitude: request.longitude,
+    );
     if (etaMinutes == null || !mounted) return;
 
-    final accepted = await cubit.acceptRequest(id, etaMinutes: etaMinutes);
+    final accepted = await cubit.acceptRequest(
+      request.id,
+      etaMinutes: etaMinutes,
+    );
     if (!mounted) return;
 
     if (accepted != null) {
@@ -318,7 +329,7 @@ class _AvailableRequestsTabState extends State<_AvailableRequestsTab> {
           final request = state.requests[index];
           return AvailableRequestCard(
             request: request,
-            onAccept: () => _accept(request.id),
+            onAccept: () => _accept(request),
             isAccepting: state.acceptingId == request.id,
           );
         },
@@ -447,8 +458,16 @@ class _MyOrdersTabState extends State<_MyOrdersTab> {
           final order = state.orders[index];
           return MyOrderCard(
             order: order,
-            onTap: () =>
-                context.push(RouteNames.charityOrderDetailsPath(order.id)),
+            // Still actionable (accepted/picked_up) → the tracking screen,
+            // where confirming pickup/distribution actually happens. Only a
+            // terminal order (completed/expired/cancelled/no_show) goes to
+            // the read-only audit — otherwise a charity mid-handover would
+            // land on a dead end with no way to continue.
+            onTap: () => context.push(
+              order.status.isActive
+                  ? RouteNames.charityOrderTrackingPath(order.id)
+                  : RouteNames.charityOrderDetailsPath(order.id),
+            ),
           );
         },
       ),

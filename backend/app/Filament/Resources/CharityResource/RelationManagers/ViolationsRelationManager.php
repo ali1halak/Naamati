@@ -57,6 +57,24 @@ class ViolationsRelationManager extends RelationManager
                 ->maxLength(1000)
                 ->rows(4)
                 ->columnSpanFull(),
+
+            Select::make('donation_request_id')
+                ->label('الطلب المرتبط')
+                ->helperText('اختياري — اربط المخالفة بالطلب الذي نتجت عنه.')
+                ->options(fn () => $this->getOwnerRecord()
+                    ->donationRequests()
+                    ->latest()
+                    ->limit(100)
+                    ->get()
+                    ->mapWithKeys(fn ($request) => [
+                        $request->id => sprintf(
+                            '#%d — %s',
+                            $request->id,
+                            $request->created_at?->format('Y-m-d') ?? ''
+                        ),
+                    ]))
+                ->searchable()
+                ->columnSpanFull(),
         ])->columns(2);
     }
 

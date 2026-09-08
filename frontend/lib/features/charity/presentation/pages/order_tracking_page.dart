@@ -214,7 +214,7 @@ class _TrackingBody extends StatelessWidget {
         ),
 
         SizedBox(height: AppConstants.paddingLG.h),
-        DonationSummaryCard(donation: order),
+        DonationSummaryCard(donation: order, showOpenInMaps: true),
         SizedBox(height: AppConstants.paddingLG.h),
       ],
     );

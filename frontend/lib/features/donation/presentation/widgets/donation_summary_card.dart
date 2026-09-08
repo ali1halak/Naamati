@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/location/open_in_maps_button.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../domain/entities/donation_request.dart';
@@ -11,7 +12,15 @@ import '../../domain/entities/donation_request.dart';
 class DonationSummaryCard extends StatelessWidget {
   final DonationRequest donation;
 
-  const DonationSummaryCard({super.key, required this.donation});
+  /// The donor is the one who set this address, so only the charity's own
+  /// tracking screen needs a way to navigate there — off by default.
+  final bool showOpenInMaps;
+
+  const DonationSummaryCard({
+    super.key,
+    required this.donation,
+    this.showOpenInMaps = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +80,19 @@ class DonationSummaryCard extends StatelessWidget {
             label: 'عنوان الاستلام',
             value: donation.pickupAddress,
           ),
+          if (showOpenInMaps &&
+              donation.latitude != null &&
+              donation.longitude != null)
+            Padding(
+              padding: EdgeInsets.only(right: 46.w, top: 2.h),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: OpenInMapsButton(
+                  latitude: donation.latitude,
+                  longitude: donation.longitude,
+                ),
+              ),
+            ),
           if (donation.pickupNotes != null &&
               donation.pickupNotes!.trim().isNotEmpty)
             _SummaryRow(
@@ -101,7 +123,9 @@ class DonationSummaryCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     errorBuilder: (context, _, _) => Container(
                       width: 96.r,
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                     ),
                   ),
                 ),

@@ -12,6 +12,8 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/location/pickup_location.dart';
+import '../../../../core/location/pickup_location_field.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_textfield.dart';
@@ -46,7 +48,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _customCategoryController = TextEditingController();
-  final _addressController = TextEditingController();
+  PickupLocation? _selectedLocation;
   final _pickupNotesController = TextEditingController();
   final List<File> _images = [];
   final _phoneController = TextEditingController();
@@ -61,7 +63,6 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
     _quantityController.dispose();
     _descriptionController.dispose();
     _customCategoryController.dispose();
-    _addressController.dispose();
     _pickupNotesController.dispose();
     _phoneController.dispose();
     _pickupUntilController.dispose();
@@ -196,6 +197,14 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
       return;
     }
 
+    final location = _selectedLocation;
+    if (location == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('يرجى تحديد موقع الاستلام')));
+      return;
+    }
+
     await cubit.submit(
       CreateDonationParams(
         foodCategoryId: selectedCategoryId,
@@ -208,7 +217,9 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
         customCategory: customCategory.isEmpty ? null : customCategory,
         validUntil: _validUntil!,
         pickupUntil: _pickupUntil!,
-        pickupAddress: _addressController.text.trim(),
+        pickupAddress: location.address,
+        latitude: location.latitude,
+        longitude: location.longitude,
         pickupNotes: _pickupNotesController.text.trim().isEmpty
             ? null
             : _pickupNotesController.text.trim(),
@@ -265,10 +276,7 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
             ),
           ),
           leading: IconButton(
-            icon: Icon(
-              Icons.close_rounded,
-              color: colorScheme.onSurface,
-            ),
+            icon: Icon(Icons.close_rounded, color: colorScheme.onSurface),
             onPressed: () => context.pop(),
           ),
           bottom: PreferredSize(
@@ -316,7 +324,8 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
                   buildWhen: (prev, curr) =>
                       prev.selectedCategoryId != curr.selectedCategoryId,
                   builder: (context, state) {
-                    if (!(state.selectedCategory?.requiresCustomName ?? false)) {
+                    if (!(state.selectedCategory?.requiresCustomName ??
+                        false)) {
                       return const SizedBox.shrink();
                     }
                     return Padding(
@@ -385,15 +394,10 @@ class _CreateDonationViewState extends State<_CreateDonationView> {
                 SizedBox(height: AppConstants.paddingXL.h),
 
                 const _SectionHeader('الموقع'),
-                CustomTextField(
-                  label: 'عنوان الاستلام',
-                  hint: 'الحي، الشارع، أقرب معلم',
-                  controller: _addressController,
-                  maxLines: 2,
-                  isRequired: true,
-                  validator: requiredFieldValidator(
-                    fieldName: 'عنوان الاستلام',
-                  ),
+                PickupLocationField(
+                  location: _selectedLocation,
+                  onChanged: (location) =>
+                      setState(() => _selectedLocation = location),
                 ),
                 SizedBox(height: AppConstants.paddingMD.h),
                 CustomTextField(
@@ -528,9 +532,8 @@ class _CategoryDropdown extends StatelessWidget {
                       );
                     }
                   : null,
-              validator: (value) => value == null
-                  ? 'يرجى اختيار نوع الطعام'
-                  : null,
+              validator: (value) =>
+                  value == null ? 'يرجى اختيار نوع الطعام' : null,
             ),
             if (state.categoriesStatus == BlocStatus.loading) ...[
               SizedBox(height: AppConstants.paddingSM.h),
@@ -674,18 +677,10 @@ class _FoodStateChip extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (locked && selected) ...[
-                Icon(
-                  Icons.lock_rounded,
-                  size: 13.r,
-                  color: fg,
-                ),
+                Icon(Icons.lock_rounded, size: 13.r, color: fg),
                 SizedBox(width: 5.w),
               ],
-              Icon(
-                icon,
-                size: 20.r,
-                color: fg,
-              ),
+              Icon(icon, size: 20.r, color: fg),
               SizedBox(width: 8.w),
               Text(
                 label,
@@ -813,10 +808,7 @@ class _ImagesPicker extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
-                  border: Border.all(
-                    color: colorScheme.outline,
-                    width: 1,
-                  ),
+                  border: Border.all(color: colorScheme.outline, width: 1),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

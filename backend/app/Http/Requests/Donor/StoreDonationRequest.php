@@ -49,13 +49,17 @@ class StoreDonationRequest extends FormRequest
             'valid_until'  => ['required', 'date', 'after:now', 'before_or_equal:'.now()->addDays(30)->format('Y-m-d H:i:s')],
             'pickup_until' => ['required', 'date', 'after:now', 'before_or_equal:valid_until'],
 
-            // Written location is always required; the map pin is a bonus.
+            // Reverse-geocoded client-side from the chosen pin — the app no
+            // longer lets the donor type this by hand (GPS or map pin only),
+            // so it always arrives alongside a matching lat/lng pair.
             'pickup_address' => ['required', 'string', 'max:255'],
 
             // How to actually find the donor: "call before arriving".
             'pickup_notes' => ['nullable', 'string', 'max:255'],
-            'latitude'       => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
-            'longitude'      => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
+
+            // The only way to set a location now — required, not optional.
+            'latitude'  => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
 
             'contact_phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s]{7,15}$/'],
 
@@ -115,8 +119,8 @@ class StoreDonationRequest extends FormRequest
             'valid_until.before_or_equal'      => 'يجب ألا يتجاوز وقت انتهاء الصلاحية 30 يوماً من الآن.',
             'valid_until.after'            => 'يجب أن يكون وقت انتهاء صلاحية الطعام في المستقبل.',
             'pickup_until.before_or_equal' => 'لا يمكن أن يكون موعد الاستلام بعد انتهاء صلاحية الطعام.',
-            'latitude.required_with'       => 'خط العرض مطلوب عند إرسال خط الطول.',
-            'longitude.required_with'      => 'خط الطول مطلوب عند إرسال خط العرض.',
+            'latitude.required'            => 'يرجى تحديد موقع الاستلام.',
+            'longitude.required'           => 'يرجى تحديد موقع الاستلام.',
             'images.max'                   => 'لا يمكن إرفاق أكثر من 4 صور.',
             'images.*.image'               => 'الملف المرفق يجب أن يكون صورة.',
             'images.*.mimes'               => 'الصورة يجب أن تكون بصيغة jpg أو png أو webp.',

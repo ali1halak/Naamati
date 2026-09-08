@@ -27,7 +27,19 @@ class AuthDataModel {
   final UserModel user;
   final String? token;
 
-  const AuthDataModel({this.type, required this.user, this.token});
+  @JsonKey(name: 'refresh_token')
+  final String? refreshToken;
+
+  @JsonKey(name: 'expires_in')
+  final int? expiresIn;
+
+  const AuthDataModel({
+    this.type,
+    required this.user,
+    this.token,
+    this.refreshToken,
+    this.expiresIn,
+  });
 
   factory AuthDataModel.fromJson(Map<String, dynamic> json) =>
       _$AuthDataModelFromJson(json);

@@ -21,6 +21,7 @@ import '../../../donation/presentation/widgets/donation_card.dart';
 import '../../../donation/presentation/widgets/my_donations_filter_bar.dart';
 import '../../../donation/domain/entities/donation_status.dart';
 import '../../../donation/domain/entities/my_donations_filter.dart';
+import '../../../notifications/presentation/widgets/notification_bell_icon.dart';
 import '../../../profile/presentation/widgets/profile_avatar.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/home_bottom_nav.dart';
@@ -96,8 +97,9 @@ class _DonorHomeBodyState extends State<_DonorHomeBody> {
         appBar: _HomeAppBar(
           colorScheme: Theme.of(context).colorScheme,
           user: _user,
+          onProfileReturn: _loadUser,
         ),
-        drawer: const AppDrawer(homeRoute: RouteNames.home),
+        drawer: AppDrawer(homeRoute: RouteNames.home, user: _user),
         body: Stack(
           children: [
             const _HeartBackground(),
@@ -119,8 +121,13 @@ class _DonorHomeBodyState extends State<_DonorHomeBody> {
 class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final ColorScheme colorScheme;
   final User? user;
+  final VoidCallback? onProfileReturn;
 
-  const _HomeAppBar({required this.colorScheme, this.user});
+  const _HomeAppBar({
+    required this.colorScheme,
+    this.user,
+    this.onProfileReturn,
+  });
 
   @override
   Size get preferredSize => Size.fromHeight(AppConstants.appBarHeight.h);
@@ -152,18 +159,14 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        IconButton(
-          icon: Icon(
-            Icons.notifications_none_rounded,
-            size: 24.r,
-            color: colorScheme.onSurface,
-          ),
-          onPressed: () => context.push(RouteNames.notifications),
-        ),
+        const NotificationBellIcon(),
         Padding(
           padding: EdgeInsets.only(left: 12.w, right: 4.w),
           child: GestureDetector(
-            onTap: () => context.push('/profile'),
+            onTap: () async {
+              await context.push('/profile');
+              onProfileReturn?.call();
+            },
             child: ProfileAvatar(
               imageUrl: user?.photoUrl,
               name: user?.name ?? '',
