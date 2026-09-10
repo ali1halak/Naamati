@@ -78,7 +78,16 @@ class CharityResource extends Resource
                     ->validationMessages([
                         'regex' => 'رقم الهاتف غير صحيح — أرقام فقط (يمكن أن يبدأ بـ +).',
                     ]),
-                TextInput::make('address')->label('العنوان')->required()->maxLength(255),
+                Placeholder::make('address_preview')
+                    ->label('العنوان')
+                    // The mobile app derives this text from the pin the
+                    // charity drops on the map (latitude/longitude are the
+                    // source of truth) — an editable TextInput here would let
+                    // an admin change the address without moving the pin,
+                    // desyncing the two. Location changes are the charity's
+                    // own responsibility, from the app.
+                    ->content(fn (?Charity $record) => static::addressPreviewHtml($record))
+                    ->columnSpanFull(),
             ])->columns(2),
 
             Section::make('وثيقة الترخيص')
@@ -254,6 +263,33 @@ class CharityResource extends Resource
                 . 'style="width:100%;height:32rem;border:1px solid rgb(214 211 229);border-radius:.75rem"></iframe>'
                 . '<div class="fi-mt-2"><a href="' . e($url) . '" target="_blank" rel="noopener" '
                 . 'class="fi-link fi-size-sm">فتح في تبويب جديد</a></div>'
+        );
+    }
+
+    /**
+     * Read-only address + coordinates, with a Google Maps link when a pin
+     * exists — mirrors the mobile app's "فتح في الخرائط" affordance so an
+     * admin can verify the location without being able to edit the text out
+     * of sync with the actual pin.
+     */
+    private static function addressPreviewHtml(?Charity $record): HtmlString
+    {
+        if (! $record) {
+            return new HtmlString('<span class="text-sm">—</span>');
+        }
+
+        $address = e($record->address);
+
+        if ($record->latitude === null || $record->longitude === null) {
+            return new HtmlString("<span class=\"text-sm\">{$address}</span>");
+        }
+
+        $mapsUrl = "https://www.google.com/maps/search/?api=1&query={$record->latitude},{$record->longitude}";
+
+        return new HtmlString(
+            "<div class=\"text-sm\">{$address}</div>"
+                . '<div class="fi-mt-1"><a href="' . e($mapsUrl) . '" target="_blank" rel="noopener" '
+                . 'class="fi-link fi-size-sm">فتح الموقع على خرائط جوجل</a></div>'
         );
     }
 

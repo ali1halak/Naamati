@@ -97,8 +97,9 @@ class _AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     final response = err.response;
-    final isRefreshCall =
-        err.requestOptions.uri.path.endsWith(ApiConstants.pathRefreshToken);
+    final isRefreshCall = err.requestOptions.uri.path.endsWith(
+      ApiConstants.pathRefreshToken,
+    );
     final alreadyRetried = err.requestOptions.extra['retried'] == true;
 
     if (response?.statusCode != 401 || isRefreshCall || alreadyRetried) {
@@ -166,10 +167,7 @@ class _AuthInterceptor extends Interceptor {
       if (newAccess == null || newAccess.isEmpty) return false;
 
       // Persist before anything else — the old pair is already dead server-side.
-      await secureStorage.write(
-        key: StorageKeys.accessToken,
-        value: newAccess,
-      );
+      await secureStorage.write(key: StorageKeys.accessToken, value: newAccess);
       if (newRefresh != null && newRefresh.isNotEmpty) {
         await secureStorage.write(
           key: StorageKeys.refreshToken,

@@ -44,7 +44,10 @@ class UpdateProfileRequest extends FormRequest
         }
 
         return $common + [
+            // Reverse-geocoded client-side from a GPS/map pin.
             'address'     => ['required', 'string', 'max:255'],
+            'latitude'    => ['required', 'numeric', 'between:-90,90'],
+            'longitude'   => ['required', 'numeric', 'between:-180,180'],
             'work_start'  => ['required', 'date_format:H:i'],
             'work_end'    => ['required', 'date_format:H:i', 'after:work_start'],
             'has_kitchen' => ['required', 'boolean'],

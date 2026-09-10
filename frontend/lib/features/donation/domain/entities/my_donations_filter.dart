@@ -50,10 +50,14 @@ class MyDonationsFilter extends Equatable {
   bool get hasActiveFilters => activeCount > 0;
 
   /// Number of dimensions currently filtered on.
-  int get activeCount =>
-      [query, status, categoryId, needsCooking, fromDate, toDate]
-          .where((f) => f != null && (f is! String || f.isNotEmpty))
-          .length;
+  int get activeCount => [
+    query,
+    status,
+    categoryId,
+    needsCooking,
+    fromDate,
+    toDate,
+  ].where((f) => f != null && (f is! String || f.isNotEmpty)).length;
 
   /// `from` in the backend's wire format (Y-m-d), or null.
   String? get fromWire => _wireDate(fromDate);
@@ -64,8 +68,8 @@ class MyDonationsFilter extends Equatable {
   static String? _wireDate(DateTime? date) => date == null
       ? null
       : '${date.year.toString().padLeft(4, '0')}'
-          '-${date.month.toString().padLeft(2, '0')}'
-          '-${date.day.toString().padLeft(2, '0')}';
+            '-${date.month.toString().padLeft(2, '0')}'
+            '-${date.day.toString().padLeft(2, '0')}';
 
   @override
   List<Object?> get props => [

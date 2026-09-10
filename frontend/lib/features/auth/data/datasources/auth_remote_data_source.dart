@@ -39,6 +39,8 @@ abstract class AuthRemoteDataSource {
     @Part(name: 'password_confirmation') required String passwordConfirmation,
     @Part(name: 'has_kitchen') required bool hasKitchen,
     @Part(name: 'address') required String address,
+    @Part(name: 'latitude') required double latitude,
+    @Part(name: 'longitude') required double longitude,
     @Part(name: 'work_start') required String workStart,
     @Part(name: 'work_end') required String workEnd,
     @Part(name: 'license_document') MultipartFile? licenseDocument,

@@ -12,6 +12,7 @@ abstract class CharityRepository {
   /// One page of open requests this charity is eligible to take
   /// (`GET /charity/requests/available`, paginated 15/page).
   Future<Either<Failure, PaginatedAvailableRequests>> getAvailableRequests({
+    String? search,
     int page,
   });
 
@@ -26,7 +27,13 @@ abstract class CharityRepository {
 
   /// This charity's own work queue and history (`GET /charity/requests`) —
   /// same resource shape as the donor's own list.
-  Future<Either<Failure, PaginatedDonations>> getMyOrders({int page});
+  /// [status] is one of the raw `RequestStatus` values, or the aliases
+  /// `active` (accepted + picked_up) / `cancelled_group` (cancelled +
+  /// no_show); null/`all` means no filter.
+  Future<Either<Failure, PaginatedDonations>> getMyOrders({
+    String? status,
+    int page,
+  });
 
   /// Grouped audit view of one order (تفاصيل الطلب) —
   /// `GET /charity/requests/{id}/details`.

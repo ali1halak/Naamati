@@ -30,7 +30,11 @@ class CharityRegisterRequest extends FormRequest
             'phone'            => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s]{7,15}$/'],
             'password'         => ['required', 'string', 'min:8', 'confirmed'],
             'has_kitchen'      => ['required', 'boolean'],
+            // Reverse-geocoded client-side from a GPS/map pin — see
+            // StoreDonationRequest for the same pattern on the donor side.
             'address'          => ['required', 'string', 'max:255'],
+            'latitude'         => ['required', 'numeric', 'between:-90,90'],
+            'longitude'        => ['required', 'numeric', 'between:-180,180'],
             'work_start'       => ['required', 'date_format:H:i'],
             'work_end'         => ['required', 'date_format:H:i', 'after:work_start'],
             'license_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],

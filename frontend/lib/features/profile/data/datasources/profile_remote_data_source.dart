@@ -26,6 +26,8 @@ abstract class ProfileRemoteDataSource {
     @Field('phone') required String phone,
     @Field('type') String? type,
     @Field('address') String? address,
+    @Field('latitude') double? latitude,
+    @Field('longitude') double? longitude,
     @Field('work_start') String? workStart,
     @Field('work_end') String? workEnd,
     @Field('has_kitchen') bool? hasKitchen,

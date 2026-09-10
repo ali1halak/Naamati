@@ -99,6 +99,8 @@ class _AuthRemoteDataSource implements AuthRemoteDataSource {
     required String passwordConfirmation,
     required bool hasKitchen,
     required String address,
+    required double latitude,
+    required double longitude,
     required String workStart,
     required String workEnd,
     MultipartFile? licenseDocument,
@@ -115,6 +117,8 @@ class _AuthRemoteDataSource implements AuthRemoteDataSource {
     _data.fields.add(MapEntry('password_confirmation', passwordConfirmation));
     _data.fields.add(MapEntry('has_kitchen', hasKitchen.toString()));
     _data.fields.add(MapEntry('address', address));
+    _data.fields.add(MapEntry('latitude', latitude.toString()));
+    _data.fields.add(MapEntry('longitude', longitude.toString()));
     _data.fields.add(MapEntry('work_start', workStart));
     _data.fields.add(MapEntry('work_end', workEnd));
     if (licenseDocument != null) {

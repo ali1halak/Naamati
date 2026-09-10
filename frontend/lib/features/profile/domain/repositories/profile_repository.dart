@@ -17,6 +17,8 @@ abstract class ProfileRepository {
     required String phone,
     String? type,
     String? address,
+    double? latitude,
+    double? longitude,
     String? workStart,
     String? workEnd,
     bool? hasKitchen,

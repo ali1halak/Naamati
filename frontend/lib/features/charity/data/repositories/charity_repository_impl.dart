@@ -24,11 +24,13 @@ class CharityRepositoryImpl implements CharityRepository {
 
   @override
   Future<Either<Failure, PaginatedAvailableRequests>> getAvailableRequests({
+    String? search,
     int page = 1,
   }) async {
     if (await networkInfo.isConnected) {
       try {
         final response = await remoteDataSource.getAvailableRequests(
+          search: search,
           page: page,
         );
         if (response.success) {
@@ -39,6 +41,7 @@ class CharityRepositoryImpl implements CharityRepository {
               items: payload.data,
               currentPage: meta?.currentPage ?? page,
               lastPage: meta?.lastPage ?? page,
+              total: meta?.total ?? payload.data.length,
             ),
           );
         }
@@ -101,11 +104,15 @@ class CharityRepositoryImpl implements CharityRepository {
 
   @override
   Future<Either<Failure, PaginatedDonations>> getMyOrders({
+    String? status,
     int page = 1,
   }) async {
     if (await networkInfo.isConnected) {
       try {
-        final response = await remoteDataSource.getMyOrders(page: page);
+        final response = await remoteDataSource.getMyOrders(
+          status: status,
+          page: page,
+        );
         if (response.success) {
           final payload = response.data;
           final meta = payload.meta;

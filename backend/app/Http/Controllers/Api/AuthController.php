@@ -60,6 +60,8 @@ class AuthController extends Controller
             'has_kitchen'      => $request->has_kitchen,
             'status'           => CharityStatus::Pending,
             'address'          => $request->address,
+            'latitude'         => $request->latitude,
+            'longitude'        => $request->longitude,
             'work_start'       => $request->work_start,
             'work_end'         => $request->work_end,
             'license_document'  => $licenseDocumentPath,

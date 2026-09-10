@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -109,6 +111,12 @@ class _CharityHomeBodyState extends State<_CharityHomeBody> {
         bottomNavigationBar: CharityBottomNav(
           selectedIndex: _selectedIndex,
           onTap: _onTapNav,
+          availableCount: context.watch<AvailableRequestsCubit>().state.total,
+          violationsCount: context
+              .watch<ViolationsCubit>()
+              .state
+              .violations
+              .length,
         ),
       ),
     );
@@ -195,11 +203,15 @@ class _AvailableRequestsTab extends StatefulWidget {
 
 class _AvailableRequestsTabState extends State<_AvailableRequestsTab> {
   final ScrollController _listController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   @override
   void initState() {
     super.initState();
     _listController.addListener(_onScroll);
+    _searchController.text =
+        context.read<AvailableRequestsCubit>().state.search ?? '';
   }
 
   void _onScroll() {
@@ -209,8 +221,20 @@ class _AvailableRequestsTabState extends State<_AvailableRequestsTab> {
     }
   }
 
+  /// Debounced server-side search — fires 350ms after the user stops typing
+  /// (same convention as the donor's own history search).
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      context.read<AvailableRequestsCubit>().loadRequests(search: value);
+    });
+  }
+
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
     _listController.dispose();
     super.dispose();
   }
@@ -253,16 +277,51 @@ class _AvailableRequestsTabState extends State<_AvailableRequestsTab> {
                 AppConstants.paddingMD.w,
                 AppConstants.paddingSM.h,
               ),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'الطلبات المتاحة',
-                  style: AppTextStyles.headlineMedium.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 22.sp,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'الطلبات المتاحة',
+                    style: AppTextStyles.headlineMedium.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 22.sp,
+                    ),
                   ),
-                ),
+                  SizedBox(height: 12.h),
+                  TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      hintText: 'ابحث بنوع الطعام أو الوصف أو الكمية',
+                      hintStyle: AppTextStyles.bodySmall.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12.sp,
+                      ),
+                      prefixIcon: Icon(Icons.search_rounded, size: 20.r),
+                      suffixIcon: (state.search ?? '').isEmpty
+                          ? null
+                          : IconButton(
+                              icon: Icon(Icons.close_rounded, size: 18.r),
+                              onPressed: () {
+                                _searchController.clear();
+                                context
+                                    .read<AvailableRequestsCubit>()
+                                    .loadRequests(search: '');
+                              },
+                            ),
+                      isDense: true,
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.radiusMD.r,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(child: _buildBody(context, state)),
@@ -394,6 +453,12 @@ class _MyOrdersTabState extends State<_MyOrdersTab> {
                 ),
               ),
             ),
+            _StatusFilterChips(
+              selected: state.filter,
+              onSelected: (filter) =>
+                  context.read<MyOrdersCubit>().loadOrders(filter: filter),
+            ),
+            SizedBox(height: AppConstants.paddingSM.h),
             Expanded(child: _buildBody(context, state)),
           ],
         );
@@ -467,6 +532,56 @@ class _MyOrdersTabState extends State<_MyOrdersTab> {
               order.status.isActive
                   ? RouteNames.charityOrderTrackingPath(order.id)
                   : RouteNames.charityOrderDetailsPath(order.id),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Filter chips for "الطلبات السابقة" — الكل / نشطة / مكتملة / ملغاة.
+class _StatusFilterChips extends StatelessWidget {
+  final MyOrdersStatusFilter selected;
+  final ValueChanged<MyOrdersStatusFilter> onSelected;
+
+  const _StatusFilterChips({required this.selected, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      height: 36.h,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: AppConstants.paddingMD.w),
+        itemCount: MyOrdersStatusFilter.values.length,
+        separatorBuilder: (_, _) => SizedBox(width: 8.w),
+        itemBuilder: (context, index) {
+          final filter = MyOrdersStatusFilter.values[index];
+          final isSelected = filter == selected;
+          return ChoiceChip(
+            label: Text(filter.label),
+            selected: isSelected,
+            onSelected: (_) => onSelected(filter),
+            labelStyle: AppTextStyles.labelSmall.copyWith(
+              color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+              fontSize: 12.sp,
+            ),
+            backgroundColor: colorScheme.surface,
+            selectedColor: colorScheme.primary,
+            side: BorderSide(
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.outline.withValues(alpha: 0.4),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(
+                AppConstants.radiusCircular.r,
+              ),
             ),
           );
         },

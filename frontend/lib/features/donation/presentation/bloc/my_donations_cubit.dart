@@ -116,15 +116,10 @@ class MyDonationsCubit extends Cubit<MyDonationsState> {
     );
 
     bool ok = false;
-    result.fold(
-      (failure) {
-        if (isClosed) return;
-        emit(
-          state.copyWith(cancellingId: null, errorMessage: failure.message),
-        );
-      },
-      (_) => ok = true,
-    );
+    result.fold((failure) {
+      if (isClosed) return;
+      emit(state.copyWith(cancellingId: null, errorMessage: failure.message));
+    }, (_) => ok = true);
 
     if (ok) {
       // Re-fetch with the same filter so pagination metadata stays honest.

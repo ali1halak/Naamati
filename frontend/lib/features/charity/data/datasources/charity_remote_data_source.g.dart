@@ -21,10 +21,11 @@ class _CharityRemoteDataSource implements CharityRemoteDataSource {
 
   @override
   Future<AvailableRequestListResponseModel> getAvailableRequests({
+    String? search,
     int? page,
   }) async {
     final _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{r'page': page};
+    final queryParameters = <String, dynamic>{r'search': search, r'page': page};
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;

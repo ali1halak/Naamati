@@ -21,10 +21,16 @@ class PickupLocationField extends StatefulWidget {
   final PickupLocation? location;
   final ValueChanged<PickupLocation> onChanged;
 
+  /// Shown before a location is picked. Defaults to the donor "pickup"
+  /// wording; charity screens (registration, own profile) pass their own
+  /// text since it's their organization's address, not a donation pickup.
+  final String placeholderText;
+
   const PickupLocationField({
     super.key,
     required this.location,
     required this.onChanged,
+    this.placeholderText = 'لم يتم تحديد موقع الاستلام بعد',
   });
 
   @override
@@ -91,7 +97,7 @@ class _PickupLocationFieldState extends State<PickupLocationField> {
               SizedBox(width: 8.w),
               Expanded(
                 child: Text(
-                  location?.address ?? 'لم يتم تحديد موقع الاستلام بعد',
+                  location?.address ?? widget.placeholderText,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.bodyMedium.copyWith(

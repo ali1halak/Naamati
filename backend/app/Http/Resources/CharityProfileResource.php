@@ -19,8 +19,14 @@ class CharityProfileResource extends JsonResource
             'email'       => $this->email,
             'phone'       => $this->phone,
             'address'     => $this->address,
-            'work_start'  => $this->work_start,
-            'work_end'    => $this->work_end,
+            'latitude'    => $this->latitude,
+            'longitude'   => $this->longitude,
+            // The `time` column comes back from MySQL as "H:i:s" — trimmed to
+            // "H:i" so it round-trips straight into the edit form's picker
+            // text and back through UpdateProfileRequest's date_format:H:i
+            // rule without the admin/charity having to touch it.
+            'work_start'  => substr($this->work_start, 0, 5),
+            'work_end'    => substr($this->work_end, 0, 5),
             'has_kitchen' => $this->has_kitchen,
 
             'status'       => $this->status->value,

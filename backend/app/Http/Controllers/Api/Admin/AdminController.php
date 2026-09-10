@@ -119,8 +119,10 @@ class AdminController extends Controller
             )
             ->latest();
 
+        // assoc=false (not getData(true)) so an empty payload's `{}` stays a
+        // stdClass instead of decoding back into `[]` before re-encoding.
         return $this->ok(
-            NotificationResource::collection($query->paginate(15))->response()->getData(true)
+            NotificationResource::collection($query->paginate(15))->response()->getData()
         );
     }
 

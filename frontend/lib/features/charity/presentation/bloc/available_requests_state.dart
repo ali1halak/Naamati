@@ -8,11 +8,17 @@ class AvailableRequestsState extends Equatable {
   final String? errorMessage;
   final List<AvailableRequest> requests;
 
+  /// Free-text search currently applied.
+  final String? search;
+
   /// 1-based page the current [requests] end at.
   final int currentPage;
 
   /// Total pages the backend reports.
   final int lastPage;
+
+  /// Total number of available requests across all pages — bottom nav badge.
+  final int total;
 
   /// Whether the next page is currently being fetched (infinite scroll).
   final bool isLoadingMore;
@@ -27,8 +33,10 @@ class AvailableRequestsState extends Equatable {
     this.status = BlocStatus.initial,
     this.errorMessage,
     this.requests = const [],
+    this.search,
     this.currentPage = 1,
     this.lastPage = 1,
+    this.total = 0,
     this.isLoadingMore = false,
     this.acceptingId,
     this.acceptErrorMessage,
@@ -49,8 +57,10 @@ class AvailableRequestsState extends Equatable {
     BlocStatus? status,
     Object? errorMessage = _unset,
     List<AvailableRequest>? requests,
+    Object? search = _unset,
     int? currentPage,
     int? lastPage,
+    int? total,
     bool? isLoadingMore,
     Object? acceptingId = _unset,
     Object? acceptErrorMessage = _unset,
@@ -61,8 +71,10 @@ class AvailableRequestsState extends Equatable {
           ? this.errorMessage
           : errorMessage as String?,
       requests: requests ?? this.requests,
+      search: identical(search, _unset) ? this.search : search as String?,
       currentPage: currentPage ?? this.currentPage,
       lastPage: lastPage ?? this.lastPage,
+      total: total ?? this.total,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       acceptingId: identical(acceptingId, _unset)
           ? this.acceptingId
@@ -78,8 +90,10 @@ class AvailableRequestsState extends Equatable {
     status,
     errorMessage,
     requests,
+    search,
     currentPage,
     lastPage,
+    total,
     isLoadingMore,
     acceptingId,
     acceptErrorMessage,

@@ -457,8 +457,12 @@ class DonationRequestService
     /**
      * Only requests this charity is allowed to see: still open, still edible,
      * and — if the food needs cooking — only charities that own a kitchen.
+     *
+     * [$search] mirrors the donor-side history search (description, custom
+     * category name, an exact numeric quantity match, or the food category's
+     * Arabic name) so the marketplace stays searchable as it grows.
      */
-    public function availableFor(Charity $charity): Builder
+    public function availableFor(Charity $charity, ?string $search = null): Builder
     {
         return DonationRequest::query()
             ->where('status', RequestStatus::Pending)
@@ -470,6 +474,21 @@ class DonationRequestService
                     ->from('violations')
                     ->where('charity_id', $charity->id)
                     ->whereNotNull('donation_request_id');
+            })
+            ->when($search !== null && trim($search) !== '', function ($q) use ($search) {
+                // LIKE wildcards in the user input are escaped so "100%" finds
+                // "100%" literally instead of matching everything.
+                $term = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], trim($search));
+
+                $q->where(function ($q) use ($term) {
+                    $q->where('description', 'like', "%{$term}%")
+                        ->orWhere('custom_category', 'like', "%{$term}%")
+                        ->when(ctype_digit($term), fn ($q) => $q->orWhere('quantity', (int) $term))
+                        ->orWhereHas(
+                            'foodCategory',
+                            fn ($c) => $c->where('name_ar', 'like', "%{$term}%"),
+                        );
+                });
             })
             ->with(['foodCategory', 'images'])
             ->latest();

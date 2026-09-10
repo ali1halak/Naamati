@@ -70,11 +70,12 @@ class DonationRequestModel extends DonationRequest {
     @JsonKey(name: 'created_at_label') super.createdAtLabel,
     this.rating,
   }) : super(
-      foodCategory: foodCategory,
-      charity: charity,
-      rating: rating,
-      images: images,
-      imageIds: imageIds);
+         foodCategory: foodCategory,
+         charity: charity,
+         rating: rating,
+         images: images,
+         imageIds: imageIds,
+       );
 
   factory DonationRequestModel.fromJson(Map<String, dynamic> json) =>
       _$DonationRequestModelFromJson(json);

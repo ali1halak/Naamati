@@ -25,6 +25,8 @@ class RegisterCharityUseCase implements UseCase<User, RegisterCharityParams> {
       passwordConfirmation: params.passwordConfirmation,
       hasKitchen: params.hasKitchen,
       address: params.address,
+      latitude: params.latitude,
+      longitude: params.longitude,
       workStart: params.workStart,
       workEnd: params.workEnd,
       licenseDocumentBytes: params.licenseDocumentBytes,
@@ -41,6 +43,8 @@ class RegisterCharityParams extends Equatable {
   final String passwordConfirmation;
   final bool hasKitchen;
   final String address;
+  final double latitude;
+  final double longitude;
   final String workStart;
   final String workEnd;
   final Uint8List? licenseDocumentBytes;
@@ -54,6 +58,8 @@ class RegisterCharityParams extends Equatable {
     required this.passwordConfirmation,
     required this.hasKitchen,
     required this.address,
+    required this.latitude,
+    required this.longitude,
     required this.workStart,
     required this.workEnd,
     this.licenseDocumentBytes,
@@ -69,6 +75,8 @@ class RegisterCharityParams extends Equatable {
     passwordConfirmation,
     hasKitchen,
     address,
+    latitude,
+    longitude,
     workStart,
     workEnd,
     licenseDocumentBytes,

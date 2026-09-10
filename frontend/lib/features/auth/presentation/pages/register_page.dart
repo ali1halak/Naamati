@@ -7,6 +7,8 @@ import 'dart:typed_data';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/location/pickup_location.dart';
+import '../../../../core/location/pickup_location_field.dart';
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -55,7 +57,7 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
   final _charityPhoneController = TextEditingController();
   final _charityPasswordController = TextEditingController();
   final _charityConfirmPasswordController = TextEditingController();
-  final _charityAddressController = TextEditingController();
+  PickupLocation? _charityLocation;
   final _charityWorkStartController = TextEditingController();
   final _charityWorkEndController = TextEditingController();
   Uint8List? _charityLicenseDocumentBytes;
@@ -86,6 +88,14 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
       return;
     }
 
+    final location = _charityLocation;
+    if (location == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('يرجى تحديد عنوان الجمعية')));
+      return;
+    }
+
     context.read<RegisterCubit>().registerCharity(
       name: _charityNameController.text.trim(),
       email: _charityEmailController.text.trim(),
@@ -93,7 +103,9 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
       password: _charityPasswordController.text,
       passwordConfirmation: _charityConfirmPasswordController.text,
       hasKitchen: _hasKitchen,
-      address: _charityAddressController.text.trim(),
+      address: location.address,
+      latitude: location.latitude,
+      longitude: location.longitude,
       workStart: _charityWorkStartController.text,
       workEnd: _charityWorkEndController.text,
       licenseDocumentBytes: _charityLicenseDocumentBytes,
@@ -175,7 +187,6 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
     _charityPhoneController.dispose();
     _charityPasswordController.dispose();
     _charityConfirmPasswordController.dispose();
-    _charityAddressController.dispose();
     _charityWorkStartController.dispose();
     _charityWorkEndController.dispose();
     super.dispose();
@@ -390,13 +401,10 @@ class _RegisterPageViewState extends State<_RegisterPageView> {
           ],
         ),
         SizedBox(height: AppConstants.paddingLG.h),
-        CustomTextField(
-          label: 'العنوان',
-          hint: 'حلب - طريق النبك',
-          controller: _charityAddressController,
-          isRequired: true,
-          validator: requiredFieldValidator(fieldName: 'العنوان'),
-          prefixIcon: Icons.location_on_outlined,
+        PickupLocationField(
+          location: _charityLocation,
+          onChanged: (location) => setState(() => _charityLocation = location),
+          placeholderText: 'لم يتم تحديد عنوان الجمعية بعد',
         ),
         SizedBox(height: AppConstants.paddingLG.h),
         Row(

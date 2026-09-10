@@ -18,6 +18,7 @@ abstract class CharityRemoteDataSource {
   /// Open requests this charity is eligible to take.
   @GET('/charity/requests/available')
   Future<AvailableRequestListResponseModel> getAvailableRequests({
+    @Query('search') String? search,
     @Query('page') int? page,
   });
 

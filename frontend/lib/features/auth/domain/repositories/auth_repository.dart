@@ -27,6 +27,8 @@ abstract class AuthRepository {
     required String passwordConfirmation,
     required bool hasKitchen,
     required String address,
+    required double latitude,
+    required double longitude,
     required String workStart,
     required String workEnd,
     Uint8List? licenseDocumentBytes,

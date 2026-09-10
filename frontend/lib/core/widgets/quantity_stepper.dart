@@ -57,9 +57,9 @@ class QuantityStepper extends StatelessWidget {
         if (label != null) ...[
           RichText(
             text: TextSpan(
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: colorScheme.onSurface,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(color: colorScheme.onSurface),
               children: [
                 TextSpan(text: label!),
                 if (isRequired)
@@ -143,11 +143,7 @@ class _StepButton extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: EdgeInsets.all(10.r),
-          child: Icon(
-            icon,
-            size: 20.r,
-            color: colorScheme.onPrimaryContainer,
-          ),
+          child: Icon(icon, size: 20.r, color: colorScheme.onPrimaryContainer),
         ),
       ),
     );

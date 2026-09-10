@@ -14,8 +14,8 @@ class Charity extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'phone', 'password', 'has_kitchen',
-        'status', 'license_document', 'logo_path', 'address', 'work_start', 'work_end',
-        'fcm_token',
+        'status', 'license_document', 'logo_path', 'address', 'latitude', 'longitude',
+        'work_start', 'work_end', 'fcm_token',
     ];
 
     // rating_avg / ratings_count are derived columns owned by RatingObserver —
@@ -32,6 +32,8 @@ class Charity extends Authenticatable
             'password'      => 'hashed',
             'rating_avg'    => 'float',
             'ratings_count' => 'integer',
+            'latitude'      => 'float',
+            'longitude'     => 'float',
         ];
     }
 

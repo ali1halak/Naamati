@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-
 /// A centered loading indicator.
 ///
 /// Use [LoadingIndicator.fullScreen] for overlay-style full-page loading,

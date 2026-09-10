@@ -20,6 +20,8 @@ class UpdateProfileUseCase implements UseCase<MyProfile, UpdateProfileParams> {
       phone: params.phone,
       type: params.type,
       address: params.address,
+      latitude: params.latitude,
+      longitude: params.longitude,
       workStart: params.workStart,
       workEnd: params.workEnd,
       hasKitchen: params.hasKitchen,
@@ -32,6 +34,8 @@ class UpdateProfileParams extends Equatable {
   final String phone;
   final String? type;
   final String? address;
+  final double? latitude;
+  final double? longitude;
   final String? workStart;
   final String? workEnd;
   final bool? hasKitchen;
@@ -41,6 +45,8 @@ class UpdateProfileParams extends Equatable {
     required this.phone,
     this.type,
     this.address,
+    this.latitude,
+    this.longitude,
     this.workStart,
     this.workEnd,
     this.hasKitchen,
@@ -52,6 +58,8 @@ class UpdateProfileParams extends Equatable {
     phone,
     type,
     address,
+    latitude,
+    longitude,
     workStart,
     workEnd,
     hasKitchen,

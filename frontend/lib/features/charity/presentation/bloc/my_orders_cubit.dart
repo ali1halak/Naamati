@@ -11,11 +11,15 @@ class MyOrdersCubit extends Cubit<MyOrdersState> {
 
   MyOrdersCubit(this._getMyOrdersUseCase) : super(const MyOrdersState());
 
-  /// Loads (or reloads) the first page — used on open and pull-to-refresh.
-  Future<void> loadOrders() async {
+  /// Loads (or reloads) the first page with [filter] — used on open,
+  /// pull-to-refresh, and switching chips. Passing null keeps the currently
+  /// applied filter (pull-to-refresh); an explicit change always passes one.
+  Future<void> loadOrders({MyOrdersStatusFilter? filter}) async {
+    final effectiveFilter = filter ?? state.filter;
     emit(
       state.copyWith(
         status: BlocStatus.loading,
+        filter: effectiveFilter,
         errorMessage: null,
         currentPage: 1,
         lastPage: 1,
@@ -23,7 +27,9 @@ class MyOrdersCubit extends Cubit<MyOrdersState> {
       ),
     );
 
-    final result = await _getMyOrdersUseCase(const GetMyOrdersParams());
+    final result = await _getMyOrdersUseCase(
+      GetMyOrdersParams(status: effectiveFilter.wireValue),
+    );
 
     result.fold(
       (failure) {
@@ -49,8 +55,8 @@ class MyOrdersCubit extends Cubit<MyOrdersState> {
     );
   }
 
-  /// Fetches the next page and appends it. No-op while already loading or
-  /// once the backend reports no further pages.
+  /// Fetches the next page (same filter) and appends it. No-op while already
+  /// loading or once the backend reports no further pages.
   Future<void> loadMore() async {
     final state = this.state;
     if (state.isLoading || state.isLoadingMore || !state.hasMore) return;
@@ -58,7 +64,10 @@ class MyOrdersCubit extends Cubit<MyOrdersState> {
     emit(state.copyWith(isLoadingMore: true, errorMessage: null));
 
     final result = await _getMyOrdersUseCase(
-      GetMyOrdersParams(page: state.currentPage + 1),
+      GetMyOrdersParams(
+        status: state.filter.wireValue,
+        page: state.currentPage + 1,
+      ),
     );
 
     result.fold(

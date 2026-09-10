@@ -39,8 +39,13 @@ class NotificationController extends Controller
             )
             ->latest();
 
+        // getData(true) decodes back to an *associative* array, which turns
+        // an empty payload's `{}` (from the resource's object cast) back
+        // into `[]` before the outer response re-encodes it — undoing the
+        // fix. getData() (assoc=false) keeps JSON objects as stdClass so the
+        // distinction survives the round trip.
         return $this->ok(
-            NotificationResource::collection($query->paginate(15))->response()->getData(true)
+            NotificationResource::collection($query->paginate(15))->response()->getData()
         );
     }
 

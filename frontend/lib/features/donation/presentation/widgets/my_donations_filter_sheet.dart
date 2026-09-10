@@ -59,9 +59,9 @@ class _FilterSheetState extends State<_FilterSheet> {
       false => _FoodState.ready,
       null => _FoodState.any,
     };
-    _categoriesFuture = sl<GetFoodCategoriesUseCase>()(NoParams()).then(
-      (either) => either.fold((_) => <FoodCategory>[], (list) => list),
-    );
+    _categoriesFuture = sl<GetFoodCategoriesUseCase>()(
+      NoParams(),
+    ).then((either) => either.fold((_) => <FoodCategory>[], (list) => list));
   }
 
   @override
@@ -397,7 +397,11 @@ class _DateField extends StatelessWidget {
   /// Called with the picked date, or null after clearing.
   final ValueChanged<DateTime?> onChanged;
 
-  const _DateField({required this.label, required this.value, required this.onChanged});
+  const _DateField({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
 
   Future<void> _pick(BuildContext context) async {
     final today = DateTime.now();
@@ -406,10 +410,8 @@ class _DateField extends StatelessWidget {
       initialDate: value ?? today,
       firstDate: DateTime(2024),
       lastDate: today.add(const Duration(days: 365)),
-      builder: (context, child) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: child!,
-      ),
+      builder: (context, child) =>
+          Directionality(textDirection: TextDirection.rtl, child: child!),
     );
     if (picked != null) {
       onChanged(picked);

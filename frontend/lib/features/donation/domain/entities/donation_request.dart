@@ -123,7 +123,8 @@ class DonationRequest extends Equatable {
   bool get canCancel => status.canCancel;
 
   /// The donor's confirm button is live only before they pressed it.
-  bool get canConfirmPickup => status.canConfirmPickup && donorConfirmedAt == null;
+  bool get canConfirmPickup =>
+      status.canConfirmPickup && donorConfirmedAt == null;
 
   /// The donor confirmed but the charity has not yet — the request is
   /// deliberately still `accepted` on the wire.

@@ -18,15 +18,19 @@ class GetAvailableRequestsUseCase
   Future<Either<Failure, PaginatedAvailableRequests>> call(
     GetAvailableRequestsParams params,
   ) {
-    return repository.getAvailableRequests(page: params.page);
+    return repository.getAvailableRequests(
+      search: params.search,
+      page: params.page,
+    );
   }
 }
 
 class GetAvailableRequestsParams extends Equatable {
+  final String? search;
   final int page;
 
-  const GetAvailableRequestsParams({this.page = 1});
+  const GetAvailableRequestsParams({this.search, this.page = 1});
 
   @override
-  List<Object?> get props => [page];
+  List<Object?> get props => [search, page];
 }

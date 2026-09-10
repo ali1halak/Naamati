@@ -9,6 +9,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/location/pickup_location.dart';
+import '../../../../core/location/pickup_location_field.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/custom_button.dart';
@@ -53,7 +55,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
   late String _donorType;
 
   // Charity-only.
-  late final TextEditingController _addressController;
+  PickupLocation? _selectedLocation;
   late final TextEditingController _workStartController;
   late final TextEditingController _workEndController;
   late bool _hasKitchen;
@@ -71,7 +73,13 @@ class _EditProfileViewState extends State<_EditProfileView> {
       text: donor?.phone ?? charity?.phone ?? '',
     );
     _donorType = donor?.type ?? 'individual';
-    _addressController = TextEditingController(text: charity?.address ?? '');
+    if (charity?.latitude != null && charity?.longitude != null) {
+      _selectedLocation = PickupLocation(
+        latitude: charity!.latitude!,
+        longitude: charity.longitude!,
+        address: charity.address,
+      );
+    }
     _workStartController = TextEditingController(
       text: charity?.workStart ?? '',
     );
@@ -83,7 +91,6 @@ class _EditProfileViewState extends State<_EditProfileView> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _addressController.dispose();
     _workStartController.dispose();
     _workEndController.dispose();
     super.dispose();
@@ -144,11 +151,20 @@ class _EditProfileViewState extends State<_EditProfileView> {
     if (!_formKey.currentState!.validate()) return;
 
     final isDonor = _profile.isDonor;
+    if (!isDonor && _selectedLocation == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('يرجى تحديد عنوان الجمعية')));
+      return;
+    }
+
     final ok = await context.read<ProfileCubit>().updateProfile(
       name: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
       type: isDonor ? _donorType : null,
-      address: isDonor ? null : _addressController.text.trim(),
+      address: isDonor ? null : _selectedLocation!.address,
+      latitude: isDonor ? null : _selectedLocation!.latitude,
+      longitude: isDonor ? null : _selectedLocation!.longitude,
       workStart: isDonor ? null : _workStartController.text.trim(),
       workEnd: isDonor ? null : _workEndController.text.trim(),
       hasKitchen: isDonor ? null : _hasKitchen,
@@ -279,12 +295,11 @@ class _EditProfileViewState extends State<_EditProfileView> {
                       },
                     ),
                   ] else ...[
-                    CustomTextField(
-                      label: 'العنوان',
-                      controller: _addressController,
-                      isRequired: true,
-                      validator: requiredFieldValidator(fieldName: 'العنوان'),
-                      prefixIcon: Icons.location_on_outlined,
+                    PickupLocationField(
+                      location: _selectedLocation,
+                      onChanged: (location) =>
+                          setState(() => _selectedLocation = location),
+                      placeholderText: 'لم يتم تحديد عنوان الجمعية بعد',
                     ),
                     SizedBox(height: AppConstants.paddingLG.h),
                     Row(

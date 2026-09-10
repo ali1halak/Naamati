@@ -27,7 +27,9 @@ class CharityRequestController extends Controller
      */
     public function available(Request $request)
     {
-        $paginated = $this->requests->availableFor($request->user())->paginate(15);
+        $paginated = $this->requests
+            ->availableFor($request->user(), $request->query('search'))
+            ->paginate(15);
 
         return $this->ok(CharityOrderResource::collection($paginated)->response()->getData(true));
     }
@@ -42,10 +44,23 @@ class CharityRequestController extends Controller
             ->latest();
 
         // ?status=all is what the History tab sends for its first chip, so it
-        // is treated as no filter rather than an invalid value.
+        // is treated as no filter rather than an invalid value. `active` and
+        // `cancelled_group` are convenience aliases for the two other chips
+        // ("نشطة" / "ملغاة") — a charity's own orders never sit in a single
+        // exact status for "in progress" or "didn't happen".
         $status = $request->query('status');
 
-        if ($status !== null && $status !== 'all') {
+        if ($status === 'active') {
+            $query->whereIn('status', [
+                RequestStatus::Accepted->value,
+                RequestStatus::PickedUp->value,
+            ]);
+        } elseif ($status === 'cancelled_group') {
+            $query->whereIn('status', [
+                RequestStatus::Cancelled->value,
+                RequestStatus::NoShow->value,
+            ]);
+        } elseif ($status !== null && $status !== 'all') {
             if (! in_array($status, array_column(RequestStatus::cases(), 'value'), true)) {
                 return $this->fail('فشل التحقق من البيانات', 422, [
                     'status' => ['الحالة المحددة غير صحيحة.'],

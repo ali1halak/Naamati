@@ -18,11 +18,19 @@ class AvailableRequestsCubit extends Cubit<AvailableRequestsState> {
   ) : super(const AvailableRequestsState());
 
   /// Loads (or reloads) the first page of open requests.
-  Future<void> loadRequests() async {
+  ///
+  /// Passing null for [search] keeps whatever is already applied (that is
+  /// what pull-to-refresh does); pass an empty string to clear it.
+  Future<void> loadRequests({String? search}) async {
+    final effectiveSearch = search == null
+        ? state.search
+        : (search.trim().isEmpty ? null : search.trim());
+
     emit(
       state.copyWith(
         status: BlocStatus.loading,
         errorMessage: null,
+        search: effectiveSearch,
         currentPage: 1,
         lastPage: 1,
         isLoadingMore: false,
@@ -30,7 +38,7 @@ class AvailableRequestsCubit extends Cubit<AvailableRequestsState> {
     );
 
     final result = await _getAvailableRequestsUseCase(
-      const GetAvailableRequestsParams(),
+      GetAvailableRequestsParams(search: effectiveSearch),
     );
 
     result.fold(
@@ -51,6 +59,7 @@ class AvailableRequestsCubit extends Cubit<AvailableRequestsState> {
             requests: page.items,
             currentPage: page.currentPage,
             lastPage: page.lastPage,
+            total: page.total,
           ),
         );
       },
@@ -65,7 +74,10 @@ class AvailableRequestsCubit extends Cubit<AvailableRequestsState> {
     emit(state.copyWith(isLoadingMore: true, errorMessage: null));
 
     final result = await _getAvailableRequestsUseCase(
-      GetAvailableRequestsParams(page: state.currentPage + 1),
+      GetAvailableRequestsParams(
+        search: state.search,
+        page: state.currentPage + 1,
+      ),
     );
 
     result.fold(
@@ -88,6 +100,7 @@ class AvailableRequestsCubit extends Cubit<AvailableRequestsState> {
             requests: [...existing, ...fresh],
             currentPage: page.currentPage,
             lastPage: page.lastPage,
+            total: page.total,
           ),
         );
       },

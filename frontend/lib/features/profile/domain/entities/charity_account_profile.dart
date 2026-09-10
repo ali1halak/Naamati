@@ -11,6 +11,8 @@ class CharityAccountProfile extends Equatable {
   final String email;
   final String phone;
   final String address;
+  final double? latitude;
+  final double? longitude;
 
   /// `HH:mm` strings.
   final String workStart;
@@ -38,6 +40,8 @@ class CharityAccountProfile extends Equatable {
     required this.email,
     required this.phone,
     required this.address,
+    this.latitude,
+    this.longitude,
     required this.workStart,
     required this.workEnd,
     required this.hasKitchen,
@@ -62,6 +66,8 @@ class CharityAccountProfile extends Equatable {
     email,
     phone,
     address,
+    latitude,
+    longitude,
     workStart,
     workEnd,
     hasKitchen,

@@ -16,9 +16,7 @@ class UpdateDonationUseCase
   UpdateDonationUseCase(this.repository);
 
   @override
-  Future<Either<Failure, DonationRequest>> call(
-    UpdateDonationParams params,
-  ) {
+  Future<Either<Failure, DonationRequest>> call(UpdateDonationParams params) {
     return repository.updateDonation(params.id, params.data);
   }
 }

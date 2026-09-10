@@ -16,16 +16,20 @@ class GetMyOrdersUseCase
 
   @override
   Future<Either<Failure, PaginatedDonations>> call(GetMyOrdersParams params) {
-    return repository.getMyOrders(page: params.page);
+    return repository.getMyOrders(status: params.status, page: params.page);
   }
 }
 
 class GetMyOrdersParams extends Equatable {
+  /// One of the raw `RequestStatus` values, or the `active`/`cancelled_group`
+  /// aliases; null means no filter.
+  final String? status;
+
   /// 1-based page to fetch.
   final int page;
 
-  const GetMyOrdersParams({this.page = 1});
+  const GetMyOrdersParams({this.status, this.page = 1});
 
   @override
-  List<Object?> get props => [page];
+  List<Object?> get props => [status, page];
 }

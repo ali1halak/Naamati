@@ -48,7 +48,8 @@ class DonationCard extends StatelessWidget {
     );
     final showCancel = onCancel != null && donation.canCancel;
     // Editing is safe only before a charity claims the request.
-    final showEdit = onEdit != null && donation.status == DonationStatus.pending;
+    final showEdit =
+        onEdit != null && donation.status == DonationStatus.pending;
     // Active requests have a live status worth following.
     final showTracking = onTrack != null && donation.status.isActive;
 
@@ -81,161 +82,166 @@ class DonationCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Circular food icon container (photo when available) ───────
-              Container(
-                width: 48.r,
-                height: 48.r,
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                clipBehavior: Clip.antiAlias,
-                alignment: Alignment.center,
-                child: (donation.images.isNotEmpty)
-                    ? Image.network(
-                        donation.images.first,
-                        width: 48.r,
-                        height: 48.r,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, _, _) => Icon(
-                          _getCategoryIcon(
-                            donation.categoryIconKey,
-                            donation.title ?? donation.foodCategory?.nameAr,
-                          ),
-                          size: 24.r,
-                          color: colorScheme.primary,
-                        ),
-                      )
-                    : Icon(
-                        _getCategoryIcon(
-                          donation.categoryIconKey,
-                          donation.title ?? donation.foodCategory?.nameAr,
-                        ),
-                        size: 24.r,
-                        color: colorScheme.primary,
-                      ),
-              ),
-              SizedBox(width: 12.w),
-
-              // ── Middle details (Title, Description, Date) ─────────────────
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      donation.title ??
-                          donation.foodCategory?.nameAr ??
-                          'طلب تبرع',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.titleMedium.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15.sp,
-                        color: colorScheme.onSurface,
-                      ),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Circular food icon container (photo when available) ───────
+                  Container(
+                    width: 48.r,
+                    height: 48.r,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      shape: BoxShape.circle,
                     ),
-                    SizedBox(height: 3.h),
-                    Text(
-                      (donation.description != null &&
-                              donation.description!.trim().isNotEmpty)
-                          ? donation.description!
-                          : 'الكمية التقديرية: ${donation.quantity} شخص',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 12.sp,
-                        height: 1.3,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 13.r,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        SizedBox(width: 5.w),
-                        Flexible(
-                          child: Text(
-                            donation.createdAtLabel ??
-                                DateFormatter.formatArabicDate(
-                                  donation.createdAt,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w500,
+                    clipBehavior: Clip.antiAlias,
+                    alignment: Alignment.center,
+                    child: (donation.images.isNotEmpty)
+                        ? Image.network(
+                            donation.images.first,
+                            width: 48.r,
+                            height: 48.r,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, _, _) => Icon(
+                              _getCategoryIcon(
+                                donation.categoryIconKey,
+                                donation.title ?? donation.foodCategory?.nameAr,
+                              ),
+                              size: 24.r,
+                              color: colorScheme.primary,
                             ),
+                          )
+                        : Icon(
+                            _getCategoryIcon(
+                              donation.categoryIconKey,
+                              donation.title ?? donation.foodCategory?.nameAr,
+                            ),
+                            size: 24.r,
+                            color: colorScheme.primary,
+                          ),
+                  ),
+                  SizedBox(width: 12.w),
+
+                  // ── Middle details (Title, Description, Date) ─────────────────
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          donation.title ??
+                              donation.foodCategory?.nameAr ??
+                              'طلب تبرع',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.titleMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15.sp,
+                            color: colorScheme.onSurface,
                           ),
                         ),
-                        // Estimated people count (quantity is a number now).
-                        ...[
-                          SizedBox(width: 10.w),
-                          Icon(
-                            Icons.groups_rounded,
-                            size: 13.r,
+                        SizedBox(height: 3.h),
+                        Text(
+                          (donation.description != null &&
+                                  donation.description!.trim().isNotEmpty)
+                              ? donation.description!
+                              : 'الكمية التقديرية: ${donation.quantity} شخص',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodySmall.copyWith(
                             color: colorScheme.onSurfaceVariant,
+                            fontSize: 12.sp,
+                            height: 1.3,
                           ),
-                          SizedBox(width: 4.w),
-                          Flexible(
-                            child: Text(
-                              '${donation.quantity} شخص',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w500,
+                        ),
+                        SizedBox(height: 8.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 13.r,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            SizedBox(width: 5.w),
+                            Flexible(
+                              child: Text(
+                                donation.createdAtLabel ??
+                                    DateFormatter.formatArabicDate(
+                                      donation.createdAt,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            // Estimated people count (quantity is a number now).
+                            ...[
+                              SizedBox(width: 10.w),
+                              Icon(
+                                Icons.groups_rounded,
+                                size: 13.r,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              SizedBox(width: 4.w),
+                              Flexible(
+                                child: Text(
+                                  '${donation.quantity} شخص',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
 
-              SizedBox(width: 8.w),
+                  SizedBox(width: 8.w),
 
-              // ── Status Badge pill (same palette the filter chips use) ────
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                decoration: BoxDecoration(
-                  color: statusConfig.backgroundColor,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusMD.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6.r,
-                      height: 6.r,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: statusConfig.textColor,
+                  // ── Status Badge pill (same palette the filter chips use) ────
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 5.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusConfig.backgroundColor,
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusMD.r,
                       ),
                     ),
-                    SizedBox(width: 5.w),
-                    Text(
-                      statusConfig.label,
-                      style: TextStyle(
-                        color: statusConfig.textColor,
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6.r,
+                          height: 6.r,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: statusConfig.textColor,
+                          ),
+                        ),
+                        SizedBox(width: 5.w),
+                        Text(
+                          statusConfig.label,
+                          style: TextStyle(
+                            color: statusConfig.textColor,
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
               // ── Footer actions: tracking + edit (pending) + cancel ────────
               if (showTracking || showEdit || showCancel) ...[
                 SizedBox(height: 10.h),

@@ -12,6 +12,8 @@ class CharityAccountProfileModel extends CharityAccountProfile {
     required super.email,
     required super.phone,
     required super.address,
+    super.latitude,
+    super.longitude,
     @JsonKey(name: 'work_start') required super.workStart,
     @JsonKey(name: 'work_end') required super.workEnd,
     @JsonKey(name: 'has_kitchen') required super.hasKitchen,
